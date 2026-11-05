@@ -2134,7 +2134,7 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
       });
     }
 
-    window.onload = function() {
+   window.onload = function() {
       const saved = localStorage.getItem('dopamine_app_data');
       if (saved) { 
         try { 
@@ -2149,6 +2149,15 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
       updateRaceCountdown();
       updateAICoachAdvice();
     };
+
+    // Config Supabase & Clés d'accès
+    const SUPABASE_URL = 'https://fxqepxcojiexvfvehcnq.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_7wkp4BFkFfE0ds8KJ6D7A_ec6nB...';
+
+    let supabaseClient = null;
+    if (window.supabase && SUPABASE_URL.startsWith('http')) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
   </script>
 </body>
 </html>
