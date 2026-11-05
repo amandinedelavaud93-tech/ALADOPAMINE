@@ -1972,6 +1972,7 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
             </div>`;
         }
       } else {
+    } else {
         // Vue annuelle compacte : 12 mois, chaque date reste cliquable.
         const year = displayDate.getFullYear();
         if (label) label.innerText = `Année ${year}`;
@@ -2013,128 +2014,7 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
       updateRaceCountdown();
     }
 
-    function navigateCalendar(direction) {
-      if (calendarMode === 'week') calendarDisplayDate.setDate(calendarDisplayDate.getDate() + direction * 7);
-      else if (calendarMode === 'month') calendarDisplayDate.setMonth(calendarDisplayDate.getMonth() + direction, 1);
-      else calendarDisplayDate.setFullYear(calendarDisplayDate.getFullYear() + direction, 0, 1);
-      renderHomeCalendar();
-      if (calendarSelectedDate) showDayDetails(calendarSelectedDate);
-    }
-    function goCalendarToday() { calendarDisplayDate = new Date(); showDayDetails(localDateISO(calendarDisplayDate)); }
-    function openPricingModal() { const el = document.getElementById('pricing-modal'); if (el) el.style.display = 'flex'; }
-    function closePricingModal() { const el = document.getElementById('pricing-modal'); if (el) el.style.display = 'none'; }
-
-    function showDayDetails(dateStr) {
-      calendarSelectedDate = dateStr;
-      const panel = document.getElementById('calendar-selection-hint');
-      const sessions = (appData.plannedSessions || []).filter(s => s.date === dateStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
-      const prettyDate = new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-      if (panel) {
-        if (!sessions.length) {
-          panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><div><strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">Aucune séance planifiée pour cette journée.</small></div><button type="button" onclick="openPlanModal();document.getElementById('plan-date').value='${dateStr}'">+ Planifier une séance</button></div>`;
-        } else {
-          panel.innerHTML = `<strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">${sessions.length} séance(s) planifiée(s)</small>` + sessions.map(s => {
-            const title = escapeHTML(String(s.title || 'Séance'));
-            const sport = escapeHTML(String(s.sport || '').toUpperCase());
-            const time = escapeHTML(String(s.time || 'Heure à définir'));
-            const detail = escapeHTML(String(s.description || s.planGoal || 'Séance planifiée'));
-            const type = s.type === 'competition' ? ' · 🏁 Compétition' : '';
-            return `<div class="calendar-detail-row"><div><strong>${time} · ${title}</strong><small>${sport}${type}<br>${detail}</small></div><button type="button" onclick="openPlanModal();document.getElementById('plan-date').value='${dateStr}'">Ajouter</button></div>`;
-          }).join('');
-        }
-      }
-      renderHomeCalendar();
-    }
-
-    function showFeedComingSoon() {
-      alert('Le Fil Dopamine est en préparation. Le partage entre amis, les photos, les likes et les commentaires seront activés après la mise en place des comptes et du stockage en ligne.');
-    }
-
-    function updateSummaryUI() {
-      ['tri', 'home-tri'].forEach(prefix => {
-        const nat = document.getElementById(`${prefix}-nat`);
-        const vel = document.getElementById(`${prefix}-vel`);
-        const cou = document.getElementById(`${prefix}-cou`);
-        const hiit = document.getElementById(`${prefix}-hiit`);
-        const cal = document.getElementById(`${prefix}-calories`);
-        if(nat) nat.innerText = `${appData.stats.natation} km`;
-        if(vel) vel.innerText = `${appData.stats.velo} km`;
-        if(cou) cou.innerText = `${appData.stats.course} km`;
-        if(hiit) hiit.innerText = `${appData.stats.hiit} min`;
-        if(cal) cal.innerText = `${appData.stats.calories} kcal`;
-      });
-      
-      document.getElementById('user-level-num').innerText = appData.level;
-      document.getElementById('user-xp-text').innerText = `${appData.xp} / 500 XP`;
-      document.getElementById('xp-bar-fill').style.width = `${(appData.xp / 500) * 100}%`;
-
-      const homeLvl = document.getElementById('home-user-level-num');
-      if(homeLvl) homeLvl.innerText = appData.level;
-      const homeXp = document.getElementById('home-user-xp-text');
-      if(homeXp) homeXp.innerText = `${appData.xp} / 500 XP`;
-      const homeXpBar = document.getElementById('home-xp-bar-fill');
-      if(homeXpBar) homeXpBar.style.width = `${(appData.xp / 500) * 100}%`;
-      
-      document.getElementById('profile-name-display').innerText = appData.user.name;
-      const hName = document.getElementById('home-profile-name');
-      if(hName) hName.innerText = appData.user.name;
-      const span2 = document.getElementById('profile-name-span-2');
-      if(span2) span2.innerText = appData.user.name;
-      document.getElementById('header-user-name').innerText = appData.user.name;
-      document.getElementById('header-user-level').innerText = `Niv. ${appData.level}`;
-
-      document.getElementById('goal-natation-text').innerText = `${appData.stats.natation} / ${appData.goals.natation} km`;
-      document.getElementById('goal-natation-bar').style.width = `${Math.min(100, (appData.stats.natation / appData.goals.natation) * 100)}%`;
-
-      document.getElementById('goal-velo-text').innerText = `${appData.stats.velo} / ${appData.goals.velo} km`;
-      document.getElementById('goal-velo-bar').style.width = `${Math.min(100, (appData.stats.velo / appData.goals.velo) * 100)}%`;
-
-      document.getElementById('goal-course-text').innerText = `${appData.stats.course} / ${appData.goals.course} km`;
-      document.getElementById('goal-course-bar').style.width = `${Math.min(100, (appData.stats.course / appData.goals.course) * 100)}%`;
-
-      const questTotal = appData.stats.velo + appData.stats.course;
-      document.getElementById('quest-progress-text').innerText = `${questTotal} / 40 km`;
-      document.getElementById('quest-bar').style.width = `${Math.min(100, (questTotal / 40) * 100)}%`;
-
-      renderRanks();
-      saveAppData();
-    }
-
-    function saveAppData() {
-      try {
-        localStorage.setItem('dopamine_app_data', JSON.stringify(appData));
-        return true;
-      } catch (error) {
-        console.error('Impossible de sauvegarder les données localement :', error);
-        alert("La sauvegarde locale a échoué (espace de stockage indisponible ou saturé). Exporte tes données JSON pour éviter de les perdre.");
-        return false;
-      }
-    }
-
-    function renderChart() {
-      const ctx = document.getElementById('evolutionChart');
-      if (!ctx) return;
-      if (chartInstance) { chartInstance.destroy(); }
-      
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Natation (km)', 'Vélo (km)', 'Course à pied (km)', 'Marche (km)', 'HIIT (min)'],
-          datasets: [{
-            label: 'Volume Total',
-            data: [appData.stats.natation, appData.stats.velo, appData.stats.course, appData.stats.marche, appData.stats.hiit],
-            backgroundColor: ['#00a2ff', '#ff6b00', '#22c55e', '#14b8a6', '#ec4899']
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }
-        }
-      });
-    }
-
-window.onload = function() {
+    window.onload = function() {
       const saved = localStorage.getItem('dopamine_app_data');
       if (saved) { 
         try { 
@@ -2149,7 +2029,6 @@ window.onload = function() {
       updateRaceCountdown();
       updateAICoachAdvice();
     };
-
   </script>
 
   <!-- MODALE DE CONNEXION / INSCRIPTION SUPABASE -->
@@ -2184,7 +2063,19 @@ window.onload = function() {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 
-    // Fonctions d'authentification Supabase
+    // Gestion automatique du profil connecté
+    async function checkUserSession() {
+      if (!supabaseClient) return;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      
+      if (session && session.user) {
+        appData.user.name = session.user.email.split('@')[0];
+        const nameElements = document.querySelectorAll('.user-name, #user-display-name');
+        nameElements.forEach(el => el.textContent = appData.user.name);
+      }
+    }
+
+    // Inscription Supabase
     async function supabaseSignUp() {
       const email = document.getElementById('auth-email').value;
       const password = document.getElementById('auth-password').value;
@@ -2192,18 +2083,30 @@ window.onload = function() {
       
       const { data, error } = await supabaseClient.auth.signUp({ email, password });
       if (error) { alert('Erreur : ' + error.message); }
-      else { alert('Inscription réussie ! Vérifie tes emails si une confirmation est demandée.'); document.getElementById('auth-modal').style.display = 'none'; }
+      else { 
+        alert('Inscription réussie !'); 
+        document.getElementById('auth-modal').style.display = 'none';
+        checkUserSession();
+      }
     }
 
+    // Connexion Supabase
     async function supabaseSignIn() {
-      const email = document.getElementById('auth-email').value;
+      const email = document.getElementById('auth-email'].value;
       const password = document.getElementById('auth-password').value;
       if (!email || !password) { alert('Remplis ton email et ton mot de passe.'); return; }
 
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) { alert('Erreur de connexion : ' + error.message); }
-      else { alert('Connexion réussie ! Bienvenue.'); document.getElementById('auth-modal').style.display = 'none'; location.reload(); }
+      else { 
+        alert('Connexion réussie ! Bienvenue.'); 
+        document.getElementById('auth-modal').style.display = 'none'; 
+        checkUserSession();
+      }
     }
+
+    // Vérification de la session au chargement de la page
+    document.addEventListener('DOMContentLoaded', checkUserSession);
   </script>
 </body>
 </html>
