@@ -2134,7 +2134,7 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
       });
     }
 
-   window.onload = function() {
+window.onload = function() {
       const saved = localStorage.getItem('dopamine_app_data');
       if (saved) { 
         try { 
@@ -2150,6 +2150,31 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
       updateAICoachAdvice();
     };
 
+  </script>
+
+  <!-- MODALE DE CONNEXION / INSCRIPTION SUPABASE -->
+  <div class="modal-overlay" id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div class="modal-content" style="background:var(--card-bg); padding:24px; border-radius:12px; width:90%; max-width:400px; border:1px solid var(--card-border);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="color:var(--text-main); font-size:1rem;"><i class="fa-solid fa-user-lock" style="color:var(--bike-orange)"></i> Compte Dopamine</h3>
+        <button onclick="document.getElementById('auth-modal').style.display='none'" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; color:var(--text-sub);">Email</label>
+        <input type="email" id="auth-email" placeholder="votre@email.com" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--card-border); background:rgba(255,255,255,0.05); color:var(--text-main);">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label style="font-size:0.8rem; color:var(--text-sub);">Mot de passe</label>
+        <input type="password" id="auth-password" placeholder="••••••••" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--card-border); background:rgba(255,255,255,0.05); color:var(--text-main);">
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button onclick="supabaseSignIn()" style="flex:1; padding:10px; background:var(--bike-orange); color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Se connecter</button>
+        <button onclick="supabaseSignUp()" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); color:var(--text-main); border:1px solid var(--card-border); border-radius:6px; font-weight:bold; cursor:pointer;">S'inscrire</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
     // Config Supabase & Clés d'accès
     const SUPABASE_URL = 'https://fxqepxcojiexvfvehcnq.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_7wkp4BFkFfE0ds8KJ6D7A_ec6nB...';
@@ -2157,6 +2182,27 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
     let supabaseClient = null;
     if (window.supabase && SUPABASE_URL.startsWith('http')) {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    // Fonctions d'authentification Supabase
+    async function supabaseSignUp() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      if (!email || !password) { alert('Remplis ton email et ton mot de passe.'); return; }
+      
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) { alert('Erreur : ' + error.message); }
+      else { alert('Inscription réussie ! Vérifie tes emails si une confirmation est demandée.'); document.getElementById('auth-modal').style.display = 'none'; }
+    }
+
+    async function supabaseSignIn() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      if (!email || !password) { alert('Remplis ton email et ton mot de passe.'); return; }
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) { alert('Erreur de connexion : ' + error.message); }
+      else { alert('Connexion réussie ! Bienvenue.'); document.getElementById('auth-modal').style.display = 'none'; location.reload(); }
     }
   </script>
 </body>
