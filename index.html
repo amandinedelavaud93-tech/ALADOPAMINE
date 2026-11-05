@@ -7,9 +7,6 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Supabase SDK JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
   <style>
     :root[data-theme="dark"] {
       --bg-dark: #050a14;
@@ -73,138 +70,2085 @@
       position: sticky; top: 0; z-index: 100;
     }
 
-    .navbar { display: flex; justify-content: space-between; align-items: center; height: 85px; flex-wrap: wrap; }
+    .navbar { display: flex; justify-content: space-between; align-items: center; min-height: 96px; padding-top: 8px; padding-bottom: 8px; flex-wrap: wrap; gap: 10px; }
+
     .nav-brand-container { display: flex; align-items: center; gap: 15px; cursor: pointer; }
-    .nav-brand { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.3rem; letter-spacing: 1px; color: var(--text-main); }
+    .nav-brand {
+      display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.45rem;
+      letter-spacing: 1px; color: var(--text-main);
+    }
+    .nav-brand img.brand-logo, .brand-logo-fallback { height: 62px; width: 62px; object-fit: cover; border-radius: 10px; border: 1px solid var(--card-border); flex-shrink:0; }
+    .brand-logo-fallback { display:none; align-items:center; justify-content:center; background:linear-gradient(135deg,#ff8a00,#ff4d00); color:#fff; font-weight:1000; font-size:2rem; box-shadow:0 4px 14px rgba(255,107,0,.22); }
     .nav-brand span { color: var(--bike-orange); }
 
     .header-user-wrapper {
       display: flex; flex-direction: column; gap: 4px; background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--card-border); border-radius: 10px; padding: 6px 12px; min-width: 130px;
+      border: 1px solid var(--card-border); border-radius: 10px; padding: 6px 12px; min-width: 110px;
     }
-    .header-username { font-size: 0.8rem; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .header-userlevel { font-size: 0.75rem; font-weight: 800; color: #000; background: var(--xp-gold); padding: 3px 10px; border-radius: 6px; cursor: pointer; text-align: center; }
+    .header-user-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .header-username {
+      font-size: 0.8rem; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 4px;
+    }
+    .header-username:hover { color: var(--bike-orange); }
+    
+    .header-userlevel {
+      font-size: 0.75rem; font-weight: 800; color: #000; background: var(--xp-gold); padding: 3px 10px; border-radius: 6px;
+      cursor: pointer; width: 100%; text-align: center; display: block; letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+    }
 
-    .nav-menu { display: flex; gap: 6px; list-style: none; flex-wrap: wrap; align-items: center; }
-    .nav-menu a { color: var(--text-sub); text-decoration: none; font-weight: 600; font-size: 0.78rem; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+    .nav-menu { display: flex; gap: 4px; list-style: none; flex-wrap: wrap; align-items: center; }
+    .nav-menu a {
+      color: var(--text-sub); text-decoration: none; font-weight: 600; font-size: 0.75rem;
+      padding: 6px 10px; border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; gap: 4px; cursor: pointer;
+      position: relative;
+    }
+    .nav-menu a:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.08); }
     .nav-menu a.active { color: var(--xp-gold); background: rgba(255, 107, 0, 0.1); border-bottom: 3px solid var(--bike-orange); }
 
-    .btn-auth-header {
-      background: linear-gradient(135deg, var(--bike-orange) 0%, #e65c00 100%);
-      color: white; border: none; padding: 6px 14px; border-radius: 8px; font-weight: bold; font-size: 0.78rem; cursor: pointer;
+    .btn-sync-nav {
+      background: linear-gradient(135deg, #fc4c02 0%, #e65c00 100%);
+      color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 0.75rem;
+      cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(252, 76, 2, 0.3);
+      transition: transform 0.2s;
     }
+    .btn-sync-nav:hover { transform: translateY(-1px); }
+
+    .nav-actions { display: flex; gap: 8px; align-items: center; }
+    .nav-activity-trigger { color: var(--text-sub); background: transparent; border: 0; font-weight: 700; font-size: .78rem; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+    .nav-activity-trigger:hover, .nav-activity-trigger[aria-expanded="true"] { color: var(--xp-gold); background: rgba(255,107,0,.1); }
+    .activity-submenu { display:none; width:100%; border-top:1px solid var(--card-border); padding:10px 0 12px; background:var(--nav-bg); }
+    .activity-submenu.open { display:block; }
+    .activity-submenu-inner { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; }
+    .activity-submenu button { display:flex; justify-content:center; align-items:center; gap:8px; padding:10px 8px; border:1px solid var(--card-border); border-radius:9px; color:var(--text-main); background:var(--card-bg); cursor:pointer; font-weight:700; }
+    .activity-submenu button:hover { border-color:var(--bike-orange); transform:translateY(-1px); }
+    @media(max-width:900px) { .activity-submenu-inner { grid-template-columns:repeat(3,minmax(0,1fr)); } .navbar { justify-content:center; } }
+    @media(max-width:520px) { .activity-submenu-inner { grid-template-columns:repeat(2,minmax(0,1fr)); } .nav-brand { font-size:1.15rem; } .nav-brand img.brand-logo, .brand-logo-fallback { height:50px; width:50px; } }
 
     .app-page { display: block; animation: fadeIn 0.3s ease-in-out; }
     .app-page.hidden { display: none !important; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    .hero-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin: 15px 0; }
-    @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } }
+    .race-countdown-banner {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(10, 18, 32, 0.95) 100%);
+      border: 1px solid var(--race-red); border-radius: 14px; padding: 12px 18px; margin: 12px 0;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .countdown-timer-box { display: flex; gap: 10px; font-weight: 800; font-size: 0.85rem; color: var(--text-main); }
+    .countdown-unit { background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4); text-align: center; }
+    .countdown-unit span { display: block; font-size: 0.55rem; color: var(--text-sub); font-weight: normal; }
 
-    .main-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; }
+    .ai-coach-banner {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(10, 18, 32, 0.95) 100%);
+      border: 1px solid var(--watts-purple); border-radius: 14px; padding: 14px 18px; margin: 15px 0; display: flex; align-items: flex-start; gap: 12px;
+    }
+    .ai-coach-icon { background: var(--watts-purple); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
 
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 24px; width: 90%; max-width: 440px; }
-    .form-group { margin-bottom: 12px; }
+    .hero-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin: 15px 0; }
+    .hero-banner { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; display: grid; grid-template-columns: minmax(140px,1fr) minmax(240px,1.2fr) minmax(140px,1fr); align-items: center; gap:18px; min-height:190px; }
+    .hero-photo { width:100%; height:150px; object-fit:cover; border-radius:11px; border:1px solid var(--card-border); }
+    .hero-feed-preview { width:100%; background:rgba(255,255,255,.025); border:1px solid var(--card-border); border-radius:12px; padding:12px; min-width:0; }
+    .hero-feed-preview-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; font-weight:800; color:var(--text-main); font-size:.85rem; }
+    .hero-feed-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+    .hero-feed-mini-photo { width:48px; height:42px; object-fit:cover; border-radius:7px; }
+    .hero-feed-preview button { width:100%; margin-top:10px; padding:8px; border:1px solid var(--bike-orange); color:var(--bike-orange); background:rgba(255,107,0,.08); border-radius:8px; cursor:pointer; font-weight:800; }
+    .hero-feed-preview .feed-stats { font-size:.7rem; color:var(--text-sub); line-height:1.5; }
+    .hero-message { text-align:center; }
+    .hero-list { list-style: none; font-size: 1rem; font-weight: 800; margin-bottom: 12px; display:inline-block; text-align:left; }
+    .hero-list li { margin-bottom: 7px; display: flex; align-items: center; gap: 9px; }
+    .quote-badge { display:block; font-style: italic; color: var(--text-sub); font-size: 0.85rem; border-left: 3px solid var(--bike-orange); padding: 8px 0 8px 10px; text-align:left; }
+    @media(max-width:700px) { .hero-banner { grid-template-columns:1fr; } .hero-photo { height:125px; } .hero-message { text-align:left; } .hero-list { display:block; } .hero-feed-preview { max-width:none; } }
+    .hero-list { list-style: none; font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; }
+    .hero-list li { margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+    .quote-badge { font-style: italic; color: var(--text-sub); font-size: 0.8rem; border-left: 3px solid var(--bike-orange); padding-left: 8px; }
+
+    .agenda-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; margin: 18px 0 22px; }
+    .card-title-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px; }
+    .btn-add-plan { background: rgba(255, 107, 0, 0.15); border: 1px solid var(--bike-orange); color: var(--bike-orange); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: bold; cursor: pointer; }
+
+    .calendar-controls { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .calendar-grid-week-mini { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 6px; }
+    .cal-day-cell-mini { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 4px; text-align: center; min-height: 82px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-size: 0.7rem; cursor: pointer; }
+    .cal-day-cell-mini:hover { border-color: var(--bike-orange); }
+    .cal-day-cell-mini.today { border-color: var(--bike-orange); background: rgba(255, 107, 0, 0.12); }
+    .cal-day-name-mini { color: var(--text-sub); font-size: 0.55rem; font-weight: bold; }
+    .cal-day-num-mini { font-weight: 800; color: var(--text-main); font-size: 0.75rem; }
+    .cal-dots-container { display: flex; gap: 2px; margin-top: 2px; flex-wrap: wrap; justify-content: center; max-width: 36px; }
+    .dot-sport { width: 6px; height: 6px; border-radius: 50%; }
+    .cal-day-cell-mini.selected { outline:2px solid var(--bike-orange); outline-offset:-2px; background:rgba(255,107,0,.10); }
+    .calendar-detail-panel { margin-top:12px; padding:12px 14px; border:1px solid var(--card-border); border-radius:10px; background:rgba(255,255,255,.025); }
+    .calendar-detail-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--card-border); }
+    .calendar-detail-row:last-child { border-bottom:0; }
+    .calendar-detail-row strong { font-size:.84rem; }
+    .calendar-detail-row small { display:block; color:var(--text-sub); margin-top:3px; line-height:1.4; }
+    .calendar-detail-row button { border:1px solid var(--bike-orange); color:var(--bike-orange); background:transparent; border-radius:7px; padding:6px 9px; cursor:pointer; white-space:nowrap; }
+    .calendar-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:9px; font-size:.7rem; color:var(--text-sub); }
+    .calendar-legend span { display:inline-flex; align-items:center; gap:5px; }
+    .calendar-legend i { width:7px;height:7px;border-radius:50%;display:inline-block; }
+
+    .sports-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+    @media (max-width: 1200px) { .sports-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px) { .sports-grid { grid-template-columns: 1fr; } }
+
+    .sport-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease; }
+    .sport-card:hover { transform: translateY(-3px); }
+    .sport-card-header { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); }
+    
+    .sport-rank-badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+    
+    .sport-card-img { width: 100%; height: 90px; object-fit: cover; }
+    .sport-card-body { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .features-list { list-style: none; font-size: 0.7rem; color: var(--text-sub); margin-bottom: 8px; }
+    .features-list li { margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
+
+    .btn-action { width: 100%; padding: 7px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; display: flex; justify-content: center; align-items: center; gap: 5px; font-size: 0.75rem; }
+    .btn-natation { background: var(--swim-blue); }
+    .btn-velo { background: var(--bike-orange); }
+    .btn-course { background: var(--run-green); }
+    .btn-marche { background: var(--walk-teal); }
+    .btn-hiit { background: var(--hiit-pink); }
+
+    .calculator-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; margin-bottom: 25px; }
+    .calc-grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    @media (max-width: 800px) { .calc-grid-layout { grid-template-columns: 1fr; } }
+
+    .calc-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { margin-bottom: 10px; }
     .form-group label { display: block; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 4px; font-weight: 600; }
-    .form-group input { width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--card-border); border-radius: 8px; color: #fff; font-size: 0.85rem; }
-    .btn-primary { background: var(--bike-orange); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.85rem; }
-    .btn-secondary { background: rgba(255,255,255,0.08); color: white; border: 1px solid var(--card-border); padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.85rem; margin-top: 6px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--card-border); border-radius: 8px; color: #fff; font-size: 0.8rem; }
+
+    .calc-action-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
+    .btn-calc-orange { background: var(--bike-orange); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.8rem; text-transform: uppercase; }
+    .btn-save-green { background: var(--run-green); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.8rem; text-transform: uppercase; }
+
+    .dashboard-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 25px; }
+    @media (max-width: 900px) { .dashboard-layout { grid-template-columns: 1fr; } }
+
+    .main-dashboard-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; }
+    .triathlon-summary-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+    .triathlon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; text-align: center; margin-top: 10px; }
+    @media (max-width: 600px) { .triathlon-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .goals-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
+    .goal-row { display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 6px; }
+    .progress-bar-bg { width: 100%; height: 5px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; margin-top: 3px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+
+    .xp-level-card { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 10px 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.2s; }
+    .xp-level-card:hover { background: rgba(245, 158, 11, 0.15); }
+    .level-badge { background: var(--xp-gold); color: #000; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem; }
+
+    .trophies-section { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+    .ranks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+    @media (max-width: 768px) { .ranks-grid { grid-template-columns: 1fr; } }
+    
+    .rank-card { background: rgba(0,0,0,0.4); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 10px; }
+    .rank-badge-pill { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    
+    .trophies-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+    .trophy-card { background: rgba(0,0,0,0.4); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 10px; opacity: 0.5; }
+    .trophy-card.unlocked { opacity: 1; border-color: var(--xp-gold); background: rgba(245, 158, 11, 0.06); }
+    .trophy-icon { font-size: 1.4rem; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); }
+    .trophy-card.unlocked .trophy-icon { background: rgba(245, 158, 11, 0.2); color: var(--xp-gold); }
+
+    .quests-card { background: linear-gradient(135deg, rgba(255, 107, 0, 0.1) 0%, rgba(10, 18, 32, 0.95) 100%); border: 1px solid var(--bike-orange); border-radius: 12px; padding: 12px 15px; margin-bottom: 15px; }
+    .quest-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; margin-top: 6px; }
+
+    .achievement-popup { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 2px solid var(--xp-gold); border-radius: 14px; padding: 15px 20px; z-index: 2000; box-shadow: 0 10px 30px rgba(245,158,11,0.4); display: none; align-items: center; gap: 15px; animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    .history-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-top: 15px; }
+    .history-list { max-height: 220px; overflow-y: auto; margin-top: 8px; }
+    .history-card { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 0.75rem; }
+    .btn-delete-session { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--heart-red); color: var(--heart-red); border-radius: 4px; padding: 2px 6px; font-size: 0.65rem; cursor: pointer; margin-left: 6px; }
+
+    .medal-tab { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: var(--text-sub); padding: 5px 10px; border-radius: 20px; font-size: 0.7rem; white-space: nowrap; cursor: pointer; }
+    .medal-tab.active { background: var(--bike-orange); color: #fff; }
+
+    .pro-side-banner { background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(5, 10, 20, 0.9) 100%); border: 1px solid var(--purple-vip); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+    .pro-badge { background: var(--purple-vip); color: #fff; padding: 3px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: bold; width: fit-content; margin-bottom: 10px; }
+    .btn-pro { background: var(--purple-vip); color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
+
+    footer { margin-top: auto; border-top: 1px solid var(--card-border); padding: 20px 0; background: var(--nav-bg); font-size: 0.8rem; }
+    .footer-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    .footer-links { display: flex; gap: 15px; list-style: none; }
+    .footer-links a { color: var(--text-sub); text-decoration: none; }
+    .footer-links a:hover { color: var(--bike-orange); }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; width: 90%; max-width: 480px; }
   </style>
 </head>
 <body>
+
+  <!-- POPUP ACHIEVEMENT -->
+  <div class="achievement-popup" id="achievement-popup">
+    <div style="font-size: 2rem; color: var(--xp-gold);"><i class="fa-solid fa-trophy"></i></div>
+    <div>
+      <div style="font-size: 0.65rem; font-weight: bold; color: var(--xp-gold); text-transform: uppercase; letter-spacing: 1px;">Succès Débloqué ! 🏆</div>
+      <div id="ach-popup-title" style="font-size: 0.9rem; font-weight: 800; color: var(--text-main);">Palier Atteint !</div>
+      <div style="font-size: 0.7rem; color: var(--text-sub);">XP et Statut mis à jour !</div>
+    </div>
+  </div>
 
   <!-- NAVBAR -->
   <header>
     <div class="container navbar">
       <div class="nav-brand-container" onclick="showPage('home')">
-        <div class="nav-brand">À LA <span>DOPAMINE</span></div>
+        <div class="nav-brand">
+          <img src="logo.png" alt="Logo À LA DOPAMINE" class="brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="brand-logo-fallback" aria-hidden="true">D</span>
+          À LA <span>DOPAMINE</span>
+        </div>
+        
         <div class="header-user-wrapper">
-          <div class="header-username" onclick="openAuthModal()"><i class="fa-solid fa-user-gear"></i> <span id="header-user-name">Mon Compte</span></div>
-          <span class="header-userlevel"><span id="header-user-level">Niv. 1</span></span>
+          <div class="header-user-row">
+            <span class="header-username" onclick="event.stopPropagation(); toggleProfileModal(true);" title="Modifier mon profil"><i class="fa-solid fa-user-gear"></i> <span id="header-user-name">Escarm</span></span>
+          </div>
+          <span class="header-userlevel" onclick="event.stopPropagation(); showPage('trophies');" title="Voir mes stats XP"><span id="header-user-level">Niv. 3</span></span>
         </div>
       </div>
 
       <ul class="nav-menu">
+        <li><button class="btn-sync-nav" onclick="openSyncModal()"><i class="fa-solid fa-link"></i> Connecter GPS</button></li>
         <li><a id="nav-home" class="active" onclick="showPage('home')"><i class="fa-solid fa-house"></i> Accueil</a></li>
-        <li><a id="nav-stats" onclick="showPage('stats')"><i class="fa-solid fa-chart-line"></i> Performance</a></li>
-        <li><button class="btn-auth-header" onclick="openAuthModal()"><i class="fa-solid fa-right-to-bracket"></i> Connexion / Inscription</button></li>
+        <li><button class="nav-activity-trigger" id="nav-activities" onclick="toggleActivityMenu()" aria-expanded="false" aria-controls="activity-submenu"><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i> Activités <i class="fa-solid fa-chevron-down"></i></button></li>
+        <li><a id="nav-stats" onclick="showPage('stats')"><i class="fa-solid fa-chart-line"></i> Bilan</a></li>
+        <li><a id="nav-trophies" onclick="showPage('trophies')"><i class="fa-solid fa-trophy"></i> Trophées</a></li>
       </ul>
+      
+      <div class="nav-actions">
+        <button class="medal-tab" onclick="toggleTheme()" title="Basculer Mode Sombre / Clair"><i class="fa-solid fa-circle-half-stroke"></i></button>
+      </div>
+    </div>
+    <div class="activity-submenu" id="activity-submenu">
+      <div class="container activity-submenu-inner">
+        <button onclick="openCalc('natation')"><i class="fa-solid fa-person-swimming" style="color:var(--swim-blue)"></i> Natation</button>
+        <button onclick="openCalc('velo')"><i class="fa-solid fa-person-biking" style="color:var(--bike-orange)"></i> Vélo</button>
+        <button onclick="openCalc('course')"><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i> Course</button>
+        <button onclick="openCalc('marche')"><i class="fa-solid fa-person-walking" style="color:var(--walk-teal)"></i> Marche</button>
+        <button onclick="openCalc('hiit')"><i class="fa-solid fa-bolt" style="color:var(--hiit-pink)"></i> HIIT</button>
+        <button onclick="showPage('home'); document.getElementById('activity-submenu').classList.remove('open');"><i class="fa-solid fa-plus-circle"></i> Autres</button>
+      </div>
     </div>
   </header>
 
   <div class="container" style="padding-top: 15px; padding-bottom: 25px;">
+
+    <!-- BANDEAU RACE DAY -->
+    <div class="race-countdown-banner" id="race-banner-container" style="display:none;">
+      <div>
+        <h4 style="font-size: 0.85rem; color: var(--race-red); font-weight: bold;"><i class="fa-solid fa-flag-checkered"></i> Prochaine Compétition / Épreuve : <span id="next-race-title">Triathlon M</span></h4>
+        <p style="font-size: 0.7rem; color: var(--text-sub);">Objectif majeur prioritaire validé dans ton calendrier.</p>
+      </div>
+      <div class="countdown-timer-box" id="race-countdown-timer">
+        <div class="countdown-unit"><b id="cd-days">00</b><span>Jours</span></div>
+        <div class="countdown-unit"><b id="cd-hours">00</b><span>Heures</span></div>
+        <div class="countdown-unit"><b id="cd-mins">00</b><span>Min</span></div>
+        <div class="countdown-unit"><b id="cd-secs">00</b><span>Sec</span></div>
+      </div>
+    </div>
+
+    <!-- COACH IA DYNAMIQUE & UX ANALYSE DE CHARGE -->
+    <div class="ai-coach-banner">
+      <div class="ai-coach-icon"><i class="fa-solid fa-brain"></i></div>
+      <div style="flex:1;">
+        <h4 style="font-size: 0.85rem; color: var(--watts-purple); font-weight: bold;"><i class="fa-solid fa-wand-magic-sparkles"></i> Analyse & Conseils du Coach IA (<span id="profile-name-display">Escarm</span>)</h4>
+        <p id="ai-coach-text" style="font-size: 0.78rem; color: var(--text-main); line-height: 1.4; margin-top: 3px;">Analyse de la charge d'entraînement et de la fraîcheur en cours...</p>
+      </div>
+    </div>
+
+    <!-- ACCUEIL -->
     <main id="view-home" class="app-page">
       <section class="hero-grid">
-        <div class="main-box">
-          <h2 style="font-size: 1.1rem; color: var(--bike-orange); margin-bottom: 10px;">🏆 Tableau de Bord Athlète</h2>
-          <p style="font-size: 0.85rem; color: var(--text-sub);">Connectez votre compte pour sauvegarder vos entraînements, trophées et statistiques dans la base de données cloud.</p>
+        <div class="hero-banner">
+          <img class="hero-photo" src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=900&q=85" alt="Coureur sur un sentier en pleine nature" loading="lazy">
+          <div class="hero-message">
+            <ul class="hero-list">
+              <li><i class="fa-solid fa-person-swimming" style="color: var(--swim-blue)"></i> Nager pour l'endurance.</li>
+              <li><i class="fa-solid fa-person-biking" style="color: var(--bike-orange)"></i> Rouler pour la liberté.</li>
+              <li><i class="fa-solid fa-person-running" style="color: var(--run-green)"></i> Courir pour le dépassement.</li>
+              <li><i class="fa-solid fa-person-walking" style="color: var(--walk-teal)"></i> Marcher pour explorer.</li>
+              <li><i class="fa-solid fa-bolt" style="color: var(--hiit-pink)"></i> HIIT pour l'explosivité.</li>
+            </ul>
+            <div class="quote-badge">« La seule mauvaise sortie est celle qu'on ne fait pas. »</div>
+          </div>
+          <aside class="hero-feed-preview" aria-label="Aperçu du Fil Dopamine">
+            <div class="hero-feed-preview-head"><i class="fa-solid fa-users" style="color:var(--bike-orange);font-size:1.15rem;"></i><span>Le Fil Dopamine</span></div>
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+              <img class="hero-feed-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=75" alt="Avatar de démonstration" loading="lazy">
+              <div style="min-width:0;flex:1;"><strong style="font-size:.75rem;">Une sortie entre amis</strong><div class="feed-stats">Photos · distance · allure · D+</div></div>
+              <img class="hero-feed-mini-photo" src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=180&q=75" alt="Exemple de photo de sortie" loading="lazy">
+            </div>
+            <p style="font-size:.76rem;line-height:1.4;margin:10px 0 0;color:var(--text-sub);">Partage tes sorties, encourage tes amis et découvre leurs progrès.</p>
+            <button type="button" onclick="showFeedComingSoon()">Découvrir bientôt <i class="fa-solid fa-arrow-right"></i></button>
+          </aside>
         </div>
-        <div class="main-box">
-          <h3 style="font-size: 0.95rem; margin-bottom: 8px;">Statut Supabase Cloud</h3>
-          <div id="connection-status" style="font-size: 0.8rem; color: var(--run-green);"><i class="fa-solid fa-circle-check"></i> Prêt à être connecté</div>
+      </section>
+
+      <section class="agenda-card" id="home-calendar">
+        <div class="card-title-flex">
+          <span style="font-size:1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-calendar-days" style="color:var(--bike-orange)"></i> Mon calendrier sportif</span>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <button class="btn-add-plan" onclick="openPlanModal()"><i class="fa-solid fa-plus"></i> Ajouter une séance</button>
+            <button class="btn-add-plan" style="background:var(--run-green);" onclick="openTrainingPlanModal()"><i class="fa-solid fa-wand-magic-sparkles"></i> Générer un plan</button>
+          </div>
+        </div>
+        <div class="calendar-controls">
+          <button class="medal-tab" onclick="navigateCalendar(-1)" aria-label="Période précédente" title="Période précédente">‹</button>
+          <button class="medal-tab active" id="cal-mode-week" onclick="setCalendarMode('week')">Semaine</button>
+          <button class="medal-tab" id="cal-mode-month" onclick="setCalendarMode('month')">Mois</button>
+          <button class="medal-tab" id="cal-mode-year" onclick="setCalendarMode('year')">Année</button>
+          <button class="medal-tab" onclick="navigateCalendar(1)" aria-label="Période suivante" title="Période suivante">›</button>
+          <button class="medal-tab" onclick="goCalendarToday()">Aujourd'hui</button>
+          <span id="calendar-current-label" style="font-size:.8rem; color:var(--text-sub); margin-left:auto; font-weight:bold;"></span>
+        </div>
+        <div class="calendar-grid-week-mini" id="calendar-days-grid-home"></div>
+        <div class="calendar-legend"><span><i style="background:var(--swim-blue)"></i> Natation</span><span><i style="background:var(--bike-orange)"></i> Vélo</span><span><i style="background:var(--run-green)"></i> Course</span><span><i style="background:var(--walk-teal)"></i> Marche</span><span><i style="background:var(--hiit-pink)"></i> HIIT</span><span><i style="background:var(--race-red)"></i> Compétition</span></div><div id="calendar-selection-hint" class="calendar-detail-panel" aria-live="polite">Choisis un jour pour afficher ici les séances prévues et leurs horaires.</div>
+      </section>
+
+      <section class="sports-grid">
+        <div class="sport-card natation">
+          <div class="sport-card-header">
+            <div><h3 style="font-size: 0.85rem;">NATATION</h3><p style="font-size: 0.62rem; color: var(--swim-blue);">Bleu Endurance</p></div>
+            <span class="sport-rank-badge" id="card-rank-natation" style="background: var(--tier-iron-bg);">Fer</span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=600&q=80" alt="Natation" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/00a2ff/ffffff?text=Natation'">
+          <div class="sport-card-body">
+            <ul class="features-list">
+              <li><i class="fa-solid fa-check" style="color: var(--swim-blue);"></i> Piscine / Mer & Allure</li>
+              <li><i class="fa-solid fa-check" style="color: var(--swim-blue);"></i> Zones Z1-Z5</li>
+            </ul>
+            <button class="btn-action btn-natation" onclick="openCalc('natation')">Accéder à la natation <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <div class="sport-card velo">
+          <div class="sport-card-header">
+            <div><h3 style="font-size: 0.85rem;">VÉLO</h3><p style="font-size: 0.62rem; color: var(--bike-orange);">Orange Rouler plus loin</p></div>
+            <span class="sport-rank-badge" id="card-rank-velo" style="background: var(--tier-iron-bg);">Fer</span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80" alt="Vélo" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/ff6b00/ffffff?text=Velo'">
+          <div class="sport-card-body">
+            <ul class="features-list">
+              <li><i class="fa-solid fa-check" style="color: var(--bike-orange);"></i> Vitesse, Watts & D+</li>
+              <li><i class="fa-solid fa-check" style="color: var(--bike-orange);"></i> Route, Forêt & Zwift</li>
+            </ul>
+            <button class="btn-action btn-velo" onclick="openCalc('velo')">Accéder au vélo <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <div class="sport-card course">
+          <div class="sport-card-header">
+            <div><h3 style="font-size: 0.85rem;">COURSE À PIED</h3><p style="font-size: 0.62rem; color: var(--run-green);">Vert Dépassement</p></div>
+            <span class="sport-rank-badge" id="card-rank-course" style="background: var(--tier-iron-bg);">Fer</span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=600&q=80" alt="Course" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/22c55e/ffffff?text=Course'">
+          <div class="sport-card-body">
+            <ul class="features-list">
+              <li><i class="fa-solid fa-check" style="color: var(--run-green);"></i> Allure, Cadence & D+</li>
+              <li><i class="fa-solid fa-check" style="color: var(--run-green);"></i> Route, Trail & Forêt</li>
+            </ul>
+            <button class="btn-action btn-course" onclick="openCalc('course')">Accéder à la course <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <div class="sport-card marche">
+          <div class="sport-card-header">
+            <div><h3 style="font-size: 0.85rem;">MARCHE</h3><p style="font-size: 0.62rem; color: var(--walk-teal);">Turquoise Rando</p></div>
+            <span class="sport-rank-badge" id="card-rank-marche" style="background: var(--tier-iron-bg);">Fer</span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80" alt="Marche" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/14b8a6/ffffff?text=Marche'">
+          <div class="sport-card-body">
+            <ul class="features-list">
+              <li><i class="fa-solid fa-check" style="color: var(--walk-teal);"></i> Rando & D+</li>
+              <li><i class="fa-solid fa-check" style="color: var(--walk-teal);"></i> Forêt, Montagne & Urbain</li>
+            </ul>
+            <button class="btn-action btn-marche" onclick="openCalc('marche')">Accéder à la marche <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <div class="sport-card hiit">
+          <div class="sport-card-header">
+            <div><h3 style="font-size: 0.85rem;">HIIT</h3><p style="font-size: 0.62rem; color: var(--hiit-pink);">Rose Intensité</p></div>
+            <span class="sport-rank-badge" id="card-rank-hiit" style="background: var(--tier-iron-bg);">Fer</span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80" alt="HIIT" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/ec4899/ffffff?text=HIIT'">
+          <div class="sport-card-body">
+            <ul class="features-list">
+              <li><i class="fa-solid fa-check" style="color: var(--hiit-pink);"></i> Séries & Répétitions</li>
+              <li><i class="fa-solid fa-check" style="color: var(--hiit-pink);"></i> Intensité RPE (1-10)</li>
+            </ul>
+            <button class="btn-action btn-hiit" onclick="openCalc('hiit')">Accéder au HIIT <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="main-dashboard-box" id="dopamine-feed-preview" style="margin:18px 0;">
+        <div class="card-title-flex">
+          <h3 style="font-size:1rem;"><i class="fa-solid fa-users" style="color:var(--bike-orange)"></i> Le Fil Dopamine</h3>
+          <span style="font-size:.75rem;color:var(--text-sub);">Communauté en préparation</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;">
+          <div style="font-size:1.8rem;color:var(--bike-orange);"><i class="fa-solid fa-heart-circle-check"></i></div>
+          <div style="flex:1;">
+            <strong>Les sorties de tes amis, leurs photos et leurs encouragements.</strong>
+            <p style="color:var(--text-sub);font-size:.82rem;margin-top:5px;">Le fil affichera les séances que tes amis choisissent de partager, avec photos, distance, durée, allure, D+, J'aime et commentaires. Le partage réel sera activé après la mise en place des comptes et de la base de données sécurisée.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-layout" style="margin-top: 20px;">
+        <div class="main-dashboard-box">
+          <div class="card-title-flex">
+            <h3 style="font-size: 0.95rem;"><i class="fa-solid fa-chart-column" style="color: var(--bike-orange);"></i> Aperçu Bilan Sportif</h3>
+            <button class="medal-tab" onclick="showPage('stats')">Voir tout le bilan</button>
+          </div>
+          <div class="triathlon-summary-box" style="margin-top: 10px;">
+            <div class="triathlon-grid">
+              <div><i class="fa-solid fa-person-swimming" style="color:var(--swim-blue)"></i><div style="font-weight:bold; font-size:1rem;" id="home-tri-nat">0 km</div><div style="font-size:0.6rem; color:var(--swim-blue);">Natation</div></div>
+              <div><i class="fa-solid fa-person-biking" style="color:var(--bike-orange)"></i><div style="font-weight:bold; font-size:1rem;" id="home-tri-vel">0 km</div><div style="font-size:0.6rem; color:var(--bike-orange);">Vélo</div></div>
+              <div><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i><div style="font-weight:bold; font-size:1rem;" id="home-tri-cou">0 km</div><div style="font-size:0.6rem; color:var(--run-green);">Course</div></div>
+              <div><i class="fa-solid fa-bolt" style="color:var(--hiit-pink)"></i><div style="font-weight:bold; font-size:1rem;" id="home-tri-hiit">0 min</div><div style="font-size:0.6rem; color:var(--hiit-pink);">HIIT</div></div>
+              <div><i class="fa-solid fa-fire" style="color:var(--heart-red)"></i><div style="font-weight:bold; font-size:1rem;" id="home-tri-calories">0 kcal</div><div style="font-size:0.6rem; color:var(--heart-red);">Calories</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="main-dashboard-box">
+          <div class="card-title-flex">
+            <h3 style="font-size: 0.95rem;"><i class="fa-solid fa-trophy" style="color: var(--xp-gold);"></i> Progression XP & Rangs</h3>
+            <button class="medal-tab" onclick="showPage('trophies')">Salle des trophées</button>
+          </div>
+          <div class="xp-level-card" style="margin-top: 10px; margin-bottom: 0;" onclick="showLevelStatsModal()">
+            <div class="level-badge" id="home-user-level-num">3</div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:0.75rem; margin-bottom:3px;">
+                <span style="color:var(--xp-gold)">Athlète (<span id="home-profile-name">Escarm</span>)</span>
+                <span id="home-user-xp-text" style="color:var(--text-sub)">320 / 500 XP</span>
+              </div>
+              <div class="progress-bar-bg" style="height:5px;">
+                <div class="progress-bar-fill" id="home-xp-bar-fill" style="width: 64%; background: var(--xp-gold);"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
+
+    <!-- FORMULAIRES DE SÉANCE DÉDIÉS -->
+    
+    <!-- NATATION -->
+    <main id="view-natation" class="app-page hidden">
+      <section class="calculator-panel">
+        <div class="card-title-flex" style="margin-bottom: 15px;">
+          <h3 style="font-size: 1.1rem; color: var(--swim-blue);"><i class="fa-solid fa-person-swimming"></i> Natation</h3>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="medal-tab active" onclick="openCalc('natation')">Natation</button>
+            <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
+            <button class="medal-tab" onclick="openCalc('course')">Course</button>
+            <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
+            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+          </div>
+        </div>
+        <div class="calc-grid-layout">
+          <div class="calc-inputs-grid">
+            <div class="form-group"><label>Distance (mètres)</label><input type="number" id="natation-dist" placeholder="ex: 1500"></div>
+            <div class="form-group"><label>Durée (Minutes)</label><input type="number" id="natation-time" placeholder="ex: 30"></div>
+            <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="natation-bpm" placeholder="ex: 140"></div>
+            <div class="form-group"><label><i class="fa-solid fa-water" style="color:var(--swim-blue)"></i> Plan d'eau</label>
+              <select id="natation-water"><option value="calme">Calme / Lisse</option><option value="agite">Agité / Clapot</option><option value="vagues">Vagues / Houle</option></select>
+            </div>
+            <div class="form-group"><label><i class="fa-solid fa-water" style="color:var(--swim-blue)"></i> Lieu</label>
+              <select id="natation-location"><option value="piscine">Piscine (25m/50m)</option><option value="eaulibre">Eau libre / Mer</option><option value="lac">Lac / Étang</option></select>
+            </div>
+            <div class="form-group"><label><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold)"></i> Météo</label>
+              <select id="natation-weather"><option value="soleil">☀️ Soleil / Idéal</option><option value="pluie">🌧️ Pluie / Humide</option><option value="vent">💨 Vent Fort</option></select>
+            </div>
+          </div>
+          <div class="form-group session-feedback-fields">
+              <label for="natation-feeling">Ressenti de la séance</label>
+              <select id="natation-feeling">
+                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
+              </select>
+              <label for="natation-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
+              <textarea id="natation-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
+            </div>
+            <div class="calc-action-box">
+            <div>
+              <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn-calc-orange" onclick="calculatePace('natation')">CALCULER LA PERFORMANCE & CHARGE</button>
+              <button class="btn-save-green" onclick="saveCurrentSession('natation')">+ ENREGISTRER LA SÉANCE</button>
+            </div>
+          </div>
+        </div>
+        <div id="calc-result-natation" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.5); border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.8rem; display: none;"></div>
+      </section>
+    </main>
+
+    <!-- VÉLO -->
+    <main id="view-velo" class="app-page hidden">
+      <section class="calculator-panel">
+        <div class="card-title-flex" style="margin-bottom: 15px;">
+          <h3 style="font-size: 1.1rem; color: var(--bike-orange);"><i class="fa-solid fa-person-biking"></i> Vélo</h3>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="medal-tab" onclick="openCalc('natation')">Natation</button>
+            <button class="medal-tab active" onclick="openCalc('velo')">Vélo</button>
+            <button class="medal-tab" onclick="openCalc('course')">Course</button>
+            <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
+            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+          </div>
+        </div>
+        <div class="calc-grid-layout">
+          <div class="calc-inputs-grid">
+            <div class="form-group"><label>Distance (km)</label><input type="number" id="velo-dist" placeholder="ex: 45"></div>
+            <div class="form-group"><label>Durée (Minutes)</label><input type="number" id="velo-time" placeholder="ex: 90"></div>
+            <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="velo-bpm" placeholder="ex: 150"></div>
+            <div class="form-group"><label><i class="fa-solid fa-bolt" style="color:var(--watts-purple)"></i> Puissance (Watts)</label><input type="number" id="velo-watts" placeholder="ex: 210"></div>
+            <div class="form-group"><label><i class="fa-solid fa-mountain" style="color:var(--text-sub)"></i> Dénivelé (D+ en m)</label><input type="number" id="velo-elev" placeholder="ex: 600"></div>
+            <div class="form-group"><label><i class="fa-solid fa-tree" style="color:var(--run-green)"></i> Lieu / Type de Terrain</label>
+              <select id="velo-terrain"><option value="route">Route / Asphalte</option><option value="foret">Forêt / Gravel / Bois</option><option value="montagne">Montagne / Col</option><option value="hometrainer">Home-Trainer / Virtuel</option></select>
+            </div>
+            <div class="form-group"><label><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold)"></i> Météo</label>
+              <select id="velo-weather"><option value="soleil">☀️ Soleil / Idéal</option><option value="vent">💨 Vent Fort</option><option value="pluie">🌧️ Pluie / Humide</option><option value="chaleur">🔥 Chaleur</option></select>
+            </div>
+          </div>
+          <div class="form-group session-feedback-fields">
+              <label for="velo-feeling">Ressenti de la séance</label>
+              <select id="velo-feeling">
+                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
+              </select>
+              <label for="velo-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
+              <textarea id="velo-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
+            </div>
+            <div class="calc-action-box">
+            <div>
+              <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn-calc-orange" onclick="calculatePace('velo')">CALCULER LA PERFORMANCE & CHARGE</button>
+              <button class="btn-save-green" onclick="saveCurrentSession('velo')">+ ENREGISTRER LA SÉANCE</button>
+            </div>
+          </div>
+        </div>
+        <div id="calc-result-velo" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.5); border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.8rem; display: none;"></div>
+      </section>
+    </main>
+
+    <!-- COURSE À PIED -->
+    <main id="view-course" class="app-page hidden">
+      <section class="calculator-panel">
+        <div class="card-title-flex" style="margin-bottom: 15px;">
+          <h3 style="font-size: 1.1rem; color: var(--run-green);"><i class="fa-solid fa-person-running"></i> Course à pied</h3>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="medal-tab" onclick="openCalc('natation')">Natation</button>
+            <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
+            <button class="medal-tab active" onclick="openCalc('course')">Course</button>
+            <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
+            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+          </div>
+        </div>
+        <div class="calc-grid-layout">
+          <div class="calc-inputs-grid">
+            <div class="form-group"><label>Distance (km)</label><input type="number" id="course-dist" placeholder="ex: 10"></div>
+            <div class="form-group"><label>Durée (Minutes)</label><input type="number" id="course-time" placeholder="ex: 50"></div>
+            <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="course-bpm" placeholder="ex: 155"></div>
+            <div class="form-group"><label><i class="fa-solid fa-shoe-prints" style="color:var(--run-green)"></i> Cadence (Pas/min)</label><input type="number" id="course-cadence" placeholder="ex: 172"></div>
+            <div class="form-group"><label><i class="fa-solid fa-mountain" style="color:var(--text-sub)"></i> Dénivelé (D+ en m)</label><input type="number" id="course-elev" placeholder="ex: 120"></div>
+            <div class="form-group"><label><i class="fa-solid fa-tree" style="color:var(--run-green)"></i> Lieu / Type de Terrain</label>
+              <select id="course-terrain"><option value="route">Route / Piste</option><option value="foret">Forêt / Sentier / Bois</option><option value="trail">Trail / Montagne</option><option value="tapis">Tapis de course</option></select>
+            </div>
+            <div class="form-group"><label><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold)"></i> Météo</label>
+              <select id="course-weather"><option value="soleil">☀️ Soleil / Idéal</option><option value="frais">❄️ Frais / Matin</option><option value="chaleur">🔥 Chaleur intense</option><option value="pluie">🌧️ Pluie / Humide</option></select>
+            </div>
+          </div>
+          <div class="form-group session-feedback-fields">
+              <label for="course-feeling">Ressenti de la séance</label>
+              <select id="course-feeling">
+                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
+              </select>
+              <label for="course-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
+              <textarea id="course-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
+            </div>
+            <div class="calc-action-box">
+            <div>
+              <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn-calc-orange" onclick="calculatePace('course')">CALCULER LA PERFORMANCE & CHARGE</button>
+              <button class="btn-save-green" onclick="saveCurrentSession('course')">+ ENREGISTRER LA SÉANCE</button>
+            </div>
+          </div>
+        </div>
+        <div id="calc-result-course" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.5); border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.8rem; display: none;"></div>
+      </section>
+    </main>
+
+    <!-- MARCHE -->
+    <main id="view-marche" class="app-page hidden">
+      <section class="calculator-panel">
+        <div class="card-title-flex" style="margin-bottom: 15px;">
+          <h3 style="font-size: 1.1rem; color: var(--walk-teal);"><i class="fa-solid fa-person-walking"></i> Marche</h3>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="medal-tab" onclick="openCalc('natation')">Natation</button>
+            <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
+            <button class="medal-tab" onclick="openCalc('course')">Course</button>
+            <button class="medal-tab active" onclick="openCalc('marche')">Marche</button>
+            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+          </div>
+        </div>
+        <div class="calc-grid-layout">
+          <div class="calc-inputs-grid">
+            <div class="form-group"><label>Distance (km)</label><input type="number" id="marche-dist" placeholder="ex: 8"></div>
+            <div class="form-group"><label>Durée (Minutes)</label><input type="number" id="marche-time" placeholder="ex: 120"></div>
+            <div class="form-group"><label><i class="fa-solid fa-mountain" style="color:var(--text-sub)"></i> Dénivelé (D+ en m)</label><input type="number" id="marche-elev" placeholder="ex: 350"></div>
+            <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="marche-bpm" placeholder="ex: 115"></div>
+            <div class="form-group"><label><i class="fa-solid fa-tree" style="color:var(--walk-teal)"></i> Type de Terrain / Lieu</label>
+              <select id="marche-terrain"><option value="sentier">Sentier / Rando / Forêt</option><option value="montagne">Montagne</option><option value="urbain">Urbain / Ville</option></select>
+            </div>
+            <div class="form-group"><label><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold)"></i> Météo</label>
+              <select id="marche-weather"><option value="soleil">☀️ Soleil / Idéal</option><option value="couvert">🌥️ Couvert</option><option value="pluie">🌧️ Pluie</option></select>
+            </div>
+          </div>
+          <div class="form-group session-feedback-fields">
+              <label for="marche-feeling">Ressenti de la séance</label>
+              <select id="marche-feeling">
+                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
+              </select>
+              <label for="marche-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
+              <textarea id="marche-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
+            </div>
+            <div class="calc-action-box">
+            <div>
+              <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn-calc-orange" onclick="calculatePace('marche')">CALCULER LA PERFORMANCE & CHARGE</button>
+              <button class="btn-save-green" onclick="saveCurrentSession('marche')">+ ENREGISTRER LA SÉANCE</button>
+            </div>
+          </div>
+        </div>
+        <div id="calc-result-marche" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.5); border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.8rem; display: none;"></div>
+      </section>
+    </main>
+
+    <!-- HIIT -->
+    <main id="view-hiit" class="app-page hidden">
+      <section class="calculator-panel">
+        <div class="card-title-flex" style="margin-bottom: 15px;">
+          <h3 style="font-size: 1.1rem; color: var(--hiit-pink);"><i class="fa-solid fa-bolt"></i> HIIT</h3>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="medal-tab" onclick="openCalc('natation')">Natation</button>
+            <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
+            <button class="medal-tab" onclick="openCalc('course')">Course</button>
+            <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
+            <button class="medal-tab active" onclick="openCalc('hiit')">HIIT</button>
+          </div>
+        </div>
+        <div class="calc-grid-layout">
+          <div class="calc-inputs-grid">
+            <div class="form-group"><label>Durée Totale (Minutes)</label><input type="number" id="hiit-time" placeholder="ex: 35"></div>
+            <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="hiit-bpm" placeholder="ex: 165"></div>
+            <div class="form-group"><label>Intensité perçue (RPE 1-10)</label><input type="number" id="hiit-rpe" placeholder="ex: 8" min="1" max="10"></div>
+          </div>
+          <div class="form-group session-feedback-fields">
+              <label for="hiit-feeling">Ressenti de la séance</label>
+              <select id="hiit-feeling">
+                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
+              </select>
+              <label for="hiit-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
+              <textarea id="hiit-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
+            </div>
+            <div class="calc-action-box">
+            <div>
+              <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn-calc-orange" onclick="calculatePace('hiit')">CALCULER LA PERFORMANCE & CHARGE</button>
+              <button class="btn-save-green" onclick="saveCurrentSession('hiit')">+ ENREGISTRER LA SÉANCE</button>
+            </div>
+          </div>
+        </div>
+        <div id="calc-result-hiit" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.5); border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.8rem; display: none;"></div>
+      </section>
+    </main>
+
+    <!-- ONGLETS : BILAN -->
+    <main id="view-stats" class="app-page hidden">
+      <section class="dashboard-layout">
+        <div class="main-dashboard-box">
+          <div class="card-title-flex">
+            <h2 style="font-size: 1.1rem;"><i class="fa-solid fa-chart-column" style="color: var(--bike-orange);"></i> BILAN & VOLUMES SPORTIFS</h2>
+          </div>
+
+          <div class="triathlon-summary-box">
+            <div class="triathlon-grid">
+              <div><i class="fa-solid fa-person-swimming" style="color:var(--swim-blue)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-nat">0 km</div><div style="font-size:0.65rem; color:var(--swim-blue);">Natation</div></div>
+              <div><i class="fa-solid fa-person-biking" style="color:var(--bike-orange)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-vel">0 km</div><div style="font-size:0.65rem; color:var(--bike-orange);">Vélo</div></div>
+              <div><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-cou">0 km</div><div style="font-size:0.65rem; color:var(--run-green);">Course</div></div>
+              <div><i class="fa-solid fa-bolt" style="color:var(--hiit-pink)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-hiit">0 min</div><div style="font-size:0.65rem; color:var(--hiit-pink);">HIIT</div></div>
+              <div><i class="fa-solid fa-fire" style="color:var(--heart-red)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-calories">0 kcal</div><div style="font-size:0.65rem; color:var(--heart-red);">Calories</div></div>
+            </div>
+          </div>
+
+          <div class="goals-box">
+            <div class="goals-header" style="font-weight:bold; font-size:0.85rem; margin-bottom:8px;"><span>Objectifs annuels par discipline</span></div>
+            <div class="goal-row"><span style="color:var(--swim-blue)">Natation</span><span id="goal-natation-text">0 / 15 km</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-natation-bar" style="width: 0%; background: var(--swim-blue);"></div></div>
+            <div class="goal-row"><span style="color:var(--bike-orange)">Vélo</span><span id="goal-velo-text">0 / 180 km</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-velo-bar" style="width: 0%; background: var(--bike-orange);"></div></div>
+            <div class="goal-row"><span style="color:var(--run-green)">Course à pied</span><span id="goal-course-text">0 / 40 km</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-course-bar" style="width: 0%; background: var(--run-green);"></div></div>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; margin: 15px 0;">
+            <canvas id="evolutionChart" style="max-height: 220px;"></canvas>
+          </div>
+
+          <div class="history-box">
+            <div class="card-title-flex">
+              <span style="font-size:0.82rem; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-clock-rotate-left"></i> Historique Sécurisé & Synchronisé</span>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <button class="medal-tab active" onclick="filterHistory('all', this)">Tous</button>
+                <button class="medal-tab" onclick="filterHistory('velo', this)">Vélo</button>
+                <button class="medal-tab" onclick="filterHistory('course', this)">Course</button>
+                <button class="medal-tab" onclick="filterHistory('hiit', this)">HIIT</button>
+              </div>
+            </div>
+            <div class="history-list" id="history-list-container"></div>
+          </div>
+        </div>
+
+        <div class="pro-side-banner">
+          <div>
+            <div class="pro-badge">PASS CLUB VIP</div>
+            <h2 style="font-size: 1.2rem; font-weight: 900; margin-bottom: 8px;">REPOUSSE TES LIMITES</h2>
+            <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 12px;">Débloquez les analyses avancées et le Coach IA illimité.</p>
+          </div>
+          <button class="btn-pro" onclick="openPricingModal()">DÉCOUVRIR LES OFFRES</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ONGLETS : TROPHÉES & RANGS -->
+    <main id="view-trophies" class="app-page hidden">
+      <section class="dashboard-layout">
+        <div class="main-dashboard-box">
+          <div class="card-title-flex">
+            <h2 style="font-size: 1.1rem;"><i class="fa-solid fa-trophy" style="color: var(--xp-gold);"></i> SALLE DES TROPHÉES & RANGS (SAISON CALENDAIRE 365J)</h2>
+          </div>
+
+          <div class="xp-level-card" onclick="showLevelStatsModal()" title="Voir les détails de progression XP">
+            <div class="level-badge" id="user-level-num">3</div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:0.8rem; margin-bottom:3px;">
+                <span id="user-title" style="color:var(--xp-gold)">Progression XP Globale (<span id="profile-name-span-2">Escarm</span>) 📈</span>
+                <span id="user-xp-text" style="color:var(--text-sub)">320 / 500 XP</span>
+              </div>
+              <div class="progress-bar-bg" style="height:6px;">
+                <div class="progress-bar-fill" id="xp-bar-fill" style="width: 64%; background: var(--xp-gold);"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="quests-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:0.8rem; font-weight:bold; color:var(--bike-orange);"><i class="fa-solid fa-flag-checkered"></i> Quête Flash du Weekend ⚡</span>
+              <span style="font-size:0.65rem; background:rgba(255,107,0,0.2); padding:2px 6px; border-radius:6px; color:#fff;">+150 XP Bonus</span>
+            </div>
+            <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Cumuler 30 km de Vélo ou 10 km de Course à pied avant dimanche soir.</p>
+            <div class="quest-item"><span>Progression Actuelle</span><span id="quest-progress-text" style="font-weight:bold; color:var(--text-main);">0 / 40 km</span></div>
+            <div class="progress-bar-bg" style="margin-top:4px;"><div class="progress-bar-fill" id="quest-bar" style="width:0%; background:var(--run-green);"></div></div>
+          </div>
+
+          <div class="trophies-section">
+            <h3 style="font-size:0.85rem; font-weight:bold; color:var(--text-main); margin-bottom:8px;"><i class="fa-solid fa-ranking-star" style="color:var(--tier-diamond)"></i> Rangs Officiels par Discipline</h3>
+            <div class="ranks-grid" id="ranks-grid-container"></div>
+          </div>
+
+          <div class="trophies-section" style="margin-top:15px;">
+            <h3 style="font-size:0.85rem; font-weight:bold; color:var(--text-main); margin-bottom:8px;"><i class="fa-solid fa-medal" style="color:var(--xp-gold)"></i> Les 4 Grands Trophées Emblématiques</h3>
+            <div class="trophies-grid" id="trophies-grid-container"></div>
+          </div>
+        </div>
+
+        <div class="pro-side-banner">
+          <div>
+            <div class="pro-badge">HALL OF FAME</div>
+            <h2 style="font-size: 1.1rem; font-weight: 900; margin-bottom: 8px;">SAISONS PASSÉES</h2>
+            <p style="font-size: 0.78rem; color: var(--text-sub); margin-bottom: 12px;">Conserve tes archives des saisons 2024 et 2025 en toute sécurité.</p>
+          </div>
+          <button class="btn-pro" onclick="alert('Archives Saison 2025 : Diamant en Vélo validé !')">VOIR LES ARCHIVES</button>
+        </div>
+      </section>
+    </main>
+
   </div>
 
-  <!-- MODALE D'AUTHENTIFICATION SUPABASE -->
-  <div class="modal-overlay" id="auth-modal">
-    <div class="modal-content">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-        <h3 style="color:var(--text-main); font-size:1rem;"><i class="fa-solid fa-user-shield" style="color:var(--bike-orange)"></i> Espace Authentification</h3>
-        <button onclick="closeAuthModal()" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
-      </div>
 
-      <div class="form-group">
-        <label>Adresse E-mail</label>
-        <input type="email" id="auth-email" placeholder="votre.email@exemple.com">
+  <!-- OFFRES : présentation commerciale, sans paiement activé à ce stade -->
+  <div class="modal-overlay" id="pricing-modal" role="dialog" aria-modal="true" aria-labelledby="pricing-title">
+    <div class="modal-content" style="max-width:760px;">
+      <div class="card-title-flex"><h3 id="pricing-title" style="color:var(--text-main);font-size:1rem;">Les offres À LA DOPAMINE</h3><button onclick="closePricingModal()" aria-label="Fermer les offres" style="background:none;border:0;color:var(--text-main);font-size:1.3rem;cursor:pointer;">&times;</button></div>
+      <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:12px;">Tarifs de lancement envisagés. Les paiements et abonnements ne sont pas encore activés sur cette version.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+        <article style="border:1px solid var(--run-green);border-radius:12px;padding:14px;">
+          <div style="font-size:.72rem;color:var(--run-green);font-weight:bold;">AUTONOME</div><h4 style="margin:6px 0;">Pass Dopamine IA</h4><p style="font-size:1.45rem;font-weight:900;margin:4px 0;">5,95 € <small style="font-size:.72rem;font-weight:normal;">/ mois</small></p><p style="font-size:.85rem;font-weight:bold;">ou 50 € / an</p><ul style="font-size:.75rem;line-height:1.6;padding-left:18px;"><li>Suivi des séances et historique</li><li>Agenda sportif et objectifs</li><li>XP, niveaux et trophées</li><li>Outils d'analyse et conseils automatisés, selon les fonctionnalités effectivement disponibles</li></ul>
+        </article>
+        <article style="border:1px solid var(--bike-orange);border-radius:12px;padding:14px;">
+          <div style="font-size:.72rem;color:var(--bike-orange);font-weight:bold;">ACCOMPAGNEMENT</div><h4 style="margin:6px 0;">Conseil & planification — Essentiel</h4><p style="font-size:1.45rem;font-weight:900;margin:4px 0;">59 € <small style="font-size:.72rem;font-weight:normal;">/ mois</small></p><ul style="font-size:.75rem;line-height:1.6;padding-left:18px;"><li>Planification personnalisée selon les objectifs et disponibilités</li><li>Analyse des données et des ressentis saisis</li><li>Accompagnement motivationnel avec modalités et fréquence de retour à définir</li></ul>
+          <hr style="border-color:var(--border-color,rgba(255,255,255,.15));margin:12px 0;">
+          <h4 style="margin:6px 0;">Premium Endurance</h4><p style="font-size:1.35rem;font-weight:900;margin:4px 0;">99 € <small style="font-size:.72rem;font-weight:normal;">/ mois</small></p><p style="font-size:.75rem;line-height:1.5;">Pour objectifs longue distance (triathlon M/L, Ironman) : analyse plus approfondie, stratégie de préparation et échanges renforcés. Le périmètre exact reste à définir avant commercialisation.</p>
+        </article>
       </div>
-      <div class="form-group">
-        <label>Mot de passe</label>
-        <input type="password" id="auth-password" placeholder="••••••••">
-      </div>
-
-      <button class="btn-primary" onclick="handleSignIn()">Se Connecter</button>
-      <button class="btn-secondary" onclick="handleSignUp()">Créer un compte</button>
+      <p style="font-size:.72rem;color:var(--text-sub);line-height:1.5;margin-top:12px;">Information importante : la formule d'accompagnement est présentée comme du conseil en planification, de l'analyse de données et de l'accompagnement motivationnel. Cette formulation ne suffit pas, à elle seule, à garantir la conformité juridique. Avant toute vente, vérifier le périmètre réel du service, les qualifications éventuellement requises, l'assurance, les CGV, les mentions légales et la protection des données.</p>
+      <button class="btn-calc-orange" onclick="closePricingModal()" style="margin-top:12px;">Fermer</button>
     </div>
   </div>
 
-  <script>
-    // Config Supabase (Clés à configurer lors de l'étape Supabase)
-    const SUPABASE_URL = 'https://votre-projet.supabase.co';
-    const SUPABASE_ANON_KEY = 'votre-cle-anon';
-    let supabase = null;
-
-    if (window.supabase) {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-
-    function openAuthModal() { document.getElementById('auth-modal').style.display = 'flex'; }
-    function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
-    function showPage(pageId) {
-      document.querySelectorAll('.app-page').forEach(page => page.classList.add('hidden'));
-      document.getElementById(`view-${pageId}`)?.classList.remove('hidden');
-    }
-
-    async function handleSignUp() {
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
-      if (!email || !password) return alert("Veuillez remplir les deux champs.");
+  <!-- MODALE SYNCHRONISATION & PASSERELLES (PRÉ-DÉFINI POUR INTERNET) -->
+  <div class="modal-overlay" id="sync-devices-modal">
+    <div class="modal-content">
+      <div class="card-title-flex" style="margin-bottom: 12px;">
+        <h3 style="color:var(--text-main); font-size:0.95rem;"><i class="fa-solid fa-link" style="color:var(--bike-orange)"></i> Passerelles & Connexions GPS</h3>
+        <button onclick="closeSyncModal()" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:12px; line-height:1.4;">
+        État actuel : aucune plateforme n’est réellement connectée. Une vraie synchronisation nécessite un serveur HTTPS, une application développeur approuvée par chaque fournisseur et une authentification sécurisée. Aucun faux entraînement ne sera créé par ces boutons.
+      </p>
       
-      alert("Demande d'inscription enregistrée pour " + email);
-      closeAuthModal();
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.78rem; margin-bottom: 15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">
+          <span>🟠 <b>Strava API v3</b></span>
+          <button class="medal-tab active" style="font-size:0.65rem; padding:3px 10px;" onclick="beginPlatformConnection('Strava')">Préparer</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">
+          <span>🔵 <b>Garmin Connect API</b></span>
+          <button class="medal-tab" style="font-size:0.65rem; padding:3px 10px;" onclick="beginPlatformConnection('Garmin')">Préparer</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">
+          <span>🟣 <b>Zwift Virtual Hub</b></span>
+          <button class="medal-tab" style="font-size:0.65rem; padding:3px 10px;" onclick="beginPlatformConnection('Zwift')">Préparer</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">
+          <span>🔴 <b>Polar Flow SDK</b></span>
+          <button class="medal-tab" style="font-size:0.65rem; padding:3px 10px;" onclick="beginPlatformConnection('Polar')">Préparer</button>
+        </div>
+      </div>
+
+      <button class="btn-calc-orange" onclick="closeSyncModal()">Fermer</button>
+    </div>
+  </div>
+
+  <!-- MODALE PLANIFICATION SUR 365 JOURS (SÉANCE OU COMPÉTITION EN ROUGE) -->
+  <div class="modal-overlay" id="plan-session-modal">
+    <div class="modal-content">
+      <div class="card-title-flex" style="margin-bottom: 12px;">
+        <h3 style="color:var(--text-main); font-size:0.95rem;"><i class="fa-solid fa-calendar-plus" style="color:var(--bike-orange)"></i> Planifier sur l'Agenda 365j</h3>
+        <button onclick="closePlanModal()" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="form-group"><label>Titre de l'événement</label><input type="text" id="plan-title" placeholder="ex: Triathlon M de Deauville / Sortie Seuil"></div>
+      <div class="form-group"><label>Date</label><input type="date" id="plan-date"></div>
+      <div class="form-group"><label>Heure</label><input type="time" id="plan-time" value="08:00"></div>
+      <div class="form-group"><label>Discipline / Format</label>
+        <select id="plan-sport">
+          <option value="natation">🏊 Natation (Bleu)</option>
+          <option value="velo">🚴 Vélo (Orange)</option>
+          <option value="course">🏃 Course à pied (Vert)</option>
+          <option value="marche">🚶 Marche (Turquoise)</option>
+          <option value="hiit">⚡ HIIT (Rose)</option>
+          <option value="triathlon">🏆 Triathlon (Épreuve Rouge)</option>
+          <option value="duathlon">🏅 Duathlon (Épreuve Rouge)</option>
+          <option value="trail">⛰️ Trail / Course (Épreuve Rouge)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Type d'événement</label>
+        <select id="plan-type">
+          <option value="entrainement">Entraînement classique</option>
+          <option value="competition">🔴 Compétition / Épreuve Majeure (Rouge)</option>
+        </select>
+      </div>
+      <button class="btn-calc-orange" style="margin-top:10px;" onclick="savePlannedSession()">Ajouter à l'Agenda</button>
+    </div>
+  </div>
+
+  <!-- MODALE GÉNÉRATEUR DE PLAN D’ENTRAÎNEMENT -->
+  <div class="modal-overlay" id="training-plan-modal">
+    <div class="modal-content" style="max-height:90vh; overflow:auto;">
+      <div class="card-title-flex" style="margin-bottom:12px;">
+        <h3 style="color:var(--text-main);font-size:0.95rem;"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--run-green)"></i> Générateur de plan progressif</h3>
+        <button onclick="closeTrainingPlanModal()" style="background:none;border:none;color:var(--text-main);font-size:1.3rem;cursor:pointer;">&times;</button>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-sub);line-height:1.5;margin-bottom:12px;">Le générateur crée des séances détaillées dans ton agenda. C’est une base générale, pas un diagnostic médical ni un remplacement d’un coach.</p>
+      <div class="form-group"><label>Objectif</label><select id="training-goal"><option value="5k">Course à pied — 5 km</option><option value="10k" selected>Course à pied — 10 km</option><option value="semi">Course à pied — semi-marathon</option><option value="marathon">Course à pied — marathon</option><option value="velo">Vélo — endurance</option><option value="forme">Forme générale multisport</option></select></div>
+      <div class="form-group"><label>Niveau actuel</label><select id="training-level"><option value="debutant">Débutant / reprise</option><option value="intermediaire" selected>Intermédiaire — déjà régulier</option><option value="confirme">Confirmé — entraînement structuré</option></select></div>
+      <div class="form-group"><label>Nombre de séances par semaine</label><select id="training-days"><option value="2">2 séances</option><option value="3" selected>3 séances</option><option value="4">4 séances</option><option value="5">5 séances</option></select></div>
+      <div class="form-group"><label>Durée du plan</label><select id="training-weeks"><option value="4">4 semaines</option><option value="6">6 semaines</option><option value="8" selected>8 semaines</option><option value="10">10 semaines</option><option value="12">12 semaines</option></select></div>
+      <div class="form-group"><label>Date de début</label><input type="date" id="training-start-date"></div>
+      <div class="form-group"><label>Jour de départ de la semaine</label><select id="training-start-day"><option value="1" selected>Lundi</option><option value="0">Dimanche</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option></select></div>
+      <button class="btn-calc-orange" style="margin-top:10px;" onclick="generateTrainingPlan()"><i class="fa-solid fa-calendar-check"></i> Générer et ajouter à l’agenda</button>
+      <button class="btn-action" style="width:100%;margin-top:8px;" onclick="closeTrainingPlanModal()">Annuler</button>
+      <p style="font-size:0.68rem;color:var(--text-sub);margin-top:10px;">Le plan sera ajouté à tes événements existants, sans les effacer. Tu pourras ensuite modifier les séances depuis l’agenda.</p>
+    </div>
+  </div>
+
+  <!-- MODALE PROFIL -->
+  <div class="modal-overlay" id="user-profile-modal">
+    <div class="modal-content">
+      <div class="card-title-flex" style="margin-bottom: 12px;">
+        <h3 style="color:var(--text-main); font-size:0.95rem;"><i class="fa-solid fa-user-gear" style="color:var(--bike-orange)"></i> Profil Athlète & Sauvegarde</h3>
+        <button onclick="toggleProfileModal(false)" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="form-group"><label>Nom / Pseudo</label><input type="text" id="user-profile-name" value="Escarm"></div>
+      <div class="form-group"><label>Âge (ans)</label><input type="number" id="user-profile-age" value="35"></div>
+      <div class="form-group"><label>Poids (kg)</label><input type="number" id="user-profile-weight" value="70"></div>
+      
+      <hr style="border: 0.5px solid var(--card-border); margin: 10px 0;">
+      <h4 style="font-size:0.8rem; color:var(--bike-orange); margin-bottom:8px;"><i class="fa-solid fa-heart-pulse"></i> FC Max Spécifiques (BPM)</h4>
+      <div class="form-group"><label>🏃 FC Max Course</label><input type="number" id="user-profile-fcmax-course" value="185"></div>
+      <div class="form-group"><label>🚴 FC Max Vélo</label><input type="number" id="user-profile-fcmax-velo" value="180"></div>
+      <div class="form-group"><label>🏊 FC Max Natation</label><input type="number" id="user-profile-fcmax-natation" value="172"></div>
+
+      <button class="btn-calc-orange" style="margin-top:8px;" onclick="saveUserProfile()">Sauvegarder le profil</button>
+
+      <hr style="border: 0.5px solid var(--card-border); margin: 12px 0;">
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-action" style="background: rgba(168, 85, 247, 0.2); border: 1px solid var(--watts-purple); font-size:0.7rem;" onclick="exportDataJSON()"><i class="fa-solid fa-download"></i> Exporter JSON</button>
+        <button class="btn-action" style="background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); font-size:0.7rem;" onclick="document.getElementById('import-json-input').click()"><i class="fa-solid fa-upload"></i> Importer JSON</button>
+        <input type="file" id="import-json-input" accept=".json" style="display:none;" onchange="importDataJSON(event)">
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container footer-content">
+      <div class="nav-brand" style="font-size: 0.95rem;">À LA <span>DOPAMINE</span></div>
+      <ul class="footer-links">
+        <li><a href="#" onclick="alert('Mentions légales')">Mentions légales</a></li>
+        <li><a href="#" onclick="alert('Contact')">Contact</a></li>
+      </ul>
+      <div style="color:var(--text-sub); font-style:italic; font-size:0.75rem;">Ensemble, allons plus loin...</div>
+    </div>
+  </footer>
+
+  <script>
+    let calendarMode = 'week'; // semaine, mois ou année
+    let calendarDisplayDate = new Date();
+    let calendarSelectedDate = localDateISO(new Date());
+    let historyFilter = 'all';
+    let chartInstance = null;
+
+    let appData = {
+      user: { name: 'Escarm', age: 35, weight: 70, fcmaxCourse: 185, fcmaxVelo: 180, fcmaxNatation: 172 },
+      xp: 320, level: 3,
+      stats: { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, calories: 0 },
+      goals: { natation: 15, velo: 180, course: 40 },
+      trophies: [
+        { id: 'velo_100', title: 'Rouleur d’Acier', desc: 'Atteindre 100 km à vélo', unlocked: false, tier: 'Or', icon: 'fa-person-biking' },
+        { id: 'course_30', title: 'Sprinteur Fondu', desc: 'Atteindre 30 km en course à pied', unlocked: false, tier: 'Argent', icon: 'fa-person-running' },
+        { id: 'tri_master', title: 'Triathlète Complet', desc: 'Valider Natation, Vélo et Course à pied', unlocked: false, tier: 'Platine', icon: 'fa-medal' },
+        { id: 'hiit_king', title: 'Explosivité Pure', desc: 'Valider 150 min de HIIT', unlocked: false, tier: 'Bronze', icon: 'fa-bolt' }
+      ],
+      sessionsHistory: [],
+      integrations: { Strava: 'non_configuree', Garmin: 'non_configuree', Polar: 'non_configuree', Zwift: 'non_configuree' },
+      plannedSessions: [
+        { id: 1, title: 'Triathlon M Objectif', date: '2026-06-15', time: '09:00', sport: 'triathlon', type: 'competition' },
+        { id: 2, title: 'Sortie Seuil Vélo', date: new Date().toISOString().split('T')[0], time: '18:00', sport: 'velo', type: 'entrainement' }
+      ]
+    };
+
+    function playDopamineSound(type = 'success') {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (type === 'success') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+          gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.3);
+        } else {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.1);
+        }
+      } catch (e) {}
     }
 
-    async function handleSignIn() {
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
-      if (!email || !password) return alert("Veuillez remplir les deux champs.");
-
-      alert("Connexion réussie pour " + email);
-      document.getElementById('header-user-name').innerText = email.split('@')[0];
-      closeAuthModal();
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      playDopamineSound('click');
     }
+
+    function toggleActivityMenu() {
+      const menu = document.getElementById('activity-submenu');
+      const trigger = document.getElementById('nav-activities');
+      if (!menu || !trigger) return;
+      const isOpen = menu.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', String(isOpen));
+    }
+
+    function closeActivityMenu() {
+      const menu = document.getElementById('activity-submenu');
+      const trigger = document.getElementById('nav-activities');
+      if (menu) menu.classList.remove('open');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function showPage(pageId) {
+      closeActivityMenu();
+      document.querySelectorAll('.app-page').forEach(page => page.classList.add('hidden'));
+      const target = document.getElementById(`view-${pageId}`);
+      if (target) {
+        target.classList.remove('hidden');
+      }
+      
+      document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
+      
+      let navId = pageId;
+      if (['natation', 'velo', 'course', 'marche', 'hiit'].includes(pageId)) {
+        navId = pageId;
+      }
+      const activeNav = document.getElementById(`nav-${navId}`);
+      if (activeNav) activeNav.classList.add('active');
+
+      if (pageId === 'home') {
+        updateAICoachAdvice();
+        renderHomeCalendar();
+      }
+      if (pageId === 'stats') {
+        renderChart();
+        renderHistory();
+      }
+      if (pageId === 'trophies') {
+        renderTrophiesAndRanks();
+      }
+      playDopamineSound('click');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openCalc(sport) {
+      closeActivityMenu();
+      showPage(sport);
+    }
+
+    function openSyncModal() {
+      document.getElementById('sync-devices-modal').style.display = 'flex';
+      playDopamineSound('click');
+    }
+
+    function closeSyncModal() {
+      document.getElementById('sync-devices-modal').style.display = 'none';
+    }
+
+    function simulateApiSync(platform) {
+      closeSyncModal();
+      syncExternalApps(platform);
+    }
+
+    function updateAICoachAdvice() {
+      const coachEl = document.getElementById('ai-coach-text');
+      if (!coachEl) return;
+
+      const totalKm = (appData.stats.natation || 0) + (appData.stats.velo || 0) + (appData.stats.course || 0);
+      const competitions = (appData.plannedSessions || []).filter(s => s.type === 'competition');
+      let advice = "";
+
+      if (competitions.length > 0) {
+        competitions.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const nextRace = competitions[0];
+        const diffDays = Math.ceil((new Date(nextRace.date) - new Date()) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0 && diffDays <= 14) {
+          coachEl.innerHTML = `🎯 <b>Affûtage actif (IA & Fraîcheur) !</b> Prochaine épreuve "${nextRace.title}" dans <b>${diffDays} jours</b>. Réduis de 30% tes volumes, soigne ton sommeil et garde du punch sur des blocs courts !`;
+          return;
+        }
+      }
+
+      if (totalKm === 0 && appData.stats.hiit === 0) {
+        advice = `👋 Salut ${appData.user.name} ! Ton compteur est à zéro. L'IA te suggère de lancer une sortie vélo ou un run pour enclencher ta dynamique de progression.`;
+      } else if (appData.stats.velo >= 80) {
+        advice = `🚴 <b>Analyse de charge :</b> Solide volume vélo (${appData.stats.velo} km) ! L'IA te conseille d'intercaler une séance de natation (bleu) ou de marche (turquoise) pour détoxifier les jambes.`;
+      } else if (appData.stats.course >= 25) {
+        advice = `🏃 <b>Analyse de charge :</b> Excellente cadence en course à pied (${appData.stats.course} km). Fais attention aux impacts et prévois une bonne récup.`;
+      } else {
+        advice = `⚡ Bonne dynamique générale ${appData.user.name} ! Volume total : <b>${totalKm.toFixed(1)} km</b>. Ton indice de fraîcheur est optimal, continue d'engranger de l'XP !`;
+      }
+
+      coachEl.innerHTML = advice;
+    }
+
+    function openTrainingPlanModal() {
+      const modal = document.getElementById('training-plan-modal');
+      const startInput = document.getElementById('training-start-date');
+      if (startInput) startInput.value = localDateISO(new Date());
+      if (modal) modal.style.display = 'flex';
+      playDopamineSound('click');
+    }
+
+    function closeTrainingPlanModal() {
+      const modal = document.getElementById('training-plan-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function isValidLocalDateISO(value) {
+      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const [year, month, day] = value.split('-').map(Number);
+      const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+      return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    }
+
+    function isValidLocalTime(value) {
+      if (typeof value !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) return false;
+      return true;
+    }
+
+    function localDateISO(date) {
+      const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function addDaysISO(dateISO, days) {
+      const d = new Date(`${dateISO}T12:00:00`);
+      d.setDate(d.getDate() + days);
+      return localDateISO(d);
+    }
+
+    function buildTrainingWorkout(goal, level, week, slot, slots, recoveryWeek, taperWeek) {
+      const easy = level === 'debutant' ? 'Facile, respiration maîtrisée (RPE 3–4/10)' : 'Endurance facile, conversation possible (RPE 3–4/10)';
+      const quality = level === 'debutant' ? 'Allure soutenue mais contrôlée (RPE 5–6/10), sans sprint' : 'Effort contrôlé (RPE 6–7/10), récupérations complètes';
+      const longBase = goal === 'semi' ? 60 : goal === 'marathon' ? 75 : goal === '10k' ? 45 : goal === '5k' ? 35 : 60;
+      const scale = level === 'debutant' ? 0.75 : level === 'confirme' ? 1.25 : 1;
+      let duration = Math.round((25 + slot * 10 + Math.max(0, week - 1) * 4) * scale);
+      if (goal === 'semi' || goal === 'marathon') duration += 10;
+      if (recoveryWeek) duration = Math.round(duration * 0.75);
+      if (taperWeek) duration = Math.round(duration * 0.65);
+      duration = Math.max(20, Math.min(duration, goal === 'marathon' ? 180 : 120));
+
+      if (goal === 'forme') {
+        const types = [
+          { sport: 'course', title: 'Endurance facile', detail: `Échauffement 8 min, ${duration - 16} min faciles (${easy}), retour au calme 8 min.` },
+          { sport: 'velo', title: 'Vélo en endurance', detail: `${duration} min en aisance respiratoire, cadence naturelle, sans forcer.` },
+          { sport: 'marche', title: 'Marche active / récupération', detail: `${duration} min à allure dynamique mais confortable.` },
+          { sport: 'hiit', title: 'Renforcement général adapté', detail: `${Math.min(30, duration)} min : mobilité et mouvements contrôlés, pauses fréquentes, pas de douleur.` },
+          { sport: 'natation', title: 'Natation technique facile', detail: `${duration} min faciles, priorité à la technique et aux pauses.` }
+        ];
+        return types[slot % types.length];
+      }
+      if (goal === 'velo') {
+        const isQuality = slot === 1 && slots >= 3 && !recoveryWeek && !taperWeek;
+        return isQuality
+          ? { sport: 'velo', title: 'Vélo — intervalles maîtrisés', detail: `10 min faciles, ${recoveryWeek ? '4 × 2 min' : '4 × 4 min'} à effort soutenu (RPE 6/10), récupération facile égale, 10 min retour au calme. Total env. ${duration} min.` }
+          : { sport: 'velo', title: slot === slots - 1 ? 'Vélo — sortie endurance longue' : 'Vélo — endurance fondamentale', detail: `${duration} min en endurance confortable (RPE 3–4/10). En semaine allégée, réduire encore si fatigue.` };
+      }
+      if (slot === 0 || slots === 2) {
+        return { sport: 'course', title: 'Course — endurance facile', detail: `8–10 min d’échauffement, ${Math.max(10, duration - 16)} min faciles (${easy}), 5–8 min de retour au calme. Marche autorisée si nécessaire.` };
+      }
+      if (slot === slots - 1 && (goal === 'semi' || goal === 'marathon' || goal === '10k')) {
+        return { sport: 'course', title: 'Sortie longue progressive', detail: `${duration} min faciles (${easy}), parcours simple et allure régulière. Ne pas accélérer en fin de sortie si la fatigue monte.` };
+      }
+      if (slot === 1 && !recoveryWeek && !taperWeek) {
+        const reps = goal === '5k' ? '6 × 1 min soutenue / 2 min facile' : goal === '10k' ? '5 × 3 min soutenue / 2 min facile' : '4 × 4 min soutenue / 3 min facile';
+        return { sport: 'course', title: 'Course — fractionné contrôlé', detail: `15 min d’échauffement, ${reps} (${quality}), puis 10 min faciles. Si tu reprends ou si une douleur apparaît, remplace par endurance facile.` };
+      }
+      return { sport: 'course', title: 'Course — endurance et éducatifs', detail: `10 min faciles, ${Math.max(10, duration - 20)} min faciles (${easy}), puis 4 accélérations relâchées de 15 s uniquement si tu es habitué, 5 min retour au calme.` };
+    }
+
+    function generateTrainingPlan() {
+      const goal = document.getElementById('training-goal').value;
+      const level = document.getElementById('training-level').value;
+      const sessionsPerWeek = Number(document.getElementById('training-days').value);
+      const weeks = Number(document.getElementById('training-weeks').value);
+      const startDate = document.getElementById('training-start-date').value;
+      const startDay = Number(document.getElementById('training-start-day').value);
+      if (!isValidLocalDateISO(startDate)) {
+        alert('Choisis une date de début valide.'); return;
+      }
+      if (![2,3,4,5].includes(sessionsPerWeek) || ![4,6,8,10,12].includes(weeks)) {
+        alert('Les paramètres du plan sont invalides.'); return;
+      }
+      const start = new Date(`${startDate}T12:00:00`);
+      const offset = (startDay - start.getDay() + 7) % 7;
+      start.setDate(start.getDate() + offset);
+      const firstDate = localDateISO(start);
+      const labels = { '5k':'5 km', '10k':'10 km', semi:'semi-marathon', marathon:'marathon', velo:'endurance vélo', forme:'forme générale' };
+      const newSessions = [];
+      const mondayBasedOffsets = sessionsPerWeek === 2 ? [1,4] : sessionsPerWeek === 3 ? [1,3,6] : sessionsPerWeek === 4 ? [1,3,5,6] : [0,1,3,5,6];
+      const weekdayOffsets = mondayBasedOffsets.map(day => { const desiredJsDay = day === 6 ? 0 : day + 1; return (desiredJsDay - startDay + 7) % 7; }).sort((a, b) => a - b);
+      for (let week = 1; week <= weeks; week++) {
+        const recoveryWeek = week % 4 === 0 && week !== weeks;
+        const taperWeek = week === weeks && weeks >= 6;
+        for (let slot = 0; slot < sessionsPerWeek; slot++) {
+          const workout = buildTrainingWorkout(goal, level, week, slot, sessionsPerWeek, recoveryWeek, taperWeek);
+          const date = addDaysISO(firstDate, (week - 1) * 7 + weekdayOffsets[slot]);
+          const weekLabel = recoveryWeek ? ' — semaine allégée' : taperWeek ? ' — affûtage' : '';
+          newSessions.push({
+            id: Date.now() + newSessions.length,
+            title: `S${week} · ${workout.title}${weekLabel}`,
+            date, time: slot === 0 ? '18:00' : slot === sessionsPerWeek - 1 ? '09:00' : '18:30',
+            sport: workout.sport, type: 'entrainement', planGenerated: true,
+            planGoal: labels[goal], planWeek: week, planLevel: level,
+            description: workout.detail, durationMinutes: Number((workout.detail.match(/(\d+) min/) || [])[1]) || null
+          });
+        }
+      }
+      if (!Array.isArray(appData.plannedSessions)) appData.plannedSessions = [];
+      const existingGenerated = appData.plannedSessions.filter(s => s && s.planGenerated && s.planGoal === labels[goal] && s.date >= firstDate && s.date <= addDaysISO(firstDate, weeks * 7));
+      if (existingGenerated.length && !confirm(`Il existe déjà ${existingGenerated.length} séance(s) générée(s) pour cet objectif sur cette période. Ajouter quand même un nouveau plan ?`)) return;
+      appData.plannedSessions.push(...newSessions);
+      saveAppData();
+      closeTrainingPlanModal();
+      renderHomeCalendar();
+      updateRaceCountdown();
+      updateAICoachAdvice();
+      alert(`Plan créé : ${newSessions.length} séances sur ${weeks} semaines pour l’objectif ${labels[goal]}. Les événements existants ont été conservés.
+
+Progression prévue avec semaines allégées et affûtage lorsque la durée le permet. Vérifie que la charge correspond à ton niveau actuel avant de commencer.`);
+      showPage('home');
+    }
+
+    function openPlanModal() {
+      document.getElementById('plan-session-modal').style.display = 'flex';
+      document.getElementById('plan-date').value = new Date().toISOString().split('T')[0];
+      playDopamineSound('click');
+    }
+
+    function closePlanModal() {
+      document.getElementById('plan-session-modal').style.display = 'none';
+    }
+
+    function savePlannedSession() {
+      const title = document.getElementById('plan-title').value.trim() || 'Séance Planifiée';
+      const date = document.getElementById('plan-date').value;
+      const time = document.getElementById('plan-time').value || '08:00';
+      const sport = document.getElementById('plan-sport').value;
+      const type = document.getElementById('plan-type').value;
+      const validDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(date) && !Number.isNaN(new Date(`${date}T12:00:00`).getTime());
+      const validTime = /^([01]\\d|2[0-3]):[0-5]\\d$/.test(time);
+      const validSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'triathlon', 'duathlon', 'trail'];
+      const validTypes = ['competition', 'entrainement'];
+
+      if (!validDate) { alert("Veuillez choisir une date valide."); return; }
+      if (!validTime) { alert("Veuillez choisir une heure valide."); return; }
+      if (!validSports.includes(sport) || !validTypes.includes(type)) {
+        alert("Le sport ou le type d'événement sélectionné est invalide."); return;
+      }
+
+      if (!Array.isArray(appData.plannedSessions)) appData.plannedSessions = [];
+      appData.plannedSessions.push({ id: Date.now(), title, date, time, sport, type });
+      saveAppData();
+      closePlanModal();
+      renderHomeCalendar();
+      updateRaceCountdown();
+      updateAICoachAdvice();
+      playDopamineSound('success');
+      alert("Événement ajouté à l'agenda 365j avec succès !");
+    }
+
+    let raceCountdownInterval = null;
+
+    function updateRaceCountdown() {
+      const banner = document.getElementById('race-banner-container');
+      const titleEl = document.getElementById('next-race-title');
+      const timerEl = document.getElementById('race-countdown-timer');
+      if (raceCountdownInterval) {
+        clearInterval(raceCountdownInterval);
+        raceCountdownInterval = null;
+      }
+
+      const now = new Date();
+      const nowMs = now.getTime();
+      const competitions = (Array.isArray(appData.plannedSessions) ? appData.plannedSessions : [])
+        .filter(s => s && s.type === 'competition' &&
+          isValidLocalDateISO(s.date) &&
+          isValidLocalTime(s.time || '08:00'))
+        .map(s => ({ ...s, raceTime: new Date(`${s.date}T${s.time || '08:00'}:00`).getTime() }))
+        .filter(s => s.raceTime >= nowMs)
+        .sort((a, b) => a.raceTime - b.raceTime);
+
+      if (competitions.length === 0) {
+        if (banner) banner.style.display = 'none';
+        if (timerEl) timerEl.textContent = 'Aucune compétition à venir';
+        return;
+      }
+
+      const nextRace = competitions[0];
+      if (banner) banner.style.display = 'flex';
+      if (titleEl) titleEl.textContent = `${nextRace.title || 'Compétition'} (${nextRace.date})`;
+
+      const updateTimer = () => {
+        const diff = nextRace.raceTime - Date.now();
+        if (diff <= 0) {
+          if (timerEl) timerEl.innerHTML = '<span style="color:var(--race-red)">C’est le Grand Jour ! Bonne chance 🚀</span>';
+          clearInterval(raceCountdownInterval);
+          raceCountdownInterval = null;
+          return;
+        }
+
+        const days = Math.floor(diff / 86400000);
+        const hours = Math.floor((diff % 86400000) / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        const dEl = document.getElementById('cd-days');
+        const hEl = document.getElementById('cd-hours');
+        const mEl = document.getElementById('cd-mins');
+        const sEl = document.getElementById('cd-secs');
+        if (dEl) dEl.textContent = String(days).padStart(2, '0');
+        if (hEl) hEl.textContent = String(hours).padStart(2, '0');
+        if (mEl) mEl.textContent = String(mins).padStart(2, '0');
+        if (sEl) sEl.textContent = String(secs).padStart(2, '0');
+      };
+
+      updateTimer();
+      if (nextRace.raceTime > Date.now()) raceCountdownInterval = setInterval(updateTimer, 1000);
+    }
+
+    function toggleProfileModal(show) {
+      const modal = document.getElementById('user-profile-modal');
+      modal.style.display = show ? 'flex' : 'none';
+      if (show) {
+        document.getElementById('user-profile-name').value = appData.user.name;
+        document.getElementById('user-profile-age').value = appData.user.age;
+        document.getElementById('user-profile-weight').value = appData.user.weight;
+        document.getElementById('user-profile-fcmax-course').value = appData.user.fcmaxCourse;
+        document.getElementById('user-profile-fcmax-velo').value = appData.user.fcmaxVelo;
+        document.getElementById('user-profile-fcmax-natation').value = appData.user.fcmaxNatation;
+      }
+      playDopamineSound('click');
+    }
+
+    function saveUserProfile() {
+      appData.user.name = document.getElementById('user-profile-name').value || 'Escarm';
+      appData.user.age = parseInt(document.getElementById('user-profile-age').value) || 35;
+      appData.user.weight = parseFloat(document.getElementById('user-profile-weight').value) || 70;
+      appData.user.fcmaxCourse = parseInt(document.getElementById('user-profile-fcmax-course').value) || 185;
+      appData.user.fcmaxVelo = parseInt(document.getElementById('user-profile-fcmax-velo').value) || 180;
+      appData.user.fcmaxNatation = parseInt(document.getElementById('user-profile-fcmax-natation').value) || 172;
+      
+      saveAppData();
+      toggleProfileModal(false);
+      updateSummaryUI();
+      updateAICoachAdvice();
+      playDopamineSound('success');
+      alert("Profil mis à jour avec succès !");
+    }
+
+    function showLevelStatsModal() {
+      playDopamineSound('success');
+      alert(`⚡ STATISTIQUES GLOBALES DE JOUEUR :\n\n- Athlète : ${appData.user.name}\n- Niveau actuel : ${appData.level}\n- Expérience : ${appData.xp} / 500 XP\n- Total Activités enregistrées : ${appData.sessionsHistory.length}\n- Calories totales brûlées : ${appData.stats.calories} kcal`);
+    }
+
+    // Préparation des connexions : aucun faux import ni aucune séance aléatoire.
+    const platformIntegrationStatus = {
+      Strava: { status: 'non_configuree', method: 'OAuth 2.0 / API Strava' },
+      Garmin: { status: 'non_configuree', method: 'Programme Garmin Health / autorisation partenaire' },
+      Polar: { status: 'non_configuree', method: 'Polar AccessLink / OAuth' },
+      Zwift: { status: 'non_configuree', method: 'API ou autorisation partenaire à confirmer' }
+    };
+
+    function beginPlatformConnection(platformName) {
+      const details = platformIntegrationStatus[platformName];
+      if (!details) {
+        alert("Cette plateforme n'est pas encore configurée.");
+        return;
+      }
+      alert(`Connexion ${platformName} non activée pour le moment.
+
+Étape suivante : configurer l'application développeur officielle, le serveur HTTPS et le flux d'autorisation de la plateforme.
+
+Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. Aucune séance n'a été créée.`);
+    }
+
+    // Compatibilité avec d'anciens boutons éventuels : cette fonction ne simule plus de synchronisation.
+    function simulateApiSync(platformName = 'Strava') {
+      beginPlatformConnection(platformName);
+    }
+
+    function exportDataJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "dopamine_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importDataJSON(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported || typeof imported !== 'object' ||
+              !imported.user || typeof imported.user !== 'object' ||
+              !Array.isArray(imported.sessionsHistory) ||
+              !Array.isArray(imported.plannedSessions || [])) {
+            alert("Fichier JSON invalide ou incomplet. Aucune donnée n'a été remplacée.");
+            return;
+          }
+          const allowedSports = ['natation', 'velo', 'course', 'marche', 'hiit'];
+          const validSessions = imported.sessionsHistory.every(s =>
+            s && allowedSports.includes(s.sport) &&
+            Number.isFinite(Number(s.rawVal)) && Number(s.rawVal) > 0 &&
+            Number.isFinite(Number(s.xp || 0)) && Number(s.xp || 0) >= 0
+          );
+          if (!validSessions) {
+            alert("Le fichier contient des séances invalides. Aucune donnée n'a été remplacée.");
+            return;
+          }
+
+          appData = { ...appData, ...imported };
+          appData.plannedSessions = Array.isArray(imported.plannedSessions) ? imported.plannedSessions : [];
+          appData.sessionsHistory = imported.sessionsHistory;
+          ensureXpBaseline();
+          recalculateStatsFromHistory();
+          renderHistory();
+          renderHomeCalendar();
+          updateRaceCountdown();
+          toggleProfileModal(false);
+          alert("Données et historique restaurés avec succès !");
+        } catch(err) {
+          alert("Erreur lors de la lecture du fichier JSON. Aucune donnée n'a été remplacée.");
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function getTotalEarnedXp() {
+      const sessionsXp = (Array.isArray(appData.sessionsHistory) ? appData.sessionsHistory : [])
+        .reduce((sum, session) => sum + Math.max(0, Number(session.xp) || 0), 0);
+      return Math.max(0, Number(appData.xpBaseTotal) || 0) + sessionsXp;
+    }
+
+    function ensureXpBaseline() {
+      if (Number.isFinite(Number(appData.xpBaseTotal))) return;
+      const currentTotal = Math.max(0, (Math.max(1, Number(appData.level) || 1) - 1) * 500 +
+        Math.max(0, Number(appData.xp) || 0));
+      const sessionXp = (Array.isArray(appData.sessionsHistory) ? appData.sessionsHistory : [])
+        .reduce((sum, session) => sum + Math.max(0, Number(session.xp) || 0), 0);
+      appData.xpBaseTotal = Math.max(0, currentTotal - sessionXp);
+    }
+
+    function recalculateXpFromHistory() {
+      ensureXpBaseline();
+      const totalXp = getTotalEarnedXp();
+      appData.level = Math.floor(totalXp / 500) + 1;
+      appData.xp = totalXp % 500;
+    }
+
+    function recalculateStatsFromHistory() {
+      if (!Array.isArray(appData.sessionsHistory)) appData.sessionsHistory = [];
+      appData.stats = { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, calories: 0 };
+      appData.sessionsHistory.forEach(s => {
+        if (!s || !['natation', 'velo', 'course', 'marche', 'hiit'].includes(s.sport)) return;
+        const val = Number(s.rawVal);
+        if (!Number.isFinite(val) || val <= 0) return;
+        appData.stats[s.sport] += val;
+        const calories = Number(s.calories);
+        appData.stats.calories += Number.isFinite(calories) && calories >= 0 ? calories : Math.round(val * 40);
+      });
+      Object.keys(appData.stats).forEach(k => {
+        appData.stats[k] = Math.round(appData.stats[k] * 10) / 10;
+      });
+      recalculateXpFromHistory();
+      saveAppData();
+      updateSummaryUI();
+      updateAICoachAdvice();
+    }
+
+    function deleteSession(id) {
+      const exists = appData.sessionsHistory.some(s => s.id === id);
+      if (!exists) { alert("Cette séance est introuvable."); return; }
+      if (confirm("Supprimer cette séance ? Les statistiques et l'XP seront automatiquement recalculées.")) {
+        appData.sessionsHistory = appData.sessionsHistory.filter(s => s.id !== id);
+        recalculateStatsFromHistory();
+        checkTrophiesUnlock();
+        renderHistory();
+        if (document.getElementById('view-stats') && !document.getElementById('view-stats').classList.contains('hidden')) {
+          renderChart();
+        }
+        updateRaceCountdown();
+        alert("Séance supprimée avec succès.");
+      }
+    }
+
+    function triggerAchievementPopup(title) {
+      const popup = document.getElementById('achievement-popup');
+      document.getElementById('ach-popup-title').innerText = title;
+      popup.style.display = 'flex';
+      playDopamineSound('success');
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 120, spread: 90, origin: { y: 0.2 } });
+      }
+      setTimeout(() => { popup.style.display = 'none'; }, 4000);
+    }
+
+    function getRankForSport(sport, value) {
+      if (value >= 1000) return { name: 'Challenger', bg: 'var(--tier-challenger-bg)' };
+      if (value >= 750) return { name: 'Grand Master', bg: 'var(--tier-master-bg)' };
+      if (value >= 500) return { name: 'Master', bg: 'var(--tier-master-bg)' };
+      if (value >= 350) return { name: 'Diamant', bg: 'var(--tier-diamond-bg)' };
+      if (value >= 250) return { name: 'Émeraude', bg: 'var(--tier-emerald-bg)' };
+      if (value >= 150) return { name: 'Platine', bg: 'var(--tier-plat-bg)' };
+      if (value >= 80) return { name: 'Or', bg: 'var(--tier-gold-bg)' };
+      if (value >= 40) return { name: 'Argent', bg: 'var(--tier-silver-bg)' };
+      if (value >= 15) return { name: 'Bronze', bg: 'var(--tier-bronze-bg)' };
+      return { name: 'Fer', bg: 'var(--tier-iron-bg)' };
+    }
+
+    function renderRanks() {
+      const container = document.getElementById('ranks-grid-container');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      const sports = [
+        { id: 'velo', label: 'Vélo', icon: 'fa-person-biking', color: 'var(--bike-orange)' },
+        { id: 'course', label: 'Course à pied', icon: 'fa-person-running', color: 'var(--run-green)' },
+        { id: 'natation', label: 'Natation', icon: 'fa-person-swimming', color: 'var(--swim-blue)' },
+        { id: 'marche', label: 'Marche', icon: 'fa-person-walking', color: 'var(--walk-teal)' },
+        { id: 'hiit', label: 'HIIT', icon: 'fa-bolt', color: 'var(--hiit-pink)' }
+      ];
+
+      sports.forEach(s => {
+        const val = appData.stats[s.id] || 0;
+        const rank = getRankForSport(s.id, val);
+        
+        const cardBadge = document.getElementById(`card-rank-${s.id}`);
+        if (cardBadge) {
+          cardBadge.innerText = rank.name;
+          cardBadge.style.background = rank.bg;
+        }
+
+        container.innerHTML += `
+          <div class="rank-card">
+            <div class="trophy-icon" style="color:${s.color}"><i class="fa-solid ${s.icon}"></i></div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:0.78rem; color:var(--text-main);">${s.label}</strong>
+                <span class="rank-badge-pill" style="background:${rank.bg};">${rank.name}</span>
+              </div>
+              <div style="font-size:0.65rem; color:var(--text-sub); margin-top:2px;">Volume : ${val} ${s.id === 'hiit' ? 'min' : 'km'}</div>
+            </div>
+          </div>`;
+      });
+    }
+
+    function renderTrophiesAndRanks() {
+      renderRanks();
+      const grid = document.getElementById('trophies-grid-container');
+      if (!grid) return;
+      grid.innerHTML = '';
+      appData.trophies.forEach(t => {
+        grid.innerHTML += `
+          <div class="trophy-card ${t.unlocked ? 'unlocked' : ''}">
+            <div class="trophy-icon"><i class="fa-solid ${t.icon}"></i></div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:0.75rem; color:var(--text-main);">${t.title}</strong>
+                <span style="font-size:0.55rem; padding:1px 5px; border-radius:4px; background:rgba(255,255,255,0.1); color:${t.unlocked ? 'var(--xp-gold)' : 'var(--text-sub)'};">${t.tier}</span>
+              </div>
+              <div style="font-size:0.65rem; color:var(--text-sub); margin-top:2px;">${t.desc}</div>
+            </div>
+          </div>`;
+      });
+    }
+
+    function getFcMaxForSport(sport) {
+      if (sport === 'course') return appData.user.fcmaxCourse;
+      if (sport === 'velo') return appData.user.fcmaxVelo;
+      if (sport === 'natation') return appData.user.fcmaxNatation;
+      return appData.user.fcmaxCourse;
+    }
+
+    function calculatePace(sport) {
+      const res = document.getElementById(`calc-result-${sport}`);
+      res.style.display = 'block';
+      const fcmax = getFcMaxForSport(sport);
+      let bpm = parseFloat(document.getElementById(`${sport}-bpm`)?.value) || 0;
+
+      let fcInfo = "";
+      if (bpm > 0) {
+        const pct = Math.round((bpm / fcmax) * 100);
+        let zone = "Z1 (Récup)"; let color = "#3b82f6";
+        if (pct >= 90) { zone = "Z5 (VO2Max)"; color = "#ef4444"; }
+        else if (pct >= 80) { zone = "Z4 (Seuil)"; color = "#f97316"; }
+        else if (pct >= 70) { zone = "Z3 (Tempo)"; color = "#eab308"; }
+        else if (pct >= 60) { zone = "Z2 (Endurance)"; color = "#22c55e"; }
+        fcInfo = `<br>🫀 Intensité: <span style="color:var(--heart-red)">${pct}% FC Max</span> | Zone: <span style="color:${color}">${zone}</span>`;
+      }
+
+      if (sport === 'natation') {
+        const dist = parseFloat(document.getElementById('natation-dist').value) || 0;
+        const time = parseFloat(document.getElementById('natation-time').value) || 0;
+        if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
+        const pace = (time * 60) / (dist / 100);
+        const m = Math.floor(pace / 60); const s = Math.round(pace % 60);
+        res.innerHTML = `🏊 Allure: <span style="color:var(--swim-blue)">${m} min ${s < 10 ? '0' : ''}${s} / 100m</span>${fcInfo}`;
+      } else if (sport === 'velo') {
+        const dist = parseFloat(document.getElementById('velo-dist').value) || 0;
+        const time = parseFloat(document.getElementById('velo-time').value) || 0;
+        if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
+        const speed = (dist / (time / 60)).toFixed(1);
+        res.innerHTML = `🚴 Vitesse: <span style="color:var(--bike-orange)">${speed} km/h</span>${fcInfo}`;
+      } else if (sport === 'course') {
+        const dist = parseFloat(document.getElementById('course-dist').value) || 0;
+        const time = parseFloat(document.getElementById('course-time').value) || 0;
+        if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
+        const paceMin = time / dist; const m = Math.floor(paceMin); const s = Math.round((paceMin - m) * 60);
+        res.innerHTML = `🏃 Allure: <span style="color:var(--run-green)">${m}'${s < 10 ? '0' : ''}${s}" / km</span>${fcInfo}`;
+      } else if (sport === 'marche') {
+        const dist = parseFloat(document.getElementById('marche-dist').value) || 0;
+        const time = parseFloat(document.getElementById('marche-time').value) || 0;
+        if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
+        const speed = (dist / (time / 60)).toFixed(1);
+        res.innerHTML = `🚶 Vitesse: <span style="color:var(--walk-teal)">${speed} km/h</span>${fcInfo}`;
+      } else if (sport === 'hiit') {
+        const time = parseFloat(document.getElementById('hiit-time').value) || 0;
+        const rpe = parseFloat(document.getElementById('hiit-rpe').value) || 7;
+        if (!time) { res.innerText = "Entrez la durée."; return; }
+        res.innerHTML = `⚡ Session HIIT (RPE ${rpe}): <span style="color:var(--hiit-pink)">Intensité Validée (${time} min)</span>${fcInfo}`;
+      }
+      playDopamineSound('click');
+    }
+
+    function saveCurrentSession(sport) {
+      const supportedSports = ['natation', 'velo', 'course', 'marche', 'hiit'];
+      if (!supportedSports.includes(sport)) {
+        alert("Le sport sélectionné n'est pas reconnu."); return;
+      }
+
+      let dist = 0, time = 0, elev = 0;
+      if (sport === 'natation') {
+        dist = (parseFloat(document.getElementById('natation-dist').value) || 0) / 1000;
+        time = parseFloat(document.getElementById('natation-time').value);
+      } else if (sport === 'velo') {
+        dist = parseFloat(document.getElementById('velo-dist').value);
+        time = parseFloat(document.getElementById('velo-time').value);
+        elev = parseFloat(document.getElementById('velo-elev').value) || 0;
+      } else if (sport === 'course') {
+        dist = parseFloat(document.getElementById('course-dist').value);
+        time = parseFloat(document.getElementById('course-time').value);
+        elev = parseFloat(document.getElementById('course-elev').value) || 0;
+      } else if (sport === 'marche') {
+        dist = parseFloat(document.getElementById('marche-dist').value);
+        time = parseFloat(document.getElementById('marche-time').value);
+        elev = parseFloat(document.getElementById('marche-elev').value) || 0;
+      } else {
+        time = parseFloat(document.getElementById('hiit-time').value);
+        dist = 0;
+      }
+
+      if (!Number.isFinite(time) || time <= 0) {
+        alert("La durée doit être un nombre supérieur à zéro."); return;
+      }
+      if (sport !== 'hiit' && (!Number.isFinite(dist) || dist <= 0)) {
+        alert("La distance doit être un nombre supérieur à zéro."); return;
+      }
+      if (!Number.isFinite(elev) || elev < 0) {
+        alert("Le dénivelé ne peut pas être négatif."); return;
+      }
+      if (sport === 'hiit') {
+        const rpeInput = parseFloat(document.getElementById('hiit-rpe').value);
+        if (Number.isFinite(rpeInput) && (rpeInput < 1 || rpeInput > 10)) {
+          alert("L'intensité perçue doit être comprise entre 1 et 10."); return;
+        }
+      }
+
+      // Garde-fous pour éviter les erreurs de saisie manifestes.
+      if (time > 24 * 60) { alert("La durée doit être inférieure ou égale à 24 heures."); return; }
+      if (sport !== 'hiit' && dist > 1000) { alert("La distance semble trop élevée. Vérifie la valeur saisie."); return; }
+      if (elev > 20000) { alert("Le dénivelé semble trop élevé. Vérifie la valeur saisie."); return; }
+
+      const rawVal = sport === 'hiit' ? time : dist;
+      let baseXp = Math.round((sport === 'hiit' ? time * 1.5 : dist * 10) + (time * 0.5) + (elev * 0.2));
+      baseXp = Math.max(30, baseXp);
+
+      // Initialiser le socle avant d'ajouter la séance pour préserver l'XP historique.
+      ensureXpBaseline();
+      const sessionTitle = `Séance ${sport.toUpperCase()}`;
+      const sessionDist = sport === 'hiit' ? `${time} min` : `${Number(dist.toFixed(2))} km`;
+      const feelingEl = document.getElementById(`${sport}-feeling`);
+      const commentEl = document.getElementById(`${sport}-comment`);
+      const feeling = feelingEl ? feelingEl.value : '';
+      const comment = commentEl ? commentEl.value.trim().slice(0, 1000) : '';
+      const session = {
+        id: Date.now(),
+        sport,
+        feeling,
+        comment,
+        title: sessionTitle,
+        distance: sessionDist,
+        rawVal,
+        duration: `${time} min`,
+        date: new Date().toISOString().split('T')[0],
+        xp: baseXp,
+        calories: Math.round(time * 9)
+      };
+      appData.sessionsHistory.unshift(session);
+      if (feelingEl) feelingEl.value = '';
+      if (commentEl) commentEl.value = '';
+      recalculateStatsFromHistory();
+      checkTrophiesUnlock();
+      renderHistory();
+      triggerAchievementPopup(`Séance validée ! +${baseXp} XP`);
+      showPage('stats');
+    }
+
+    function checkTrophiesUnlock() {
+      if (appData.stats.velo >= 100) {
+        const t = appData.trophies.find(x => x.id === 'velo_100');
+        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Rouleur d'Acier !"); }
+      }
+      if (appData.stats.course >= 30) {
+        const t = appData.trophies.find(x => x.id === 'course_30');
+        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Sprinteur Fondu !"); }
+      }
+      if (appData.stats.natation > 0 && appData.stats.velo > 0 && appData.stats.course > 0) {
+        const t = appData.trophies.find(x => x.id === 'tri_master');
+        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Triathlète Complet !"); }
+      }
+      if (appData.stats.hiit >= 150) {
+        const t = appData.trophies.find(x => x.id === 'hiit_king');
+        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Explosivité Pure !"); }
+      }
+    }
+
+    function filterHistory(filter, btn) {
+      historyFilter = filter;
+      document.querySelectorAll('.history-box .medal-tab').forEach(b => b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('history-list-container');
+      if (!container) return;
+      container.innerHTML = '';
+      const list = (historyFilter === 'all') ? appData.sessionsHistory : appData.sessionsHistory.filter(s => s.sport === historyFilter);
+      if (list.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-sub); font-size:0.75rem; text-align:center; padding:10px;">Aucune séance enregistrée.</p>';
+        return;
+      }
+      const escapeHTML = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+      list.forEach(s => {
+        const feedback = [s.feeling ? `Ressenti : ${escapeHTML(s.feeling)}` : '', s.comment ? escapeHTML(s.comment) : ''].filter(Boolean).join(' — ');
+        container.innerHTML += `
+          <div class="history-card">
+            <div style="min-width:0;flex:1;"><strong>${escapeHTML(s.title)}</strong><div style="font-size:0.65rem; color:var(--text-sub);">${escapeHTML(s.date)} • ${escapeHTML(s.duration)}</div>${feedback ? `<div style="font-size:0.72rem;color:var(--text-sub);margin-top:5px;overflow-wrap:anywhere;">${feedback}</div>` : ''}</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="text-align:right;"><strong style="color:var(--bike-orange);">${s.distance}</strong><div style="font-size:0.65rem; color:var(--xp-gold);">+${s.xp} XP</div></div>
+              <button class="btn-delete-session" onclick="deleteSession(${s.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>`;
+      });
+    }
+
+    function setCalendarMode(mode) {
+      calendarMode = mode;
+      document.getElementById('cal-mode-week').classList.toggle('active', mode === 'week');
+      document.getElementById('cal-mode-month').classList.toggle('active', mode === 'month');
+      document.getElementById('cal-mode-year').classList.toggle('active', mode === 'year');
+      renderHomeCalendar();
+    }
+
+    function renderHomeCalendar() {
+      const grid = document.getElementById('calendar-days-grid-home');
+      const label = document.getElementById('calendar-current-label');
+      if (!grid) return;
+      
+      const today = new Date();
+      const displayDate = new Date(calendarDisplayDate);
+      grid.innerHTML = '';
+
+      const sportPriority = { natation: 1, velo: 2, course: 3, marche: 4, hiit: 5, duathlon: 6, triathlon: 7, trail: 8 };
+
+      if (calendarMode === 'week') {
+        grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+        const currentDayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1;
+        const displayDayOfWeek = displayDate.getDay() === 0 ? 6 : displayDate.getDay() - 1;
+        const startOfWeek = new Date(displayDate);
+        startOfWeek.setDate(displayDate.getDate() - displayDayOfWeek);
+
+        if(label) label.innerText = `Semaine du ${startOfWeek.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'})}`;
+
+        const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        days.forEach((dayName, index) => {
+          const cellDate = new Date(startOfWeek);
+          cellDate.setDate(startOfWeek.getDate() + index);
+          const dateStr = localDateISO(cellDate);
+          const isToday = localDateISO(cellDate) === localDateISO(today);
+
+          let daySessions = (appData.plannedSessions || []).filter(s => s.date === dateStr);
+          daySessions.sort((a, b) => (sportPriority[a.sport] || 9) - (sportPriority[b.sport] || 9));
+
+          let dotsHtml = '';
+          daySessions.forEach(s => {
+            let color = 'var(--bike-orange)';
+            if (s.type === 'competition' || ['triathlon', 'duathlon', 'trail'].includes(s.sport)) {
+              color = 'var(--race-red)'; // ROUGE POUR LES COMPÉTITIONS
+            } else {
+              if (s.sport === 'natation') color = 'var(--swim-blue)';       // BLEU
+              else if (s.sport === 'velo') color = 'var(--bike-orange)';   // ORANGE
+              else if (s.sport === 'course') color = 'var(--run-green)'; // VERT
+              else if (s.sport === 'marche') color = 'var(--walk-teal)'; // TURQUOISE
+              else if (s.sport === 'hiit') color = 'var(--hiit-pink)';     // ROSE
+            }
+            dotsHtml += `<div class="dot-sport" style="background:${color};" title="${s.title} (${s.time || ''})"></div>`;
+          });
+
+          grid.innerHTML += `
+            <div class="cal-day-cell-mini ${isToday ? 'today' : ''} ${dateStr === calendarSelectedDate ? 'selected' : ''}" onclick="showDayDetails('${dateStr}')">
+              <span class="cal-day-name-mini">${dayName}</span>
+              <span class="cal-day-num-mini">${cellDate.getDate()}</span>
+              <div class="cal-dots-container">${dotsHtml}</div>
+            </div>`;
+        });
+      } else if (calendarMode === 'month') {
+        // VUE MOIS (30/31 jours)
+        grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+        const year = displayDate.getFullYear();
+        const month = displayDate.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+        
+        if(label) label.innerText = firstDayOfMonth.toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
+
+        // Jours de la semaine en entête
+        const daysShort = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+        
+        // Décalage premier jour
+        let startDay = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
+        
+        for (let i = 0; i < startDay; i++) {
+          grid.innerHTML += `<div class="cal-day-cell-mini" style="opacity:0.2; min-height:45px;"></div>`;
+        }
+
+        for (let d = 1; d <= lastDayOfMonth.getDate(); d++) {
+          const cellDate = new Date(year, month, d);
+          const dateStr = localDateISO(cellDate);
+          const isToday = localDateISO(cellDate) === localDateISO(today);
+
+          let daySessions = (appData.plannedSessions || []).filter(s => s.date === dateStr);
+          let dotsHtml = '';
+          daySessions.forEach(s => {
+            let color = 'var(--bike-orange)';
+            if (s.type === 'competition' || ['triathlon', 'duathlon', 'trail'].includes(s.sport)) {
+              color = 'var(--race-red)';
+            } else {
+              if (s.sport === 'natation') color = 'var(--swim-blue)';
+              else if (s.sport === 'velo') color = 'var(--bike-orange)';
+              else if (s.sport === 'course') color = 'var(--run-green)';
+              else if (s.sport === 'marche') color = 'var(--walk-teal)';
+              else if (s.sport === 'hiit') color = 'var(--hiit-pink)';
+            }
+            dotsHtml += `<div class="dot-sport" style="background:${color}; width:4px; height:4px;" title="${s.title}"></div>`;
+          });
+
+          grid.innerHTML += `
+            <div class="cal-day-cell-mini ${isToday ? 'today' : ''} ${dateStr === calendarSelectedDate ? 'selected' : ''}" style="min-height:45px;" onclick="showDayDetails('${dateStr}')">
+              <span class="cal-day-num-mini" style="font-size:0.65rem;">${d}</span>
+              <div class="cal-dots-container">${dotsHtml}</div>
+            </div>`;
+        }
+      } else {
+        // Vue annuelle compacte : 12 mois, chaque date reste cliquable.
+        const year = displayDate.getFullYear();
+        if (label) label.innerText = `Année ${year}`;
+        grid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+        grid.style.gap = '10px';
+        const dayNames = ['L','M','M','J','V','S','D'];
+        for (let month = 0; month < 12; month++) {
+          const firstDay = new Date(year, month, 1);
+          const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+          const monthBox = document.createElement('div');
+          monthBox.style.cssText = 'border:1px solid var(--card-border);border-radius:10px;padding:8px;min-width:0;background:rgba(255,255,255,.015);';
+          const monthTitle = document.createElement('div');
+          monthTitle.textContent = firstDay.toLocaleDateString('fr-FR',{month:'long'});
+          monthTitle.style.cssText = 'font-weight:800;text-transform:capitalize;font-size:.78rem;margin-bottom:6px;color:var(--text-main);';
+          monthTitle.style.cursor = 'pointer';
+          monthTitle.title = 'Cliquer pour ouvrir ce mois';
+          monthTitle.onclick = () => { calendarDisplayDate = new Date(year, month, 1); setCalendarMode('month'); };
+          monthBox.appendChild(monthTitle);
+          const mini = document.createElement('div');
+          mini.style.cssText = 'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;';
+          dayNames.forEach(dn => { const el=document.createElement('span'); el.textContent=dn; el.style.cssText='text-align:center;font-size:.53rem;color:var(--text-sub);'; mini.appendChild(el); });
+          for (let pad=0; pad<offset; pad++) { const blank=document.createElement('span'); mini.appendChild(blank); }
+          const total = new Date(year,month+1,0).getDate();
+          for (let d=1; d<=total; d++) {
+            const cellDate = new Date(year,month,d); const dateStr=localDateISO(cellDate);
+            const daySessions=(appData.plannedSessions||[]).filter(x=>x.date===dateStr);
+            const cell=document.createElement('button'); cell.type='button'; cell.textContent=String(d);
+            const isToday=dateStr===localDateISO(today); const isSelected=dateStr===calendarSelectedDate;
+            cell.style.cssText=`min-width:0;width:100%;aspect-ratio:1;padding:0;border:1px solid ${isSelected?'var(--bike-orange)':'transparent'};border-radius:5px;background:${isToday?'rgba(255,107,0,.16)':'transparent'};color:var(--text-main);font-size:.61rem;cursor:pointer;position:relative;`;
+            if(daySessions.length) { const dot=document.createElement('i'); dot.style.cssText='position:absolute;width:4px;height:4px;border-radius:50%;background:var(--bike-orange);bottom:1px;left:calc(50% - 2px);'; cell.appendChild(dot); }
+            cell.title=`${dateStr} · ${daySessions.length} séance(s)`;
+            cell.onclick=()=>showDayDetails(dateStr);
+            mini.appendChild(cell);
+          }
+          monthBox.appendChild(mini); grid.appendChild(monthBox);
+        }
+        if (window.matchMedia && window.matchMedia('(max-width: 700px)').matches) grid.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';
+      }
+      updateRaceCountdown();
+    }
+
+    function navigateCalendar(direction) {
+      if (calendarMode === 'week') calendarDisplayDate.setDate(calendarDisplayDate.getDate() + direction * 7);
+      else if (calendarMode === 'month') calendarDisplayDate.setMonth(calendarDisplayDate.getMonth() + direction, 1);
+      else calendarDisplayDate.setFullYear(calendarDisplayDate.getFullYear() + direction, 0, 1);
+      renderHomeCalendar();
+      if (calendarSelectedDate) showDayDetails(calendarSelectedDate);
+    }
+    function goCalendarToday() { calendarDisplayDate = new Date(); showDayDetails(localDateISO(calendarDisplayDate)); }
+    function openPricingModal() { const el = document.getElementById('pricing-modal'); if (el) el.style.display = 'flex'; }
+    function closePricingModal() { const el = document.getElementById('pricing-modal'); if (el) el.style.display = 'none'; }
+
+    function showDayDetails(dateStr) {
+      calendarSelectedDate = dateStr;
+      const panel = document.getElementById('calendar-selection-hint');
+      const sessions = (appData.plannedSessions || []).filter(s => s.date === dateStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+      const prettyDate = new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      if (panel) {
+        if (!sessions.length) {
+          panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><div><strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">Aucune séance planifiée pour cette journée.</small></div><button type="button" onclick="openPlanModal();document.getElementById('plan-date').value='${dateStr}'">+ Planifier une séance</button></div>`;
+        } else {
+          panel.innerHTML = `<strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">${sessions.length} séance(s) planifiée(s)</small>` + sessions.map(s => {
+            const title = escapeHTML(String(s.title || 'Séance'));
+            const sport = escapeHTML(String(s.sport || '').toUpperCase());
+            const time = escapeHTML(String(s.time || 'Heure à définir'));
+            const detail = escapeHTML(String(s.description || s.planGoal || 'Séance planifiée'));
+            const type = s.type === 'competition' ? ' · 🏁 Compétition' : '';
+            return `<div class="calendar-detail-row"><div><strong>${time} · ${title}</strong><small>${sport}${type}<br>${detail}</small></div><button type="button" onclick="openPlanModal();document.getElementById('plan-date').value='${dateStr}'">Ajouter</button></div>`;
+          }).join('');
+        }
+      }
+      renderHomeCalendar();
+    }
+
+    function showFeedComingSoon() {
+      alert('Le Fil Dopamine est en préparation. Le partage entre amis, les photos, les likes et les commentaires seront activés après la mise en place des comptes et du stockage en ligne.');
+    }
+
+    function updateSummaryUI() {
+      ['tri', 'home-tri'].forEach(prefix => {
+        const nat = document.getElementById(`${prefix}-nat`);
+        const vel = document.getElementById(`${prefix}-vel`);
+        const cou = document.getElementById(`${prefix}-cou`);
+        const hiit = document.getElementById(`${prefix}-hiit`);
+        const cal = document.getElementById(`${prefix}-calories`);
+        if(nat) nat.innerText = `${appData.stats.natation} km`;
+        if(vel) vel.innerText = `${appData.stats.velo} km`;
+        if(cou) cou.innerText = `${appData.stats.course} km`;
+        if(hiit) hiit.innerText = `${appData.stats.hiit} min`;
+        if(cal) cal.innerText = `${appData.stats.calories} kcal`;
+      });
+      
+      document.getElementById('user-level-num').innerText = appData.level;
+      document.getElementById('user-xp-text').innerText = `${appData.xp} / 500 XP`;
+      document.getElementById('xp-bar-fill').style.width = `${(appData.xp / 500) * 100}%`;
+
+      const homeLvl = document.getElementById('home-user-level-num');
+      if(homeLvl) homeLvl.innerText = appData.level;
+      const homeXp = document.getElementById('home-user-xp-text');
+      if(homeXp) homeXp.innerText = `${appData.xp} / 500 XP`;
+      const homeXpBar = document.getElementById('home-xp-bar-fill');
+      if(homeXpBar) homeXpBar.style.width = `${(appData.xp / 500) * 100}%`;
+      
+      document.getElementById('profile-name-display').innerText = appData.user.name;
+      const hName = document.getElementById('home-profile-name');
+      if(hName) hName.innerText = appData.user.name;
+      const span2 = document.getElementById('profile-name-span-2');
+      if(span2) span2.innerText = appData.user.name;
+      document.getElementById('header-user-name').innerText = appData.user.name;
+      document.getElementById('header-user-level').innerText = `Niv. ${appData.level}`;
+
+      document.getElementById('goal-natation-text').innerText = `${appData.stats.natation} / ${appData.goals.natation} km`;
+      document.getElementById('goal-natation-bar').style.width = `${Math.min(100, (appData.stats.natation / appData.goals.natation) * 100)}%`;
+
+      document.getElementById('goal-velo-text').innerText = `${appData.stats.velo} / ${appData.goals.velo} km`;
+      document.getElementById('goal-velo-bar').style.width = `${Math.min(100, (appData.stats.velo / appData.goals.velo) * 100)}%`;
+
+      document.getElementById('goal-course-text').innerText = `${appData.stats.course} / ${appData.goals.course} km`;
+      document.getElementById('goal-course-bar').style.width = `${Math.min(100, (appData.stats.course / appData.goals.course) * 100)}%`;
+
+      const questTotal = appData.stats.velo + appData.stats.course;
+      document.getElementById('quest-progress-text').innerText = `${questTotal} / 40 km`;
+      document.getElementById('quest-bar').style.width = `${Math.min(100, (questTotal / 40) * 100)}%`;
+
+      renderRanks();
+      saveAppData();
+    }
+
+    function saveAppData() {
+      try {
+        localStorage.setItem('dopamine_app_data', JSON.stringify(appData));
+        return true;
+      } catch (error) {
+        console.error('Impossible de sauvegarder les données localement :', error);
+        alert("La sauvegarde locale a échoué (espace de stockage indisponible ou saturé). Exporte tes données JSON pour éviter de les perdre.");
+        return false;
+      }
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('evolutionChart');
+      if (!ctx) return;
+      if (chartInstance) { chartInstance.destroy(); }
+      
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Natation (km)', 'Vélo (km)', 'Course à pied (km)', 'Marche (km)', 'HIIT (min)'],
+          datasets: [{
+            label: 'Volume Total',
+            data: [appData.stats.natation, appData.stats.velo, appData.stats.course, appData.stats.marche, appData.stats.hiit],
+            backgroundColor: ['#00a2ff', '#ff6b00', '#22c55e', '#14b8a6', '#ec4899']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }
+        }
+      });
+    }
+
+    window.onload = function() {
+      const saved = localStorage.getItem('dopamine_app_data');
+      if (saved) { 
+        try { 
+          const parsed = JSON.parse(saved);
+          appData = { ...appData, ...parsed };
+        } catch (e) {} 
+      }
+      ensureXpBaseline();
+      renderHomeCalendar();
+      recalculateStatsFromHistory();
+      renderHistory();
+      updateRaceCountdown();
+      updateAICoachAdvice();
+    };
   </script>
 </body>
 </html>
