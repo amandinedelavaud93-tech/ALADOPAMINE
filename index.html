@@ -7,8 +7,33 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root[data-theme="dark"] {
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+  .nav-discipline-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(10, 18, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-discipline-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--bike-orange);
+  transform: translateY(-1px);
+}
+
+.nav-discipline-btn i {
+  font-size: 1rem;
+}
+  :root[data-theme="dark"] {
       --bg-dark: #050a14;
       --card-bg: rgba(10, 18, 32, 0.95);
       --card-border: rgba(255, 255, 255, 0.12);
@@ -72,12 +97,12 @@
 
     .navbar { display: flex; justify-content: space-between; align-items: center; min-height: 96px; padding-top: 8px; padding-bottom: 8px; flex-wrap: wrap; gap: 10px; }
 
-    .nav-brand-container { display: flex; align-items: center; gap: 15px; cursor: pointer; }
+    .nav-brand-container { display: flex; align-items: center; gap: 10px; cursor: pointer; min-width: 225px; }
     .nav-brand {
       display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 1.45rem;
       letter-spacing: 1px; color: var(--text-main);
     }
-    .nav-brand img.brand-logo, .brand-logo-fallback { height: 62px; width: 62px; object-fit: cover; border-radius: 10px; border: 1px solid var(--card-border); flex-shrink:0; }
+.nav-brand-container img.brand-logo, .nav-brand img.brand-logo, .brand-logo-fallback { height: 80px; width: 80px; object-fit: contain; border-radius: 14px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.2); flex-shrink: 0; }
     .brand-logo-fallback { display:none; align-items:center; justify-content:center; background:linear-gradient(135deg,#ff8a00,#ff4d00); color:#fff; font-weight:1000; font-size:2rem; box-shadow:0 4px 14px rgba(255,107,0,.22); }
     .nav-brand span { color: var(--bike-orange); }
 
@@ -123,7 +148,7 @@
     .activity-submenu button { display:flex; justify-content:center; align-items:center; gap:8px; padding:10px 8px; border:1px solid var(--card-border); border-radius:9px; color:var(--text-main); background:var(--card-bg); cursor:pointer; font-weight:700; }
     .activity-submenu button:hover { border-color:var(--bike-orange); transform:translateY(-1px); }
     @media(max-width:900px) { .activity-submenu-inner { grid-template-columns:repeat(3,minmax(0,1fr)); } .navbar { justify-content:center; } }
-    @media(max-width:520px) { .activity-submenu-inner { grid-template-columns:repeat(2,minmax(0,1fr)); } .nav-brand { font-size:1.15rem; } .nav-brand img.brand-logo, .brand-logo-fallback { height:50px; width:50px; } }
+    @media(max-width:520px) { .activity-submenu-inner { grid-template-columns:repeat(2,minmax(0,1fr)); } .nav-brand { font-size:1.15rem; } .nav-brand img.brand-logo, .brand-logo-fallback { height:48px; width:48px; } }
 
     .app-page { display: block; animation: fadeIn 0.3s ease-in-out; }
     .app-page.hidden { display: none !important; }
@@ -186,7 +211,7 @@
     .calendar-legend span { display:inline-flex; align-items:center; gap:5px; }
     .calendar-legend i { width:7px;height:7px;border-radius:50%;display:inline-block; }
 
-    .sports-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+    .sports-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
     @media (max-width: 1200px) { .sports-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 768px) { .sports-grid { grid-template-columns: 1fr; } }
 
@@ -226,7 +251,7 @@
 
     .main-dashboard-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; }
     .triathlon-summary-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-    .triathlon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; text-align: center; margin-top: 10px; }
+    .triathlon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; text-align: center; margin-top: 10px; }
     @media (max-width: 600px) { .triathlon-grid { grid-template-columns: repeat(2, 1fr); } }
 
     .goals-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
@@ -277,7 +302,59 @@
 
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; }
     .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; width: 90%; max-width: 480px; }
-  </style>
+  
+  /* --- STYLE DU SÉLECTEUR RPE INTERACTIF --- */
+  .rpe-container {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 10px;
+    grid-column: 1 / -1;
+  }
+  .rpe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .rpe-slider {
+    width: 100%;
+    accent-color: var(--bike-orange);
+    cursor: pointer;
+    margin: 6px 0;
+  }
+  .rpe-feedback-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+  .streak-card-banner {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(10, 18, 32, 0.95) 100%);
+    border: 1px solid var(--run-green);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+  }
+  .header-user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--bike-orange);
+    background: rgba(0,0,0,0.3);
+  }
+
+</style>
 </head>
 <body>
 
@@ -292,45 +369,80 @@
   </div>
 
   <!-- NAVBAR -->
-  <header>
-    <div class="container navbar">
-      <div class="nav-brand-container" onclick="showPage('home')">
-        <div class="nav-brand">
-          <img src="logo.png" alt="Logo À LA DOPAMINE" class="brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="brand-logo-fallback" aria-hidden="true">D</span>
-          À LA <span>DOPAMINE</span>
-        </div>
-        
-        <div class="header-user-wrapper">
-          <div class="header-user-row">
-            <span class="header-username" onclick="event.stopPropagation(); toggleProfileModal(true);" title="Modifier mon profil"><i class="fa-solid fa-user-gear"></i> <span id="header-user-name">Escarm</span></span>
-          </div>
-          <span class="header-userlevel" onclick="event.stopPropagation(); showPage('trophies');" title="Voir mes stats XP"><span id="header-user-level">Niv. 3</span></span>
+<!-- HEADER FIXE UNIQUE -->
+<header style="position: sticky; top: 0; z-index: 1000; background: #051014; border-bottom: 1px solid var(--card-border); box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+  <div class="container navbar">
+    <!-- LOGO À LA DOPAMINE (À gauche) -->
+    <div class="nav-brand-container" onclick="showPage('home')">
+      <img src="logo.png" alt="Logo À LA DOPAMINE" class="brand-logo" onerror="this.style.display='none';">
+    <span style="font-weight: 900; font-size: 1.3rem; letter-spacing: 1px; color: var(--text-main);">À LA <span style="color:var(--bike-orange);">DOPAMINE</span></span>
+    </div>
+
+    <!-- MENU DE NAVIGATION HARMONISÉ (Au centre - Point 6) -->
+    <ul class="nav-menu">
+      
+      <li><a id="nav-home" class="active" onclick="showPage('home')"><i class="fa-solid fa-house"></i> Accueil</a></li>
+      <li><a id="nav-stats" onclick="showPage('stats')"><i class="fa-solid fa-chart-line"></i> Bilan</a></li>
+      <li><a id="nav-trophies" onclick="showPage('trophies')"><i class="fa-solid fa-trophy"></i> Trophées</a></li>
+      <li><a id="nav-calendar" onclick="showPage('home'); document.getElementById('home-calendar').scrollIntoView({behavior:'smooth'});"><i class="fa-solid fa-calendar-days"></i> Mon calendrier</a></li>
+      <li><a id="nav-feed" onclick="showFeedComingSoon()"><i class="fa-solid fa-users"></i> Fil Dopamine</a></li>
+      <li><a id="nav-search-friends" onclick="openSearchFriendsModal()"><i class="fa-solid fa-magnifying-glass" style="color:var(--bike-orange);"></i></a></li>
+    </ul>
+
+    <!-- BLOC DROITE : METEO (Point 4) + AVATAR PHOTO & PROFIL (Point 5) -->
+    <div class="nav-actions" style="display: flex; align-items: center; gap: 10px;">
+      
+      <!-- METEO DU PROFIL (Positionnée directement à gauche de l'avatar) -->
+      <div id="dopamine-weather-widget" style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:6px 10px;font-size:.68rem;max-width:180px;display:none;">
+        <div style="display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold);font-size:1.1rem;"></i><div style="min-width:0;"><strong id="weather-place" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Météo locale</strong><div id="weather-summary" style="color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Ville du profil</div></div></div>
+      </div>
+
+      <!-- BADGE PROFIL AVEC PHOTO DE PROFIL REELLE (Point 5) -->
+      <div id="user-profile-badge" onclick="toggleProfileModal(true);" title="Modifier mon profil" style="display: none; align-items: center; gap: 8px; background: rgba(255, 107, 0, 0.1); border: 1px solid var(--bike-orange); border-radius: 20px; padding: 4px 10px; cursor: pointer;">
+        <img id="header-user-avatar-img" class="header-user-avatar" src="" alt="Avatar" onerror="this.style.display='none'; document.getElementById('header-user-avatar-icon').style.display='inline-block';" style="display:none;">
+        <i id="header-user-avatar-icon" class="fa-solid fa-user-astronaut" style="color: var(--bike-orange); font-size:1.1rem;"></i>
+        <div>
+          <span id="header-username" style="font-size: 0.8rem; font-weight: bold; color: var(--text-main); display:block; line-height:1.1;">Sportif</span>
+          <span id="header-userlevel" style="font-size: 0.68rem; color: var(--xp-gold); display: block;">Niv. 1</span>
         </div>
       </div>
 
-      <ul class="nav-menu">
-        <li><button class="btn-sync-nav" onclick="openSyncModal()"><i class="fa-solid fa-link"></i> Connecter GPS</button></li>
-        <li><a id="nav-home" class="active" onclick="showPage('home')"><i class="fa-solid fa-house"></i> Accueil</a></li>
-        <li><button class="nav-activity-trigger" id="nav-activities" onclick="toggleActivityMenu()" aria-expanded="false" aria-controls="activity-submenu"><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i> Activités <i class="fa-solid fa-chevron-down"></i></button></li>
-        <li><a id="nav-stats" onclick="showPage('stats')"><i class="fa-solid fa-chart-line"></i> Bilan</a></li>
-        <li><a id="nav-trophies" onclick="showPage('trophies')"><i class="fa-solid fa-trophy"></i> Trophées</a></li>
-      </ul>
-      
-      <div class="nav-actions">
-        <button class="medal-tab" onclick="toggleTheme()" title="Basculer Mode Sombre / Clair"><i class="fa-solid fa-circle-half-stroke"></i></button>
-      </div>
+      <button id="btn-open-auth" class="btn-sync-nav" onclick="document.getElementById('auth-modal').style.display='flex'" style="background:var(--bike-orange);">
+        <i class="fa-solid fa-user"></i> Connexion
+      </button>
+      <button id="btn-sign-out" class="btn-sync-nav" onclick="handleSignOut()" style="background: rgba(255, 68, 68, 0.2); color: #ff4444; border: 1px solid #ff4444; display: none;">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+      <button class="medal-tab" onclick="toggleTheme()" title="Basculer Mode Sombre / Clair">
+        <i class="fa-solid fa-circle-half-stroke"></i>
+      </button>
     </div>
-    <div class="activity-submenu" id="activity-submenu">
-      <div class="container activity-submenu-inner">
-        <button onclick="openCalc('natation')"><i class="fa-solid fa-person-swimming" style="color:var(--swim-blue)"></i> Natation</button>
-        <button onclick="openCalc('velo')"><i class="fa-solid fa-person-biking" style="color:var(--bike-orange)"></i> Vélo</button>
-        <button onclick="openCalc('course')"><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i> Course</button>
-        <button onclick="openCalc('marche')"><i class="fa-solid fa-person-walking" style="color:var(--walk-teal)"></i> Marche</button>
-        <button onclick="openCalc('hiit')"><i class="fa-solid fa-bolt" style="color:var(--hiit-pink)"></i> HIIT</button>
-        <button onclick="showPage('home'); document.getElementById('activity-submenu').classList.remove('open');"><i class="fa-solid fa-plus-circle"></i> Autres</button>
-      </div>
+  </div>
+
+  <!-- BARRE DES 5 DISCIPLINES INTEGRÉE AU HEADER -->
+  <div id="activity-submenu-bar" style="background: #08141c; border-top: 1px solid rgba(255,255,255,0.05); padding: 10px 0;">
+    <div class="container" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px;">
+      <button type="button" class="nav-discipline-btn" onclick="openCalc('natation')">
+        <i class="fa-solid fa-person-swimming" style="color: var(--swim-blue);"></i> Natation
+      </button>
+      <button type="button" class="nav-discipline-btn" onclick="openCalc('velo')">
+        <i class="fa-solid fa-person-biking" style="color: var(--bike-orange);"></i> Vélo
+      </button>
+      <button type="button" class="nav-discipline-btn" onclick="openCalc('course')">
+        <i class="fa-solid fa-person-running" style="color: var(--run-green);"></i> Course à pied
+      </button>
+      <button type="button" class="nav-discipline-btn" onclick="openCalc('marche')">
+        <i class="fa-solid fa-person-walking" style="color: var(--walk-teal);"></i> Marche
+      </button>
+      <button type="button" class="nav-discipline-btn" onclick="openCalc('hiit')">
+        <i class="fa-solid fa-bolt" style="color: var(--hiit-pink);"></i> HIIT
+      </button>
+      <button type="button" class="nav-discipline-btn" onclick="openCalc('autres')">
+        <i class="fa-solid fa-table-tennis-paddle-ball" style="color: #a855f7;"></i> Autres sports
+      </button>
     </div>
-  </header>
+  </div>
+</header>
 
   <div class="container" style="padding-top: 15px; padding-bottom: 25px;">
 
@@ -352,7 +464,7 @@
     <div class="ai-coach-banner">
       <div class="ai-coach-icon"><i class="fa-solid fa-brain"></i></div>
       <div style="flex:1;">
-        <h4 style="font-size: 0.85rem; color: var(--watts-purple); font-weight: bold;"><i class="fa-solid fa-wand-magic-sparkles"></i> Analyse & Conseils du Coach IA (<span id="profile-name-display">Escarm</span>)</h4>
+        <h4 style="font-size: 0.85rem; color: var(--watts-purple); font-weight: bold;"><i class="fa-solid fa-wand-magic-sparkles"></i> Analyse & Conseils du Coach IA (<span id="profile-name-display">Sportif</span>)</h4>
         <p id="ai-coach-text" style="font-size: 0.78rem; color: var(--text-main); line-height: 1.4; margin-top: 3px;">Analyse de la charge d'entraînement et de la fraîcheur en cours...</p>
       </div>
     </div>
@@ -387,7 +499,7 @@
 
       <section class="agenda-card" id="home-calendar">
         <div class="card-title-flex">
-          <span style="font-size:1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-calendar-days" style="color:var(--bike-orange)"></i> Mon calendrier sportif</span>
+          <span style="font-size:1rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-calendar-days" style="color:var(--bike-orange)"></i> Mon calendrier</span>
           <div style="display:flex; flex-wrap:wrap; gap:6px;">
             <button class="btn-add-plan" onclick="openPlanModal()"><i class="fa-solid fa-plus"></i> Ajouter une séance</button>
             <button class="btn-add-plan" style="background:var(--run-green);" onclick="openTrainingPlanModal()"><i class="fa-solid fa-wand-magic-sparkles"></i> Générer un plan</button>
@@ -467,6 +579,21 @@
           </div>
         </div>
 
+        <div class="sport-card autres">
+          <div class="sport-card-header">
+            <div><h3 style="font-size: 0.85rem;">AUTRES SPORTS</h3><p style="font-size: 0.62rem; color: #a855f7;">Sports Co, Raquette & Extérieur</p></div>
+            <span class="sport-rank-badge" id="card-rank-autres" style="background: var(--tier-iron-bg);">Fer</span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=80" alt="Autres sports" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/a855f7/ffffff?text=Autres+Sports'">
+          <div class="sport-card-body">
+            <ul class="features-list">
+              <li><i class="fa-solid fa-check" style="color: #a855f7;"></i> Foot, Tennis, Padel, Fitness...</li>
+              <li><i class="fa-solid fa-check" style="color: #a855f7;"></i> Durée, RPE & Distance optionnelle</li>
+            </ul>
+            <button class="btn-action" style="background:#a855f7;" onclick="openCalc('autres')">Accéder aux autres sports <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+
         <div class="sport-card hiit">
           <div class="sport-card-header">
             <div><h3 style="font-size: 0.85rem;">HIIT</h3><p style="font-size: 0.62rem; color: var(--hiit-pink);">Rose Intensité</p></div>
@@ -520,14 +647,14 @@
             <button class="medal-tab" onclick="showPage('trophies')">Salle des trophées</button>
           </div>
           <div class="xp-level-card" style="margin-top: 10px; margin-bottom: 0;" onclick="showLevelStatsModal()">
-            <div class="level-badge" id="home-user-level-num">3</div>
+            <div class="level-badge" id="home-user-level-num">1</div>
             <div style="flex:1;">
               <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:0.75rem; margin-bottom:3px;">
-                <span style="color:var(--xp-gold)">Athlète (<span id="home-profile-name">Escarm</span>)</span>
-                <span id="home-user-xp-text" style="color:var(--text-sub)">320 / 500 XP</span>
+                <span style="color:var(--xp-gold)">Athlète (<span id="home-profile-name">Sportif</span>)</span>
+                <span id="home-user-xp-text" style="color:var(--text-sub)">0 / 500 XP</span>
               </div>
               <div class="progress-bar-bg" style="height:5px;">
-                <div class="progress-bar-fill" id="home-xp-bar-fill" style="width: 64%; background: var(--xp-gold);"></div>
+                <div class="progress-bar-fill" id="home-xp-bar-fill" style="width: 0%; background: var(--xp-gold);"></div>
               </div>
             </div>
           </div>
@@ -573,7 +700,17 @@
               <label for="natation-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="natation-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
-            <div class="calc-action-box">
+            
+          <div class="form-group rpe-container">
+            <div class="rpe-header">
+              <label for="natation-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
+              <span id="natation-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+            </div>
+            <input type="range" id="natation-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('natation', this.value)">
+            <div id="natation-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+          </div>
+
+          <div class="calc-action-box">
             <div>
               <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
               <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
@@ -623,7 +760,17 @@
               <label for="velo-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="velo-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
-            <div class="calc-action-box">
+            
+          <div class="form-group rpe-container">
+            <div class="rpe-header">
+              <label for="velo-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
+              <span id="velo-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+            </div>
+            <input type="range" id="velo-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('velo', this.value)">
+            <div id="velo-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+          </div>
+
+          <div class="calc-action-box">
             <div>
               <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
               <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
@@ -673,7 +820,17 @@
               <label for="course-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="course-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
-            <div class="calc-action-box">
+            
+          <div class="form-group rpe-container">
+            <div class="rpe-header">
+              <label for="course-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
+              <span id="course-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+            </div>
+            <input type="range" id="course-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('course', this.value)">
+            <div id="course-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+          </div>
+
+          <div class="calc-action-box">
             <div>
               <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
               <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
@@ -722,7 +879,17 @@
               <label for="marche-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="marche-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
-            <div class="calc-action-box">
+            
+          <div class="form-group rpe-container">
+            <div class="rpe-header">
+              <label for="marche-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
+              <span id="marche-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+            </div>
+            <input type="range" id="marche-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('marche', this.value)">
+            <div id="marche-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+          </div>
+
+          <div class="calc-action-box">
             <div>
               <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
               <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
@@ -764,7 +931,17 @@
               <label for="hiit-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="hiit-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
-            <div class="calc-action-box">
+            
+          <div class="form-group rpe-container">
+            <div class="rpe-header">
+              <label for="hiit-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
+              <span id="hiit-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+            </div>
+            <input type="range" id="hiit-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('hiit', this.value)">
+            <div id="hiit-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+          </div>
+
+          <div class="calc-action-box">
             <div>
               <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Intelligent</h4>
               <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Multi-facteur d'effort et calcul automatique de l'XP.</p>
@@ -779,12 +956,105 @@
       </section>
     </main>
 
+    
+    <!-- AUTRES SPORTS (Football, Tennis, Padel, Fitness, etc.) -->
+    <main id="view-autres" class="app-page hidden">
+      <section class="calculator-panel">
+        <div class="card-title-flex" style="margin-bottom: 15px;">
+          <h3 style="font-size: 1.1rem; color: #a855f7;"><i class="fa-solid fa-table-tennis-paddle-ball"></i> Autres Sports & Activités</h3>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="medal-tab" onclick="openCalc('natation')">Natation</button>
+            <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
+            <button class="medal-tab" onclick="openCalc('course')">Course</button>
+            <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
+            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+            <button class="medal-tab active" onclick="openCalc('autres')">Autres sports</button>
+          </div>
+        </div>
+        <div class="calc-grid-layout">
+          <div class="calc-inputs-grid">
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label><i class="fa-solid fa-trophy" style="color:#a855f7;"></i> Sélectionne la discipline</label>
+              <select id="autres-sport-select">
+                <option value="Football">⚽ Football</option>
+                <option value="Basketball">🏀 Basket-ball</option>
+                <option value="Tennis">🎾 Tennis</option>
+                <option value="Padel">🎾 Padel</option>
+                <option value="Badminton">🏸 Badminton</option>
+                <option value="Handball">🤾 Handball</option>
+                <option value="Rugby">🏉 Rugby</option>
+                <option value="Escalade">🧗 Escalade</option>
+                <option value="Ski">⛷️ Ski / Snowboard</option>
+                <option value="Boxe">🥊 Boxe / Arts Martiaux</option>
+                <option value="Fitness">🏋️ Fitness / Musculation</option>
+                <option value="Equitation">🏇 Équitation</option>
+                <option value="Autre">🎯 Autre activité</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Durée totale (Minutes)</label><input type="number" id="autres-time" placeholder="ex: 60"></div>
+            <div class="form-group"><label>Distance optionnelle (km)</label><input type="number" id="autres-dist" placeholder="ex: 7.5 (facultatif)"></div>
+            <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="autres-bpm" placeholder="ex: 145"></div>
+            <div class="form-group"><label><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold)"></i> Météo / Lieu</label>
+              <select id="autres-weather"><option value="interieur">🏠 Intérieur / Salle</option><option value="exterieur_soleil">☀️ Extérieur / Beau temps</option><option value="exterieur_pluie">🌧️ Extérieur / Pluie</option></select>
+            </div>
+          </div>
+          <div class="form-group session-feedback-fields">
+              <label for="autres-feeling">Ressenti de la séance</label>
+              <select id="autres-feeling">
+                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
+              </select>
+              <label for="autres-comment" style="display:block;margin-top:8px;">Commentaire / Détails du match ou de la séance</label>
+              <textarea id="autres-comment" rows="2" maxlength="1000" placeholder="Ex. Victoire 6-4 6-3 au Padel, bonnes sensations physiquement..." style="width:100%;resize:vertical;"></textarea>
+          </div>
+            
+          <div class="form-group rpe-container">
+            <div class="rpe-header">
+              <label for="autres-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
+              <span id="autres-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+            </div>
+            <input type="range" id="autres-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('autres', this.value)">
+            <div id="autres-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+          </div>
+
+          <div class="calc-action-box">
+            <div>
+              <h4 style="font-size:0.9rem; margin-bottom:4px;">Enregistrement Multi-Sports</h4>
+              <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:12px;">Calcul d'XP personnalisé selon la durée et l'effort RPE.</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="btn-calc-orange" onclick="calculatePace('autres')">CALCULER LA CHARGE</button>
+              <button class="btn-save-green" onclick="saveCurrentSession('autres')">+ ENREGISTRER LA SÉANCE</button>
+            </div>
+          </div>
+        </div>
+        <div id="calc-result-autres" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.5); border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.8rem; display: none;"></div>
+      </section>
+    </main>
+
     <!-- ONGLETS : BILAN -->
     <main id="view-stats" class="app-page hidden">
       <section class="dashboard-layout">
         <div class="main-dashboard-box">
           <div class="card-title-flex">
             <h2 style="font-size: 1.1rem;"><i class="fa-solid fa-chart-column" style="color: var(--bike-orange);"></i> BILAN & VOLUMES SPORTIFS</h2>
+          </div>
+
+          
+          <!-- POINT 2 : BANNIÈRE DE RÉGULARITÉ SUR SEMAINES CONSÉCUTIVES -->
+          <div class="streak-card-banner">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="background:rgba(34, 197, 94, 0.2); color:var(--run-green); width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+                <i class="fa-solid fa-fire-flame-curved"></i>
+              </div>
+              <div>
+                <strong style="font-size:0.9rem; color:var(--text-main); display:block;">Régularité & Discipline Hebdomadaire</strong>
+                <span style="font-size:0.75rem; color:var(--text-sub);">Objectif : au moins 2 entraînements validés par semaine.</span>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div id="weekly-streak-count" style="font-size:1.3rem; font-weight:900; color:var(--run-green);">0 Semaines</div>
+              <span style="font-size:0.65rem; color:var(--text-sub); text-transform:uppercase; font-weight:bold;">Série en cours 🔥</span>
+            </div>
           </div>
 
           <div class="triathlon-summary-box">
@@ -819,6 +1089,7 @@
                 <button class="medal-tab" onclick="filterHistory('velo', this)">Vélo</button>
                 <button class="medal-tab" onclick="filterHistory('course', this)">Course</button>
                 <button class="medal-tab" onclick="filterHistory('hiit', this)">HIIT</button>
+                <button class="medal-tab" onclick="filterHistory('autres', this)">Autres sports</button>
               </div>
             </div>
             <div class="history-list" id="history-list-container"></div>
@@ -845,14 +1116,14 @@
           </div>
 
           <div class="xp-level-card" onclick="showLevelStatsModal()" title="Voir les détails de progression XP">
-            <div class="level-badge" id="user-level-num">3</div>
+            <div class="level-badge" id="user-level-num">1</div>
             <div style="flex:1;">
               <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:0.8rem; margin-bottom:3px;">
-                <span id="user-title" style="color:var(--xp-gold)">Progression XP Globale (<span id="profile-name-span-2">Escarm</span>) 📈</span>
-                <span id="user-xp-text" style="color:var(--text-sub)">320 / 500 XP</span>
+                <span id="user-title" style="color:var(--xp-gold)">Progression XP Globale (<span id="profile-name-span-2">Sportif</span>) 📈</span>
+                <span id="user-xp-text" style="color:var(--text-sub)">0 / 500 XP</span>
               </div>
               <div class="progress-bar-bg" style="height:6px;">
-                <div class="progress-bar-fill" id="xp-bar-fill" style="width: 64%; background: var(--xp-gold);"></div>
+                <div class="progress-bar-fill" id="xp-bar-fill" style="width: 0%; background: var(--xp-gold);"></div>
               </div>
             </div>
           </div>
@@ -957,15 +1228,27 @@
       <div class="form-group"><label>Date</label><input type="date" id="plan-date"></div>
       <div class="form-group"><label>Heure</label><input type="time" id="plan-time" value="08:00"></div>
       <div class="form-group"><label>Discipline / Format</label>
-        <select id="plan-sport">
+        <select id="plan-sport" onchange="toggleRaceFormatDropdown(this.value)">
           <option value="natation">🏊 Natation (Bleu)</option>
           <option value="velo">🚴 Vélo (Orange)</option>
           <option value="course">🏃 Course à pied (Vert)</option>
           <option value="marche">🚶 Marche (Turquoise)</option>
           <option value="hiit">⚡ HIIT (Rose)</option>
+          <option value="autres">⚽ Autres Sports (Violet)</option>
           <option value="triathlon">🏆 Triathlon (Épreuve Rouge)</option>
           <option value="duathlon">🏅 Duathlon (Épreuve Rouge)</option>
           <option value="trail">⛰️ Trail / Course (Épreuve Rouge)</option>
+        </select>
+      </div>
+      <div class="form-group" id="race-format-group" style="display:none;">
+        <label><i class="fa-solid fa-medal" style="color:var(--race-red)"></i> Format de l'épreuve / Distance</label>
+        <select id="plan-race-format">
+          <option value="XS">Format XS (Découverte)</option>
+          <option value="S">Format S (Sprint)</option>
+          <option value="M">Format M (Olympique)</option>
+          <option value="L">Format L (Half / 70.3)</option>
+          <option value="XL">Format XL</option>
+          <option value="XXL">Format XXL / Ironman</option>
         </select>
       </div>
       <div class="form-group"><label>Type d'événement</label>
@@ -998,167 +1281,275 @@
     </div>
   </div>
 
-  <!-- MODALE PROFIL -->
+  <!-- MODALE PROFIL ATHLETE - V4 -->
   <div class="modal-overlay" id="user-profile-modal">
-    <div class="modal-content">
-      <div class="card-title-flex" style="margin-bottom: 12px;">
-        <h3 style="color:var(--text-main); font-size:0.95rem;"><i class="fa-solid fa-user-gear" style="color:var(--bike-orange)"></i> Profil Athlète & Sauvegarde</h3>
-        <button onclick="toggleProfileModal(false)" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
+    <div class="modal-content" style="max-height:90vh;overflow:auto;max-width:620px;">
+      <div class="card-title-flex" style="margin-bottom:12px;">
+        <h3 style="color:var(--text-main);font-size:.95rem;"><i class="fa-solid fa-user-gear" style="color:var(--bike-orange)"></i> Mon profil À LA DOPAMINE</h3>
+        <button onclick="toggleProfileModal(false)" aria-label="Fermer" style="background:none;border:none;color:var(--text-main);font-size:1.3rem;cursor:pointer;">&times;</button>
       </div>
-      <div class="form-group"><label>Nom / Pseudo</label><input type="text" id="user-profile-name" value="Escarm"></div>
-      <div class="form-group"><label>Âge (ans)</label><input type="number" id="user-profile-age" value="35"></div>
-      <div class="form-group"><label>Poids (kg)</label><input type="number" id="user-profile-weight" value="70"></div>
-      
-      <hr style="border: 0.5px solid var(--card-border); margin: 10px 0;">
-      <h4 style="font-size:0.8rem; color:var(--bike-orange); margin-bottom:8px;"><i class="fa-solid fa-heart-pulse"></i> FC Max Spécifiques (BPM)</h4>
-      <div class="form-group"><label>🏃 FC Max Course</label><input type="number" id="user-profile-fcmax-course" value="185"></div>
-      <div class="form-group"><label>🚴 FC Max Vélo</label><input type="number" id="user-profile-fcmax-velo" value="180"></div>
-      <div class="form-group"><label>🏊 FC Max Natation</label><input type="number" id="user-profile-fcmax-natation" value="172"></div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+        <img id="profile-photo-preview" alt="Photo de profil" src="" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid var(--bike-orange);background:var(--card-bg);display:none;">
+        <div style="flex:1;min-width:0;">
+          <label for="user-profile-photo" style="display:block;font-size:.75rem;color:var(--text-sub);margin-bottom:6px;">Photo de profil</label>
+          <input id="user-profile-photo" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewProfilePhoto(event)" style="width:100%;font-size:.75rem;">
+          <button type="button" onclick="removeProfilePhoto()" class="medal-tab" style="margin-top:6px;">Supprimer la photo</button>
+        </div>
+      </div>
+      <div class="form-group"><label for="user-profile-name">Pseudo public</label><input type="text" id="user-profile-name" maxlength="24" placeholder="Ex. Escarm"></div>
+      <div class="form-group"><label for="user-profile-bio">Présentation personnelle (facultatif)</label><textarea id="user-profile-bio" rows="2" maxlength="240" placeholder="Quelques mots sur toi, tes sports et tes objectifs…" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--card-border);background:rgba(0,0,0,.35);color:var(--text-main);resize:vertical;"></textarea></div>
+      <div class="calc-inputs-grid">
+        <div class="form-group" style="position:relative;"><label for="user-profile-city">Ville</label><input id="user-profile-city" maxlength="80" placeholder="Commence à taper ta ville…" autocomplete="off" aria-autocomplete="list" aria-controls="profile-city-suggestions"><div id="profile-city-suggestions" role="listbox" style="display:none;position:absolute;z-index:10050;top:100%;left:0;right:0;max-height:220px;overflow-y:auto;background:var(--card-bg);border:1px solid var(--bike-orange);border-radius:8px;box-shadow:0 8px 22px rgba(0,0,0,.35);"></div><small id="profile-city-status" style="display:block;color:var(--text-sub);font-size:.68rem;margin-top:4px;">Choisis une proposition pour renseigner automatiquement le département.</small></div>
+        <div class="form-group"><label for="user-profile-department">Département</label><input id="user-profile-department" maxlength="80" placeholder="Automatique après sélection" readonly></div>
+        <div class="form-group"><label for="user-profile-age">Âge (facultatif)</label><input type="number" id="user-profile-age" min="13" max="110"></div>
+        <div class="form-group"><label for="user-profile-weight">Poids (kg, facultatif)</label><input type="number" id="user-profile-weight" min="20" max="350" step="0.1"></div>
+        <div class="form-group"><label for="user-profile-height">Taille (cm, facultatif)</label><input type="number" id="user-profile-height" min="100" max="250"></div>
+        <div class="form-group"><label for="user-profile-sex">Sexe (facultatif)</label><select id="user-profile-sex"><option value="">Je préfère ne pas renseigner</option><option value="homme">Homme</option><option value="femme">Femme</option><option value="autre">Autre</option></select></div>
+      </div>
+      <div class="form-group"><label for="user-profile-level">Niveau sportif</label><select id="user-profile-level"><option value="debutant">Débutant / reprise</option><option value="intermediaire">Intermédiaire / régulier</option><option value="confirme">Confirmé</option><option value="expert">Expert / compétition</option></select></div>
+      <div class="form-group"><label>Sports favoris</label><div style="display:flex;flex-wrap:wrap;gap:10px;font-size:.78rem;">
+        <label><input type="checkbox" name="favorite-sport" value="course"> 🏃 Course</label><label><input type="checkbox" name="favorite-sport" value="velo"> 🚴 Vélo</label><label><input type="checkbox" name="favorite-sport" value="natation"> 🏊 Natation</label><label><input type="checkbox" name="favorite-sport" value="marche"> 🚶 Marche</label><label><input type="checkbox" name="favorite-sport" value="hiit"> ⚡ HIIT</label>
+      </div></div>
+      <hr style="border:0;border-top:1px solid var(--card-border);margin:12px 0;">
+      <h4 style="font-size:.82rem;color:var(--bike-orange);margin-bottom:8px;"><i class="fa-solid fa-heart-pulse"></i> Fréquence cardiaque maximale (BPM)</h4>
+      <div class="calc-inputs-grid">
+        <div class="form-group"><label>🏃 FC Max Course</label><input type="number" id="user-profile-fcmax-course" min="80" max="240"></div>
+        <div class="form-group"><label>🚴 FC Max Vélo</label><input type="number" id="user-profile-fcmax-velo" min="80" max="240"></div>
+        <div class="form-group"><label>🏊 FC Max Natation</label><input type="number" id="user-profile-fcmax-natation" min="80" max="240"></div>
+      </div>
+      <hr style="border:0;border-top:1px solid var(--card-border);margin:12px 0;">
+      <!-- 📡 PASSERELLES ET CONNEXIONS GPS -->
+      <hr style="border:0;border-top:1px solid var(--card-border);margin:14px 0;">
+      <h4 style="font-size:.82rem;color:var(--bike-orange);margin-bottom:8px;"><i class="fa-solid fa-link"></i> Synchronisation GPS & Applications</h4>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:10px; line-height:1.4;">
+        Connecte tes comptes pour synchroniser tes entraînements directement sur À LA DOPAMINE.
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.78rem; margin-bottom: 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">
+          <span>🟠 <b>Strava API v3</b></span>
+          <button type="button" class="medal-tab active" style="font-size:0.65rem; padding:3px 10px;" onclick="beginPlatformConnection('Strava')">Connecter</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">
+          <span>🔵 <b>Garmin Connect</b></span>
+          <button type="button" class="medal-tab" style="font-size:0.65rem; padding:3px 10px;" onclick="beginPlatformConnection('Garmin')">Connecter</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">
+          <span>🟣 <b>Zwift Virtual Hub</b></span>
+          <button type="button" class="medal-tab" style="font-size:0.65rem; padding:3px 10px;" onclick="beginPlatformConnection('Zwift')">Connecter</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">
+          <span>🔴 <b>Polar Flow</b></span>
+          <button type="button" class="medal-tab" style="font-size:0.65rem; padding:3px 10px;" onclick="beginPlatformConnection('Polar')">Connecter</button>
+        </div>
+      </div>
 
-      <button class="btn-calc-orange" style="margin-top:8px;" onclick="saveUserProfile()">Sauvegarder le profil</button>
-
-      <hr style="border: 0.5px solid var(--card-border); margin: 12px 0;">
-      <div style="display: flex; gap: 8px;">
-        <button class="btn-action" style="background: rgba(168, 85, 247, 0.2); border: 1px solid var(--watts-purple); font-size:0.7rem;" onclick="exportDataJSON()"><i class="fa-solid fa-download"></i> Exporter JSON</button>
-        <button class="btn-action" style="background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); font-size:0.7rem;" onclick="document.getElementById('import-json-input').click()"><i class="fa-solid fa-upload"></i> Importer JSON</button>
+      <hr style="border:0;border-top:1px solid var(--card-border);margin:14px 0;">
+      <h4 style="font-size:.82rem;color:var(--bike-orange);margin-bottom:8px;">🔒 Confidentialité du profil</h4>
+      <div class="form-group">
+        <label for="user-profile-phone"><i class="fa-solid fa-phone" style="color:var(--bike-orange);"></i> Numéro de téléphone (Secret / Validation & Amis)</label>
+        <input type="tel" id="user-profile-phone" placeholder="ex: 06 12 34 56 78 (Reste strictement confidentiel)">
+        <small style="color:var(--text-sub); font-size:0.68rem; margin-top:2px; display:block;">Permettra de retrouver tes amis inscrits et de valider ton compte par SMS.</small>
+      </div>
+      <div class="form-group"><label for="user-profile-visibility">Qui peut voir mon profil ?</label><select id="user-profile-visibility"><option value="private">Privé — moi uniquement</option><option value="friends">Amis acceptés</option><option value="public">Public — membres du site</option></select></div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;font-size:.76rem;">
+        <label><input type="checkbox" id="privacy-show-age"> Afficher mon âge</label><label><input type="checkbox" id="privacy-show-weight"> Afficher mon poids</label><label><input type="checkbox" id="privacy-show-heart"> Afficher mes données cardiaques</label><label><input type="checkbox" id="privacy-show-performance"> Afficher mes performances</label><label><input type="checkbox" id="privacy-show-city"> Afficher ma ville</label>
+      </div>
+      <p style="font-size:.68rem;color:var(--text-sub);margin-top:7px;">Ces réglages sont enregistrés dans ton profil local pour cette version. Ils ne deviennent pas une protection réelle des données partagées avant l'activation des règles de sécurité Supabase.</p>
+      <hr style="border:0;border-top:1px solid var(--card-border);margin:12px 0;">
+      <h4 style="font-size:.82rem;color:var(--bike-orange);margin-bottom:8px;">🔔 Préférences de notifications</h4>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;font-size:.76rem;">
+        <label><input type="checkbox" id="notif-sound-enabled"> Sons activés</label><label><input type="checkbox" id="notif-visual-enabled"> Notifications visuelles</label><label><input type="checkbox" id="notif-trophies"> Trophées et XP</label><label><input type="checkbox" id="notif-friends"> Invitations et amis</label><label><input type="checkbox" id="notif-reminders"> Rappels de séances</label>
+      </div>
+      <div class="form-group" style="margin-top:8px;"><label for="notif-volume">Volume des sons</label><input type="range" id="notif-volume" min="0" max="100" step="5" style="width:100%;"></div>
+      <p id="profile-joined-date" style="font-size:.7rem;color:var(--text-sub);margin:8px 0;">Date d'inscription : disponible après lecture du compte.</p>
+      <button class="btn-calc-orange" style="margin-top:8px;" onclick="saveUserProfile()">Enregistrer mon profil et mes préférences</button>
+      <hr style="border:0;border-top:1px solid var(--card-border);margin:14px 0;"><!-- SECTION UTILISATEURS BLOQUÉS -->
+      <h4 style="font-size:.82rem;color:var(--bike-orange);margin-bottom:8px;"><i class="fa-solid fa-user-slash"></i> Utilisateurs bloqués</h4>
+      <div id="blocked-users-container" style="margin-bottom: 12px; font-size: 0.78rem;">
+        <!-- La liste des utilisateurs bloqués s'affichera ici -->
+      </div>
+      <h4 style="font-size:.82rem;color:var(--bike-orange);margin-bottom:8px;">Mes données et mon compte</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-action" style="flex:1;background:rgba(168,85,247,.2);border:1px solid var(--watts-purple);font-size:.7rem;" onclick="exportDataJSON()"><i class="fa-solid fa-download"></i> Télécharger mes données</button>
+        <button class="btn-action" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--card-border);font-size:.7rem;" onclick="document.getElementById('import-json-input').click()"><i class="fa-solid fa-upload"></i> Importer JSON</button>
         <input type="file" id="import-json-input" accept=".json" style="display:none;" onchange="importDataJSON(event)">
+      </div>
+      <button type="button" class="btn-action" style="margin-top:9px;background:rgba(239,68,68,.12);border:1px solid #ef4444;color:#ef4444;" onclick="explainAccountDeletion()">Demander la suppression de mon compte</button>
+      <p style="font-size:.66rem;color:var(--text-sub);margin-top:7px;">La suppression définitive doit être exécutée côté serveur pour supprimer aussi les données associées. Le bouton explique la procédure tant que cette fonction sécurisée n'est pas installée.</p>
+    </div>
+  </div>
+
+
+
+<footer>
+  <div class="container footer-content">
+    <div class="footer-brand-container" style="display: flex; align-items: center; gap: 12px;">
+      <img src="logo.png" alt="Logo À LA DOPAMINE" class="brand-logo" style="height: 60px; width: 60px; object-fit: contain; border-radius: 10px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.2);" onerror="this.style.display='none';">
+      <span class="footer-brand-title" style="font-weight: 900; font-size: 1.3rem; letter-spacing: 1px; color: var(--text-main);">À LA <span style="color:var(--bike-orange);">DOPAMINE</span></span>
+    </div>
+    <ul class="footer-links">
+      <li><a href="#" onclick="document.getElementById('legal-terms-modal').style.display='flex'">Mentions légales & Confidentialité</a></li>
+      <li><a href="#" onclick="alert('Contact')">Contact</a></li>
+    </ul>
+    <div style="color:var(--text-sub); font-style:italic; font-size:0.75rem;">Ensemble, allons plus loin...</div>
+  </div>
+
+  <!-- MODALE MENTIONS LÉGALES & POLITIQUE DE CONFIDENTIALITÉ -->
+  <div class="modal-overlay" id="legal-terms-modal" style="display:none;">
+    <div class="modal-content" style="max-height:85vh; overflow-y:auto; max-width:650px;">
+      <div class="card-title-flex" style="margin-bottom:12px;">
+        <h3 style="color:var(--text-main); font-size:1rem;"><i class="fa-solid fa-scale-balanced" style="color:var(--bike-orange)"></i> Mentions Légales & Confidentialité</h3>
+        <button onclick="document.getElementById('legal-terms-modal').style.display='none'" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-sub); line-height:1.6; text-align:left;">
+        <h4 style="color:var(--text-main); margin:10px 0 4px;">1. Éditeur & Hébergement du site</h4>
+        <p><b>Éditeur du site :</b> <span id="legal-company-name">Marc LE PALLUD (Projet Personnel Non Immatriculé - À LA DOPAMINE)</span></p>
+        <p><b>RCS / SIRET :</b> <span id="legal-siret">Non immatriculé (Éditeur particulier à titre non professionnel - Projet en phase de test)</span></p>
+        <p><b>Responsable publication :</b> <span id="legal-director">Marc LE PALLUD</span></p>
+        <p><b>Contact E-mail :</b> <span id="legal-email">ALADOPAMINE@hotmail.com</span></p>
+        <p><b>Hébergeur :</b> Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723 / Supabase Inc.</p>
+
+        <h4 style="color:var(--text-main); margin:14px 0 4px;">2. Avertissement Santé & Pratique Sportive (Disclaimer)</h4>
+        <p style="background:rgba(239, 68, 68, 0.1); border-left:3px solid var(--race-red); padding:8px; border-radius:4px;">
+          ⚠️ <b>Avis médical important :</b> L'application "À LA DOPAMINE" fournit des outils de suivi, des calculs de zones cardiaques (Z1-Z5), d'effort (RPE) et des plans d'entraînement automatisés à titre strictement indicatif. Ces contenus ne constituent en aucun cas un diagnostic médical ni un accompagnement médical individualisé. Consultez impérativement un médecin ou un professionnel de santé avant d'entreprendre ou de modifier un programme d'entraînement intensif.
+        </p>
+
+        <h4 style="color:var(--text-main); margin:14px 0 4px;">3. Protection des Données Personnelles (RGPD)</h4>
+        <p>Conformément au RGPD et à la loi Informatique et Libertés, les données collectées (adresse e-mail, données physiques et activités sportives) sont strictement destinées au fonctionnement personnalisé de ton compte.</p>
+        <p>Vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles que vous pouvez exercer directement depuis les paramètres du profil ou sur simple demande par e-mail.</p>
+      </div>
+      <button class="btn-calc-orange" style="margin-top:15px; width:100%;" onclick="document.getElementById('legal-terms-modal').style.display='none'">Fermer</button>
+    </div>
+  </div>
+
+
+  <!-- MODALE RECHERCHE D'AMIS & PASSERELLES -->
+  <div class="modal-overlay" id="search-friends-modal" style="display:none;">
+    <div class="modal-content" style="max-width:520px;">
+      <div class="card-title-flex" style="margin-bottom:12px;">
+        <h3 style="color:var(--text-main); font-size:1rem;"><i class="fa-solid fa-magnifying-glass" style="color:var(--bike-orange)"></i> Rechercher des amis sur À LA DOPAMINE</h3>
+        <button onclick="document.getElementById('search-friends-modal').style.display='none'" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="form-group">
+        <input type="text" id="search-friend-input" placeholder="Saisir un pseudo ou un numéro de téléphone..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--card-border); background:rgba(0,0,0,0.3); color:var(--text-main);">
+      </div>
+      <button class="btn-calc-orange" style="width:100%; margin-bottom:15px;" onclick="performFriendSearch()"><i class="fa-solid fa-search"></i> Rechercher</button>
+      
+      <div id="friend-search-results" style="margin-bottom:15px; font-size:0.8rem; color:var(--text-sub);">
+        Renseigne un pseudo pour chercher des membres inscrits.
+      </div>
+
+      <hr style="border:0; border-top:1px solid var(--card-border); margin:12px 0;">
+      <h4 style="font-size:0.85rem; color:var(--text-main); margin-bottom:10px;"><i class="fa-solid fa-share-nodes" style="color:var(--run-green);"></i> Inviter des amis à rejoindre l'appli</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button type="button" class="btn-action" style="background:#25D366;" onclick="shareInvite('whatsapp')"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+        <button type="button" class="btn-action" style="background:#1877F2;" onclick="shareInvite('facebook')"><i class="fa-brands fa-facebook"></i> Facebook</button>
       </div>
     </div>
   </div>
 
-  <footer>
-    <div class="container footer-content">
-      <div class="nav-brand" style="font-size: 0.95rem;">À LA <span>DOPAMINE</span></div>
-      <ul class="footer-links">
-        <li><a href="#" onclick="alert('Mentions légales')">Mentions légales</a></li>
-        <li><a href="#" onclick="alert('Contact')">Contact</a></li>
-      </ul>
-      <div style="color:var(--text-sub); font-style:italic; font-size:0.75rem;">Ensemble, allons plus loin...</div>
-    </div>
-  </footer>
+</footer>
 
   <script>
+    // Sons Dopamine : synthèse Web Audio (aucun fichier audio externe requis).
+    // Le navigateur exige une première interaction utilisateur avant d'autoriser le son.
+    let dopamineAudioContext = null;
+    let dopamineAudioUnlocked = false;
+    function unlockDopamineAudio() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return false;
+        if (!dopamineAudioContext) dopamineAudioContext = new AudioCtx();
+        if (dopamineAudioContext.state === 'suspended') dopamineAudioContext.resume();
+        dopamineAudioUnlocked = true;
+        return true;
+      } catch (error) { console.warn('Audio non disponible :', error); return false; }
+    }
+    document.addEventListener('pointerdown', unlockDopamineAudio, { once: true, passive: true });
+    document.addEventListener('keydown', unlockDopamineAudio, { once: true });
+    function playDopamineSound(kind = 'click') {
+      const prefs = appData?.user?.notifications || {};
+      if (prefs.sound === false || Number(prefs.volume ?? 60) <= 0) return;
+      if (!dopamineAudioContext && !unlockDopamineAudio()) return;
+      if (!dopamineAudioContext || dopamineAudioContext.state !== 'running') return;
+      const patterns = { click: [660], success: [523, 659, 784], trophy: [523, 659, 784, 1046], error: [220, 165] };
+      const notes = patterns[kind] || patterns.click;
+      const volume = Math.min(1, Math.max(0, Number(prefs.volume ?? 60) / 100)) * 0.12;
+      const now = dopamineAudioContext.currentTime;
+      notes.forEach((frequency, index) => {
+        const oscillator = dopamineAudioContext.createOscillator();
+        const gain = dopamineAudioContext.createGain();
+        const start = now + index * 0.11;
+        oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start); gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, volume), start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.10);
+        oscillator.connect(gain); gain.connect(dopamineAudioContext.destination);
+        oscillator.start(start); oscillator.stop(start + 0.12);
+      });
+    }
+
     let calendarMode = 'week'; // semaine, mois ou année
     let calendarDisplayDate = new Date();
     let calendarSelectedDate = localDateISO(new Date());
     let historyFilter = 'all';
     let chartInstance = null;
 
-    let appData = {
-      user: { name: 'Escarm', age: 35, weight: 70, fcmaxCourse: 185, fcmaxVelo: 180, fcmaxNatation: 172 },
-      xp: 320, level: 3,
-      stats: { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, calories: 0 },
-      goals: { natation: 15, velo: 180, course: 40 },
-      trophies: [
-        { id: 'velo_100', title: 'Rouleur d’Acier', desc: 'Atteindre 100 km à vélo', unlocked: false, tier: 'Or', icon: 'fa-person-biking' },
-        { id: 'course_30', title: 'Sprinteur Fondu', desc: 'Atteindre 30 km en course à pied', unlocked: false, tier: 'Argent', icon: 'fa-person-running' },
-        { id: 'tri_master', title: 'Triathlète Complet', desc: 'Valider Natation, Vélo et Course à pied', unlocked: false, tier: 'Platine', icon: 'fa-medal' },
-        { id: 'hiit_king', title: 'Explosivité Pure', desc: 'Valider 150 min de HIIT', unlocked: false, tier: 'Bronze', icon: 'fa-bolt' }
-      ],
-      sessionsHistory: [],
-      integrations: { Strava: 'non_configuree', Garmin: 'non_configuree', Polar: 'non_configuree', Zwift: 'non_configuree' },
-      plannedSessions: [
-        { id: 1, title: 'Triathlon M Objectif', date: '2026-06-15', time: '09:00', sport: 'triathlon', type: 'competition' },
-        { id: 2, title: 'Sortie Seuil Vélo', date: new Date().toISOString().split('T')[0], time: '18:00', sport: 'velo', type: 'entrainement' }
-      ]
-    };
-
-    function playDopamineSound(type = 'success') {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        if (type === 'success') {
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
-          gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.3);
-        } else {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.1);
-        }
-      } catch (e) {}
-    }
-
-    function toggleTheme() {
-      const html = document.documentElement;
-      const current = html.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      playDopamineSound('click');
-    }
-
-    function toggleActivityMenu() {
-      const menu = document.getElementById('activity-submenu');
-      const trigger = document.getElementById('nav-activities');
-      if (!menu || !trigger) return;
-      const isOpen = menu.classList.toggle('open');
-      trigger.setAttribute('aria-expanded', String(isOpen));
-    }
-
-    function closeActivityMenu() {
-      const menu = document.getElementById('activity-submenu');
-      const trigger = document.getElementById('nav-activities');
-      if (menu) menu.classList.remove('open');
-      if (trigger) trigger.setAttribute('aria-expanded', 'false');
-    }
-
-    function showPage(pageId) {
-      closeActivityMenu();
-      document.querySelectorAll('.app-page').forEach(page => page.classList.add('hidden'));
-      const target = document.getElementById(`view-${pageId}`);
-      if (target) {
-        target.classList.remove('hidden');
-      }
-      
-      document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
-      
-      let navId = pageId;
-      if (['natation', 'velo', 'course', 'marche', 'hiit'].includes(pageId)) {
-        navId = pageId;
-      }
-      const activeNav = document.getElementById(`nav-${navId}`);
+    // Navigation centrale : toutes les pages déjà présentes dans le HTML.
+    function showPage(page) {
+      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'stats', 'trophies'];
+      if (!allowedPages.includes(page)) return;
+      document.querySelectorAll('.app-page').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(`view-${page}`);
+      if (!target) { console.warn(`Page introuvable : view-${page}`); return; }
+      target.classList.remove('hidden');
+      document.querySelectorAll('nav a, #nav-home, #nav-stats, #nav-trophies').forEach(el => el.classList.remove('active'));
+      const activeNav = document.getElementById(page === 'home' ? 'nav-home' : page === 'stats' ? 'nav-stats' : page === 'trophies' ? 'nav-trophies' : null);
       if (activeNav) activeNav.classList.add('active');
-
-      if (pageId === 'home') {
-        updateAICoachAdvice();
-        renderHomeCalendar();
-      }
-      if (pageId === 'stats') {
-        renderChart();
-        renderHistory();
-      }
-      if (pageId === 'trophies') {
-        renderTrophiesAndRanks();
-      }
-      playDopamineSound('click');
+      document.querySelectorAll('.nav-discipline-btn').forEach(btn => btn.classList.toggle('active', (btn.getAttribute('onclick') || '').includes(`openCalc('${page}')`)));
+      const submenu = document.getElementById('activity-submenu');
+      if (submenu && ['home', 'stats', 'trophies'].includes(page)) submenu.classList.remove('open');
+      if (page === 'stats') { renderChart(); renderHistory(); }
+      if (page === 'trophies') renderTrophiesAndRanks();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function openCalc(sport) {
-      closeActivityMenu();
+      const sportPages = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres'];
+      if (!sportPages.includes(sport)) return;
       showPage(sport);
+      const submenu = document.getElementById('activity-submenu');
+      if (submenu) submenu.classList.remove('open');
+      const trigger = document.getElementById('nav-activities');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
     }
 
-    function openSyncModal() {
-      document.getElementById('sync-devices-modal').style.display = 'flex';
-      playDopamineSound('click');
+    function toggleActivityMenu() {
+      const submenu = document.getElementById('activity-submenu');
+      const trigger = document.getElementById('nav-activities');
+      if (!submenu || !trigger) return;
+      const isOpen = submenu.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', String(isOpen));
     }
 
-    function closeSyncModal() {
-      document.getElementById('sync-devices-modal').style.display = 'none';
-    }
-
+let activeUserId = null;
+let appData = {
+ user: { name: '', age: 0, weight: 0, height: 0, sex: '', bio: '', city: '', department: '', photo: '', joinedAt: '', levelSportif: 'debutant', favoriteSports: [], visibility: 'private', privacy: { age: false, weight: false, heart: false, performance: false, city: false }, notifications: { sound: true, visual: true, trophies: true, friends: true, reminders: true, volume: 60 }, fcmaxCourse: 0, fcmaxVelo: 0, fcmaxNatation: 0 },
+  xp: 0,
+  level: 1,
+  stats: { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, autres: 0, calories: 0 },
+  goals: { natation: 15, velo: 180, course: 40 },
+  trophies: [
+    { id: 'velo_100', title: 'Rouleur d’Acier', desc: 'Atteindre 100 km à vélo', unlocked: false, tier: 'Or', icon: 'fa-person-biking' },
+    { id: 'course_30', title: 'Sprinteur Fondu', desc: 'Atteindre 30 km en course à pied', unlocked: false, tier: 'Argent', icon: 'fa-person-running' },
+    { id: 'tri_master', title: 'Triathlète Complet', desc: 'Valider Natation, Vélo et Course à pied', unlocked: false, tier: 'Platine', icon: 'fa-medal' },
+    { id: 'hiit_king', title: 'Explosivité Pure', desc: 'Valider 150 min de HIIT', unlocked: false, tier: 'Bronze', icon: 'fa-bolt' },
+          { id: 'autres_first', title: 'Curieux du sport', desc: 'Enregistrer une première activité dans Autres sports', unlocked: false, tier: 'Bronze', icon: 'fa-medal' },
+          { id: 'autres_600', title: 'Polyvalent', desc: 'Cumuler 600 minutes dans Autres sports', unlocked: false, tier: 'Argent', icon: 'fa-award' }
+  ],
+  sessionsHistory: [],
+  integrations: { Strava: 'non_configuree', Garmin: 'non_configuree', Polar: 'non_configuree', Zwift: 'non_configuree' },
+  plannedSessions: []
+};
     function simulateApiSync(platform) {
       closeSyncModal();
       syncExternalApps(platform);
@@ -1422,37 +1813,305 @@ Progression prévue avec semaines allégées et affûtage lorsque la durée le p
 
     function toggleProfileModal(show) {
       const modal = document.getElementById('user-profile-modal');
+      if (!modal) return;
       modal.style.display = show ? 'flex' : 'none';
       if (show) {
-        document.getElementById('user-profile-name').value = appData.user.name;
-        document.getElementById('user-profile-age').value = appData.user.age;
-        document.getElementById('user-profile-weight').value = appData.user.weight;
-        document.getElementById('user-profile-fcmax-course').value = appData.user.fcmaxCourse;
-        document.getElementById('user-profile-fcmax-velo').value = appData.user.fcmaxVelo;
-        document.getElementById('user-profile-fcmax-natation').value = appData.user.fcmaxNatation;
-      }
+        const u = appData.user || {};
+        const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value ?? ''; };
+        set('user-profile-name', u.name); set('user-profile-bio', u.bio); set('user-profile-city', u.city); set('user-profile-department', u.department);
+        window.selectedProfileCity = (u.city && u.cityCode && Number.isFinite(Number(u.cityLatitude)) && Number.isFinite(Number(u.cityLongitude))) ? { nom: u.city, code: u.cityCode, codeDepartement: u.cityDepartmentCode, latitude: Number(u.cityLatitude), longitude: Number(u.cityLongitude) } : null;
+        const cityStatus = document.getElementById('profile-city-status');
+        if (cityStatus) cityStatus.textContent = u.cityCode ? `Ville sélectionnée · ${u.department || ''}` : 'Choisis une proposition pour renseigner automatiquement le département.';
+        if (!window.profileCityAutocompleteReady) { setupProfileCityAutocomplete(); window.profileCityAutocompleteReady = true; }
+        set('user-profile-age', u.age || ''); set('user-profile-weight', u.weight || ''); set('user-profile-height', u.height || ''); set('user-profile-sex', u.sex);
+        set('user-profile-level', u.levelSportif || 'debutant'); set('user-profile-fcmax-course', u.fcmaxCourse || ''); set('user-profile-fcmax-velo', u.fcmaxVelo || ''); set('user-profile-fcmax-natation', u.fcmaxNatation || '');
+        set('user-profile-visibility', u.visibility || 'private');
+        const privacy = u.privacy || {}; const notif = u.notifications || {};
+        [['privacy-show-age',privacy.age],['privacy-show-weight',privacy.weight],['privacy-show-heart',privacy.heart],['privacy-show-performance',privacy.performance],['privacy-show-city',privacy.city],['notif-sound-enabled',notif.sound !== false],['notif-visual-enabled',notif.visual !== false],['notif-trophies',notif.trophies !== false],['notif-friends',notif.friends !== false],['notif-reminders',notif.reminders !== false]].forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.checked=!!val;});
+        set('notif-volume', notif.volume ?? 60);
+        document.querySelectorAll('input[name="favorite-sport"]').forEach(el => el.checked = (u.favoriteSports || []).includes(el.value));
+        const photo = document.getElementById('profile-photo-preview'); if (photo) { photo.src = u.photo || ''; photo.style.display = u.photo ? 'block' : 'none'; }
+        const joined = document.getElementById('profile-joined-date'); if (joined) joined.textContent = `Date d'inscription : ${u.joinedAt ? new Date(u.joinedAt).toLocaleDateString('fr-FR') : 'non disponible pour le moment'}`;
+      }loadBlockedUsersUI('blocked-users-container');
       playDopamineSound('click');
     }
 
-    function saveUserProfile() {
-      appData.user.name = document.getElementById('user-profile-name').value || 'Escarm';
-      appData.user.age = parseInt(document.getElementById('user-profile-age').value) || 35;
-      appData.user.weight = parseFloat(document.getElementById('user-profile-weight').value) || 70;
-      appData.user.fcmaxCourse = parseInt(document.getElementById('user-profile-fcmax-course').value) || 185;
-      appData.user.fcmaxVelo = parseInt(document.getElementById('user-profile-fcmax-velo').value) || 180;
-      appData.user.fcmaxNatation = parseInt(document.getElementById('user-profile-fcmax-natation').value) || 172;
-      
-      saveAppData();
-      toggleProfileModal(false);
-      updateSummaryUI();
-      updateAICoachAdvice();
-      playDopamineSound('success');
-      alert("Profil mis à jour avec succès !");
+    function previewProfilePhoto(event) {
+      const file = event.target.files && event.target.files[0]; if (!file) return;
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { alert('Choisis une image JPG, PNG ou WEBP.'); event.target.value=''; return; }
+      if (file.size > 8 * 1024 * 1024) { alert('La photo doit faire moins de 8 Mo.'); event.target.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image(); img.onload = () => {
+          const canvas = document.createElement('canvas'); const scale = Math.min(1, 320 / Math.max(img.width, img.height));
+          canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          appData.user.photo = canvas.toDataURL('image/jpeg', .78);
+          const preview = document.getElementById('profile-photo-preview'); preview.src = appData.user.photo; preview.style.display = 'block';
+        }; img.src = reader.result;
+      }; reader.readAsDataURL(file);
+    }
+
+    function removeProfilePhoto() {
+      appData.user.photo = ''; const preview = document.getElementById('profile-photo-preview');
+      if (preview) { preview.removeAttribute('src'); preview.style.display='none'; }
+      const input = document.getElementById('user-profile-photo'); if (input) input.value='';
+    }
+    
+async function saveUserProfile() {
+  const val = id => document.getElementById(id)?.value ?? '';
+  const num = id => { const n = Number(val(id)); return Number.isFinite(n) && n > 0 ? n : 0; };
+  const name = val('user-profile-name').trim();
+  if (name.length < 3) { alert('Le pseudo doit contenir au moins 3 caractères.'); return; }
+
+  const u = appData.user;
+  const selectedCity = window.selectedProfileCity;
+  const typedCity = val('user-profile-city').trim();
+
+  if (typedCity && (!selectedCity || selectedCity.nom !== typedCity)) {
+    alert('Sélectionne une ville dans la liste des propositions pour renseigner automatiquement le département.');
+    return;
+  }
+
+  if (selectedCity) {
+    u.cityLatitude = selectedCity.latitude;
+    u.cityLongitude = selectedCity.longitude;
+    u.cityCode = selectedCity.code;
+    u.cityDepartmentCode = selectedCity.codeDepartement;
+  }
+
+  // 1. Récupération du numéro de téléphone
+  u.phone = val('user-profile-phone').trim();
+
+  // 2. Gestion de l'upload de la photo de profil vers Supabase Storage (bucket 'avatars')
+  const fileInput = document.getElementById('user-profile-photo');
+  let photoUrl = u.photo || '';
+
+  if (fileInput && fileInput.files && fileInput.files[0] && activeUserId && typeof supabaseClient !== 'undefined') {
+    const file = fileInput.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${activeUserId}/avatar.${fileExt}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from('avatars')
+      .upload(fileName, file, { upsert: true });
+
+    if (!uploadError) {
+      const { data: publicUrlData } = supabaseClient.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      if (publicUrlData?.publicUrl) {
+        photoUrl = publicUrlData.publicUrl;
+        u.photo = photoUrl;
+      }
+    } else {
+      console.warn("Erreur lors de l'envoi de l'avatar :", uploadError.message);
+    }
+  }
+
+  Object.assign(u, {
+    name,
+    bio: val('user-profile-bio').trim(),
+    city: typedCity,
+    department: val('user-profile-department').trim(),
+    age: num('user-profile-age'),
+    weight: num('user-profile-weight'),
+    height: num('user-profile-height'),
+    sex: val('user-profile-sex'),
+    levelSportif: val('user-profile-level'),
+    fcmaxCourse: num('user-profile-fcmax-course'),
+    fcmaxVelo: num('user-profile-fcmax-velo'),
+    fcmaxNatation: num('user-profile-fcmax-natation'),
+    visibility: val('user-profile-visibility') || 'private'
+  });
+
+  u.favoriteSports = Array.from(document.querySelectorAll('input[name="favorite-sport"]:checked')).map(el => el.value);
+  u.privacy = { 
+    age: !!document.getElementById('privacy-show-age')?.checked, 
+    weight: !!document.getElementById('privacy-show-weight')?.checked, 
+    heart: !!document.getElementById('privacy-show-heart')?.checked, 
+    performance: !!document.getElementById('privacy-show-performance')?.checked, 
+    city: !!document.getElementById('privacy-show-city')?.checked 
+  };
+  u.notifications = { 
+    sound: !!document.getElementById('notif-sound-enabled')?.checked, 
+    visual: !!document.getElementById('notif-visual-enabled')?.checked, 
+    trophies: !!document.getElementById('notif-trophies')?.checked, 
+    friends: !!document.getElementById('notif-friends')?.checked, 
+    reminders: !!document.getElementById('notif-reminders')?.checked, 
+    volume: Number(val('notif-volume')) || 0 
+  };
+
+  if (!u.joinedAt && activeUserId) {
+    try { const { data } = await supabaseClient.auth.getUser(); u.joinedAt = data.user?.created_at || ''; } catch(e) {}
+  }
+
+  const saved = saveAppData();
+
+  // 3. Synchronisation complète avec Supabase (table profiles incluant le téléphone et l'avatar)
+  if (typeof supabaseClient !== 'undefined' && supabaseClient && activeUserId) {
+    try {
+      supabaseClient.auth.updateUser({ data: { username: u.name } }).catch(() => {});
+
+      const { error: profileError } = await supabaseClient.from('profiles').upsert(
+        {
+          id: activeUserId,
+          username: u.name,
+          bio: u.bio,
+          city: u.city,
+          department: u.department,
+          city_code: u.cityCode,
+          department_code: u.cityDepartmentCode,
+          latitude: u.cityLatitude,
+          longitude: u.cityLongitude,
+          age: u.age,
+          weight: u.weight,
+          height: u.height,
+          sex: u.sex,
+          phone: u.phone,
+          photo_url: u.photo
+        },
+        { onConflict: 'id' }
+      );
+
+      if (profileError) console.warn('Erreur synchro Supabase :', profileError.message);
+    } catch (syncError) { console.warn('Synchronisation Supabase indisponible :', syncError); }
+  }
+
+  toggleProfileModal(false);
+  updateSummaryUI();
+  updateAICoachAdvice();
+  if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
+  if (u.city) refreshProfileWeather();
+  playDopamineSound('success');
+
+  alert(saved ? (activeUserId ? 'Profil, téléphone et avatar synchronisés avec succès sur Supabase !' : 'Profil enregistré sur cet appareil en mode invité.') : 'La sauvegarde a échoué.');
+}
+
+// CONFIGURATION DE L'AUTOCOMPLÉTION DES VILLES
+function setupProfileCityAutocomplete() {
+  const input = document.getElementById('user-profile-city');
+  const status = document.getElementById('profile-city-status');
+  const list = document.getElementById('profile-city-suggestions');
+  if (!input || !list) return;
+
+  let timer = null;
+  window.selectedProfileCity = null;
+  const hide = () => { list.style.display = 'none'; list.innerHTML = ''; };
+  
+  input.addEventListener('input', () => {
+    // ... le reste de ton code d'autocomplétion ...
+    const query = input.value.trim();
+    window.selectedProfileCity = null;
+    if (appData.user) { appData.user.cityLatitude = null; appData.user.cityLongitude = null; appData.user.cityCode = ''; appData.user.cityDepartmentCode = ''; }
+    const dep = document.getElementById('user-profile-department'); if (dep) dep.value = '';
+    if (status) status.textContent = 'Recherche des communes françaises…';
+    clearTimeout(timer);
+    if (query.length < 2) { hide(); if (status) status.textContent = 'Tape au moins 2 caractères.'; return; }
+    timer = setTimeout(async () => {
+      try {
+        const url = `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(query)}&fields=nom,code,codeDepartement,departement,centre&format=json&boost=population&limit=8`;
+        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error('Service de recherche indisponible.');
+        const cities = await response.json();
+        list.innerHTML = '';
+        if (!cities.length) { hide(); if (status) status.textContent = "Aucune commune trouvée. Vérifie l'orthographe."; return; }
+        cities.forEach(city => {
+          const button = document.createElement('button');
+          button.type = 'button'; 
+          button.setAttribute('role','option');
+          button.style.cssText = 'display:block;width:100%;text-align:left;padding:9px 11px;border:0;border-bottom:1px solid var(--card-border);background:transparent;cursor:pointer;color:inherit;';
+          button.textContent = `${city.nom} (${city.departement?.nom || 'Département'} - ${city.codeDepartement})`;
+          button.addEventListener('click', () => {
+            const coords = city.centre?.coordinates || [];
+            if (coords.length !== 2) { if (status) status.textContent = "Coordonnées indisponibles pour cette commune. Choisis une autre proposition."; return; }
+            input.value = city.nom;
+            const department = document.getElementById('user-profile-department');
+            if (department) department.value = `${city.departement?.nom || 'Département'} (${city.codeDepartement})`;
+            window.selectedProfileCity = { nom: city.nom, code: city.code, codeDepartement: city.codeDepartement, latitude: Number(coords[1]), longitude: Number(coords[0]) };
+            if (appData.user) {
+              appData.user.cityLatitude = Number(coords[1]);
+              appData.user.cityLongitude = Number(coords[0]);
+              appData.user.cityCode = city.code;
+              appData.user.cityDepartmentCode = city.codeDepartement;
+            }
+            if (status) status.textContent = "Ville sélectionnée. Le département et les coordonnées sont enregistrés avec le profil.";
+            hide();
+          });
+          list.appendChild(button);
+        });
+        list.style.display = 'block';
+        if (status) status.textContent = 'Sélectionne la bonne commune dans la liste.';
+      } catch (error) { hide(); if (status) status.textContent = error.message || 'Impossible de rechercher les communes pour le moment.'; }
+    }, 300);
+  });
+  input.addEventListener('keydown', event => { if (event.key === 'Escape') hide(); });
+  document.addEventListener('click', event => { if (!list.contains(event.target) && event.target !== input) hide(); });
+}
+
+    async function refreshProfileWeather() {
+      const box = document.getElementById('dopamine-weather-widget');
+      const user = appData.user || {};
+      const summary = document.getElementById('weather-summary');
+      const placeEl = document.getElementById('weather-place');
+      if (!box || !summary || !placeEl) return;
+      box.style.display = 'block';
+      if (!user.city) { placeEl.textContent = 'Météo locale'; summary.textContent = 'Renseigne ta ville dans ton profil.'; return; }
+      placeEl.textContent = `${user.city}${user.department ? ' · ' + user.department : ''}`;
+      summary.textContent = 'Recherche de la météo…';
+      try {
+        let latitude = Number(user.cityLatitude);
+        let longitude = Number(user.cityLongitude);
+        // Compatibilité avec les profils déjà enregistrés avant l'ajout des coordonnées.
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !user.cityCode) {
+          const geoUrl = `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(user.city)}&fields=nom,code,codeDepartement,departement,centre&format=json&boost=population&limit=10`;
+          const geoResponse = await fetch(geoUrl, { headers: { Accept: 'application/json' } });
+          if (!geoResponse.ok) throw new Error('Le service de localisation est indisponible.');
+          const cities = await geoResponse.json();
+          const match = cities.find(city => city.nom.toLocaleLowerCase('fr') === user.city.toLocaleLowerCase('fr') && (!user.cityDepartmentCode || city.codeDepartement === user.cityDepartmentCode)) || cities[0];
+          const coords = match?.centre?.coordinates;
+          if (!coords || coords.length !== 2) throw new Error('Coordonnées de cette commune introuvables. Modifie et sélectionne à nouveau ta ville dans le profil.');
+          longitude = Number(coords[0]); latitude = Number(coords[1]);
+          user.cityLatitude = latitude; user.cityLongitude = longitude; user.cityCode = match.code; user.cityDepartmentCode = match.codeDepartement;
+          if (!user.department && match.departement?.nom) user.department = `${match.departement.nom} (${match.codeDepartement})`;
+          saveAppData();
+        }
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&forecast_days=3&timezone=auto`;
+        const weatherResponse = await fetch(weatherUrl);
+        if (!weatherResponse.ok) throw new Error('Le service météo est temporairement indisponible.');
+        const weather = await weatherResponse.json();
+        if (!weather.current) throw new Error('Aucune donnée météo reçue pour cette ville.');
+        const c = weather.current;
+        const codes = {0:'☀️ Ciel dégagé',1:'🌤️ Peu nuageux',2:'⛅ Éclaircies',3:'☁️ Couvert',45:'🌫️ Brouillard',48:'🌫️ Brouillard givrant',51:'🌦️ Bruine',53:'🌦️ Bruine',55:'🌦️ Bruine',61:'🌧️ Pluie',63:'🌧️ Pluie modérée',65:'🌧️ Forte pluie',71:'🌨️ Neige',73:'🌨️ Neige',75:'🌨️ Forte neige',80:'🌦️ Averses',81:'🌦️ Averses',82:'🌧️ Fortes averses',95:'⛈️ Orage',96:'⛈️ Orage et grêle',99:'⛈️ Orage et grêle'};
+        summary.textContent = `${codes[c.weather_code] || 'Météo variable'} · ${Math.round(c.temperature_2m)}°C · ressenti ${Math.round(c.apparent_temperature)}°C · vent ${Math.round(c.wind_speed_10m)} km/h`;
+        box.title = `Pluie actuelle : ${c.precipitation} mm. Prévisions sur 3 jours disponibles.`;
+      } catch (error) {
+        console.warn('Météo À LA DOPAMINE :', error);
+        summary.textContent = error.message || 'Météo temporairement indisponible. Réessaie dans quelques instants.';
+      }
     }
 
     function showLevelStatsModal() {
       playDopamineSound('success');
       alert(`⚡ STATISTIQUES GLOBALES DE JOUEUR :\n\n- Athlète : ${appData.user.name}\n- Niveau actuel : ${appData.level}\n- Expérience : ${appData.xp} / 500 XP\n- Total Activités enregistrées : ${appData.sessionsHistory.length}\n- Calories totales brûlées : ${appData.stats.calories} kcal`);
+    }
+
+    // Ouvrir / fermer la fenêtre des connexions externes (les intégrations restent en préparation).
+    function openSyncModal() {
+      const modal = document.getElementById('sync-devices-modal');
+      if (modal) modal.style.display = 'flex';
+    }
+    function closeSyncModal() {
+      const modal = document.getElementById('sync-devices-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Bascule de thème mémorisée sur cet appareil.
+    function toggleTheme() {
+      const root = document.documentElement;
+      const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = nextTheme;
+      try { localStorage.setItem('dopamine_theme', nextTheme); } catch (error) { console.warn('Préférence de thème non mémorisée.', error); }
     }
 
     // Préparation des connexions : aucun faux import ni aucune séance aléatoire.
@@ -1485,7 +2144,7 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "dopamine_backup.json");
+      downloadAnchor.setAttribute("download", `a-la-dopamine-donnees-${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
@@ -1549,7 +2208,16 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
         .reduce((sum, session) => sum + Math.max(0, Number(session.xp) || 0), 0);
       appData.xpBaseTotal = Math.max(0, currentTotal - sessionXp);
     }
+function resetActiveForm(sport) {
+  const inputs = document.querySelectorAll(`#view-${sport} input, #view-${sport} textarea`);
+  inputs.forEach(input => { input.value = ''; });
 
+  const selects = document.querySelectorAll(`#view-${sport} select`);
+  selects.forEach(select => { select.selectedIndex = 0; });
+
+  const res = document.getElementById(`calc-result-${sport}`);
+  if (res) { res.style.display = 'none'; res.innerHTML = ''; }
+}
     function recalculateXpFromHistory() {
       ensureXpBaseline();
       const totalXp = getTotalEarnedXp();
@@ -1559,9 +2227,9 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
 
     function recalculateStatsFromHistory() {
       if (!Array.isArray(appData.sessionsHistory)) appData.sessionsHistory = [];
-      appData.stats = { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, calories: 0 };
+      appData.stats = { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, autres: 0, calories: 0 };
       appData.sessionsHistory.forEach(s => {
-        if (!s || !['natation', 'velo', 'course', 'marche', 'hiit'].includes(s.sport)) return;
+        if (!s || !['natation', 'velo', 'course', 'marche', 'hiit', 'autres'].includes(s.sport)) return;
         const val = Number(s.rawVal);
         if (!Number.isFinite(val) || val <= 0) return;
         appData.stats[s.sport] += val;
@@ -1627,7 +2295,8 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
         { id: 'course', label: 'Course à pied', icon: 'fa-person-running', color: 'var(--run-green)' },
         { id: 'natation', label: 'Natation', icon: 'fa-person-swimming', color: 'var(--swim-blue)' },
         { id: 'marche', label: 'Marche', icon: 'fa-person-walking', color: 'var(--walk-teal)' },
-        { id: 'hiit', label: 'HIIT', icon: 'fa-bolt', color: 'var(--hiit-pink)' }
+        { id: 'hiit', label: 'HIIT', icon: 'fa-bolt', color: 'var(--hiit-pink)' },
+        { id: 'autres', label: 'Autres sports', icon: 'fa-medal', color: '#a855f7' }
       ];
 
       sports.forEach(s => {
@@ -1648,7 +2317,7 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
                 <strong style="font-size:0.78rem; color:var(--text-main);">${s.label}</strong>
                 <span class="rank-badge-pill" style="background:${rank.bg};">${rank.name}</span>
               </div>
-              <div style="font-size:0.65rem; color:var(--text-sub); margin-top:2px;">Volume : ${val} ${s.id === 'hiit' ? 'min' : 'km'}</div>
+              <div style="font-size:0.65rem; color:var(--text-sub); margin-top:2px;">Volume : ${val} ${['hiit','autres'].includes(s.id) ? 'min' : 'km'}</div>
             </div>
           </div>`;
       });
@@ -1723,6 +2392,12 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
         if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
         const speed = (dist / (time / 60)).toFixed(1);
         res.innerHTML = `🚶 Vitesse: <span style="color:var(--walk-teal)">${speed} km/h</span>${fcInfo}`;
+      } else if (sport === 'autres') {
+        const time = parseFloat(document.getElementById('autres-time').value) || 0;
+        const rpe = parseFloat(document.getElementById('autres-rpe-slider')?.value) || 5;
+        if (!time) { res.innerText = 'Entrez la durée de l’activité.'; return; }
+        const activity = document.getElementById('autres-sport-select')?.value || 'Activité';
+        res.innerHTML = `🏅 ${activity} · ${time} min · RPE ${rpe}/10${fcInfo}`;
       } else if (sport === 'hiit') {
         const time = parseFloat(document.getElementById('hiit-time').value) || 0;
         const rpe = parseFloat(document.getElementById('hiit-rpe').value) || 7;
@@ -1733,7 +2408,7 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
     }
 
     function saveCurrentSession(sport) {
-      const supportedSports = ['natation', 'velo', 'course', 'marche', 'hiit'];
+      const supportedSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres'];
       if (!supportedSports.includes(sport)) {
         alert("Le sport sélectionné n'est pas reconnu."); return;
       }
@@ -1754,40 +2429,41 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
         dist = parseFloat(document.getElementById('marche-dist').value);
         time = parseFloat(document.getElementById('marche-time').value);
         elev = parseFloat(document.getElementById('marche-elev').value) || 0;
-      } else {
+      } else if (sport === 'hiit') {
         time = parseFloat(document.getElementById('hiit-time').value);
         dist = 0;
+      } else {
+        time = parseFloat(document.getElementById('autres-time').value);
+        dist = parseFloat(document.getElementById('autres-dist').value) || 0;
       }
 
       if (!Number.isFinite(time) || time <= 0) {
         alert("La durée doit être un nombre supérieur à zéro."); return;
       }
-      if (sport !== 'hiit' && (!Number.isFinite(dist) || dist <= 0)) {
+      if (!['hiit', 'autres'].includes(sport) && (!Number.isFinite(dist) || dist <= 0)) {
         alert("La distance doit être un nombre supérieur à zéro."); return;
       }
       if (!Number.isFinite(elev) || elev < 0) {
         alert("Le dénivelé ne peut pas être négatif."); return;
       }
-      if (sport === 'hiit') {
-        const rpeInput = parseFloat(document.getElementById('hiit-rpe').value);
-        if (Number.isFinite(rpeInput) && (rpeInput < 1 || rpeInput > 10)) {
-          alert("L'intensité perçue doit être comprise entre 1 et 10."); return;
-        }
+      if (['hiit', 'autres'].includes(sport)) {
+        const rpeInput = parseFloat(document.getElementById(sport === 'autres' ? 'autres-rpe-slider' : 'hiit-rpe').value);
+        if (Number.isFinite(rpeInput) && (rpeInput < 1 || rpeInput > 10)) { alert("L'intensité perçue doit être comprise entre 1 et 10."); return; }
       }
-
       // Garde-fous pour éviter les erreurs de saisie manifestes.
       if (time > 24 * 60) { alert("La durée doit être inférieure ou égale à 24 heures."); return; }
-      if (sport !== 'hiit' && dist > 1000) { alert("La distance semble trop élevée. Vérifie la valeur saisie."); return; }
+      if (!['hiit', 'autres'].includes(sport) && dist > 1000) { alert("La distance semble trop élevée. Vérifie la valeur saisie."); return; }
       if (elev > 20000) { alert("Le dénivelé semble trop élevé. Vérifie la valeur saisie."); return; }
 
-      const rawVal = sport === 'hiit' ? time : dist;
-      let baseXp = Math.round((sport === 'hiit' ? time * 1.5 : dist * 10) + (time * 0.5) + (elev * 0.2));
+      const rawVal = ['hiit', 'autres'].includes(sport) ? time : dist;
+      let baseXp = Math.round((['hiit', 'autres'].includes(sport) ? time * 1.5 : dist * 10) + (time * 0.5) + (elev * 0.2));
       baseXp = Math.max(30, baseXp);
 
       // Initialiser le socle avant d'ajouter la séance pour préserver l'XP historique.
       ensureXpBaseline();
-      const sessionTitle = `Séance ${sport.toUpperCase()}`;
-      const sessionDist = sport === 'hiit' ? `${time} min` : `${Number(dist.toFixed(2))} km`;
+      const activityName = sport === 'autres' ? (document.getElementById('autres-sport-select')?.value || 'Autre sport') : sport.toUpperCase();
+      const sessionTitle = sport === 'autres' ? activityName : `Séance ${activityName}`;
+      const sessionDist = ['hiit', 'autres'].includes(sport) ? `${time} min` : `${Number(dist.toFixed(2))} km`;
       const feelingEl = document.getElementById(`${sport}-feeling`);
       const commentEl = document.getElementById(`${sport}-comment`);
       const feeling = feelingEl ? feelingEl.value : '';
@@ -1801,7 +2477,7 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
         distance: sessionDist,
         rawVal,
         duration: `${time} min`,
-        date: new Date().toISOString().split('T')[0],
+        date: localDateISO(new Date()),
         xp: baseXp,
         calories: Math.round(time * 9)
       };
@@ -1832,6 +2508,8 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
         const t = appData.trophies.find(x => x.id === 'hiit_king');
         if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Explosivité Pure !"); }
       }
+      if ((appData.stats.autres || 0) > 0) { const t = appData.trophies.find(x => x.id === 'autres_first'); if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup('🏆 Trophée : Curieux du sport !'); } }
+      if ((appData.stats.autres || 0) >= 600) { const t = appData.trophies.find(x => x.id === 'autres_600'); if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup('🏆 Trophée : Polyvalent !'); } }
     }
 
     function filterHistory(filter, btn) {
@@ -1972,7 +2650,6 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
             </div>`;
         }
       } else {
-    } else {
         // Vue annuelle compacte : 12 mois, chaque date reste cliquable.
         const year = displayDate.getFullYear();
         if (label) label.innerText = `Année ${year}`;
@@ -2014,24 +2691,378 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
       updateRaceCountdown();
     }
 
-    window.onload = function() {
-      const saved = localStorage.getItem('dopamine_app_data');
-      if (saved) { 
-        try { 
-          const parsed = JSON.parse(saved);
-          appData = { ...appData, ...parsed };
-        } catch (e) {} 
+    function navigateCalendar(direction) {
+      if (calendarMode === 'week') calendarDisplayDate.setDate(calendarDisplayDate.getDate() + direction * 7);
+      else if (calendarMode === 'month') calendarDisplayDate.setMonth(calendarDisplayDate.getMonth() + direction, 1);
+      else calendarDisplayDate.setFullYear(calendarDisplayDate.getFullYear() + direction, 0, 1);
+      renderHomeCalendar();
+      if (calendarSelectedDate) showDayDetails(calendarSelectedDate);
+    }
+    function goCalendarToday() { calendarDisplayDate = new Date(); showDayDetails(localDateISO(calendarDisplayDate)); }
+    function openPricingModal() { const el = document.getElementById('pricing-modal'); if (el) el.style.display = 'flex'; }
+    function closePricingModal() { const el = document.getElementById('pricing-modal'); if (el) el.style.display = 'none'; }
+
+    function showDayDetails(dateStr) {
+      calendarSelectedDate = dateStr;
+      const panel = document.getElementById('calendar-selection-hint');
+      const sessions = (appData.plannedSessions || []).filter(s => s.date === dateStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+      const prettyDate = new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      if (panel) {
+        if (!sessions.length) {
+          panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><div><strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">Aucune séance planifiée pour cette journée.</small></div><button type="button" onclick="openPlanModal();document.getElementById('plan-date').value='${dateStr}'">+ Planifier une séance</button></div>`;
+        } else {
+          panel.innerHTML = `<strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">${sessions.length} séance(s) planifiée(s)</small>` + sessions.map(s => {
+            const title = escapeHTML(String(s.title || 'Séance'));
+            const sport = escapeHTML(String(s.sport || '').toUpperCase());
+            const time = escapeHTML(String(s.time || 'Heure à définir'));
+            const detail = escapeHTML(String(s.description || s.planGoal || 'Séance planifiée'));
+            const type = s.type === 'competition' ? ' · 🏁 Compétition' : '';
+            return `<div class="calendar-detail-row"><div><strong>${time} · ${title}</strong><small>${sport}${type}<br>${detail}</small></div><button type="button" onclick="openPlanModal();document.getElementById('plan-date').value='${dateStr}'">Ajouter</button></div>`;
+          }).join('');
+        }
       }
+      renderHomeCalendar();
+    }
+
+    
+    function openSearchFriendsModal() {
+      document.getElementById('search-friends-modal').style.display = 'flex';
+    }
+
+    function toggleRaceFormatDropdown(sport) {
+      const formatGroup = document.getElementById('race-format-group');
+      if (!formatGroup) return;
+      if (['triathlon', 'duathlon', 'trail'].includes(sport)) {
+        formatGroup.style.display = 'block';
+      } else {
+        formatGroup.style.display = 'none';
+      }
+    }
+
+    function performFriendSearch() {
+      const query = document.getElementById('search-friend-input').value.trim();
+      const resultsDiv = document.getElementById('friend-search-results');
+      if (!query) {
+        resultsDiv.innerHTML = '<span style="color:var(--heart-red);">Veuillez entrer un pseudo ou un numéro.</span>';
+        return;
+      }
+      resultsDiv.innerHTML = `<div style="background:rgba(255,107,0,0.1); border:1px solid var(--bike-orange); padding:10px; border-radius:8px;">
+        🔍 Recherche en cours pour "<b>${query}</b>"...<br>
+        <span style="font-size:0.72rem; color:var(--text-sub);">Aucun résultat en local. La recherche globale de membres sera active dès la synchronisation Supabase !</span>
+      </div>`;
+    }
+
+    function shareInvite(platform) {
+      const message = encodeURIComponent("Rejoins-moi sur l'application À LA DOPAMINE pour suivre nos entraînements et relever des défis ensemble !");
+      if (platform === 'whatsapp') {
+        window.open(`https://api.whatsapp.com/send?text=${message}`, '_blank');
+      } else if (platform === 'facebook') {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+      }
+    }
+
+    function showFeedComingSoon() {
+      alert('Le Fil Dopamine est en préparation. Le partage entre amis, les photos, les likes et les commentaires seront activés après la mise en place des comptes et du stockage en ligne.');
+    }
+
+    
+    // POINT 1 : Gestion Dynamique du RPE (1 à 10)
+    function updateRPEValue(sport, val) {
+      const value = parseInt(val, 10);
+      const badge = document.getElementById(`${sport}-rpe-badge`);
+      const desc = document.getElementById(`${sport}-rpe-desc`);
+      const slider = document.getElementById(`${sport}-rpe-slider`);
+      
+      if (!badge || !desc || !slider) return;
+
+      let emoji = "😎";
+      let color = "#22c55e"; 
+      let text = "Récupération / Très facile";
+
+      if (value >= 3 && value <= 4) {
+        emoji = "🙂";
+        color = "#3b82f6"; 
+        text = "Endurance fondamentale (discussion possible)";
+      } else if (value >= 5 && value <= 6) {
+        emoji = "😐";
+        color = "#eab308"; 
+        text = "Allure soutenue, rythme actif";
+      } else if (value >= 7 && value <= 8) {
+        emoji = "🥵";
+        color = "#f97316"; 
+        text = "Effort dur, seuil anaérobie";
+      } else if (value >= 9 && value <= 10) {
+        emoji = "🚀";
+        color = "#ef4444"; 
+        text = "Effort maximal absolu (Explosion / Sprint)";
+      }
+
+      badge.textContent = `${emoji} RPE ${value}/10`;
+      badge.style.color = color;
+      desc.textContent = text;
+      slider.style.accentColor = color;
+    }
+
+    // POINT 2 : Calculateur de régularité basée sur les semaines consécutives (>= 2 séances / semaine)
+    function calculateWeeklyStreak() {
+      if (!Array.isArray(appData.sessionsHistory) || appData.sessionsHistory.length === 0) return 0;
+      
+      // Regrouper les séances par année et numéro de semaine ISO
+      const weekCounts = {};
+      
+      appData.sessionsHistory.forEach(s => {
+        if (!s.date) return;
+        const d = new Date(s.date);
+        if (isNaN(d.getTime())) return;
+        
+        // Calcul numéro de semaine ISO
+        const target = new Date(d.valueOf());
+        const dayNr = (d.getDay() + 6) % 7;
+        target.setDate(target.getDate() - dayNr + 3);
+        const firstThursday = target.valueOf();
+        target.setMonth(0, 1);
+        if (target.getDay() !== 4) {
+          target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+        }
+        const weekNum = 1 + Math.round((firstThursday - target.valueOf()) / 604800000);
+        const yearNum = target.getFullYear();
+        const key = `${yearNum}-W${weekNum < 10 ? '0' : ''}${weekNum}`;
+        
+        weekCounts[key] = (weekCounts[key] || 0) + 1;
+      });
+
+      // Compter les semaines consécutives en remontant à partir de la semaine actuelle
+      const now = new Date();
+      let currentWeekCount = 0;
+      let checkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      while (true) {
+        const d = new Date(checkDate.valueOf());
+        const dayNr = (d.getDay() + 6) % 7;
+        d.setDate(d.getDate() - dayNr + 3);
+        const firstThursday = d.valueOf();
+        d.setMonth(0, 1);
+        if (d.getDay() !== 4) {
+          d.setMonth(0, 1 + ((4 - d.getDay() + 7) % 7));
+        }
+        const weekNum = 1 + Math.round((firstThursday - d.valueOf()) / 604800000);
+        const yearNum = d.getFullYear();
+        const key = `${yearNum}-W${weekNum < 10 ? '0' : ''}${weekNum}`;
+
+        if (weekCounts[key] && weekCounts[key] >= 2) {
+          currentWeekCount++;
+          // Reculer d'une semaine (7 jours)
+          checkDate.setDate(checkDate.getDate() - 7);
+        } else {
+          // Si c'est la semaine courante en cours et qu'elle n'a pas encore atteint 2 séances, tester la semaine précédente
+          if (currentWeekCount === 0) {
+            checkDate.setDate(checkDate.getDate() - 7);
+            const prevKey = key;
+            // Éviter boucle infinie
+            if (checkDate.getFullYear() < 2020) break;
+            continue;
+          }
+          break;
+        }
+      }
+
+      return currentWeekCount;
+    }
+
+    function updateWeeklyStreakUI() {
+      const el = document.getElementById('weekly-streak-count');
+      if (el) {
+        const streak = calculateWeeklyStreak();
+        el.textContent = `${streak} ${streak > 1 ? 'Semaines' : 'Semaine'}`;
+      }
+    }
+
+    function updateSummaryUI() {
+      updateWeeklyStreakUI();
+      ['tri', 'home-tri'].forEach(prefix => {
+        const nat = document.getElementById(`${prefix}-nat`);
+        const vel = document.getElementById(`${prefix}-vel`);
+        const cou = document.getElementById(`${prefix}-cou`);
+        const hiit = document.getElementById(`${prefix}-hiit`);
+        const cal = document.getElementById(`${prefix}-calories`);
+        if(nat) nat.innerText = `${appData.stats.natation} km`;
+        if(vel) vel.innerText = `${appData.stats.velo} km`;
+        if(cou) cou.innerText = `${appData.stats.course} km`;
+        if(hiit) hiit.innerText = `${appData.stats.hiit} min`;
+        if(cal) cal.innerText = `${appData.stats.calories} kcal`;
+      });
+      
+      document.getElementById('user-level-num').innerText = appData.level;
+      document.getElementById('user-xp-text').innerText = `${appData.xp} / 500 XP`;
+      document.getElementById('xp-bar-fill').style.width = `${(appData.xp / 500) * 100}%`;
+
+      const homeLvl = document.getElementById('home-user-level-num');
+      if(homeLvl) homeLvl.innerText = appData.level;
+      const homeXp = document.getElementById('home-user-xp-text');
+      if(homeXp) homeXp.innerText = `${appData.xp} / 500 XP`;
+      const homeXpBar = document.getElementById('home-xp-bar-fill');
+      if(homeXpBar) homeXpBar.style.width = `${(appData.xp / 500) * 100}%`;
+      
+      document.getElementById('profile-name-display').innerText = appData.user.name || 'Sportif';
+      const hName = document.getElementById('home-profile-name');
+      if(hName) hName.innerText = appData.user.name;
+      const span2 = document.getElementById('profile-name-span-2');
+      if(span2) span2.innerText = appData.user.name;
+      const headerName = document.getElementById('header-username');
+      if (headerName) headerName.textContent = appData.user.name || 'Sportif';
+
+      const headerAvatarImg = document.getElementById('header-user-avatar-img');
+      const headerAvatarIcon = document.getElementById('header-user-avatar-icon');
+      if (headerAvatarImg && headerAvatarIcon) {
+        if (appData.user && appData.user.photo) {
+          headerAvatarImg.src = appData.user.photo;
+          headerAvatarImg.style.display = 'block';
+          headerAvatarIcon.style.display = 'none';
+        } else {
+          headerAvatarImg.style.display = 'none';
+          headerAvatarIcon.style.display = 'inline-block';
+        }
+      }
+
+      const headerLvl = document.getElementById('header-userlevel');
+      if (headerLvl) headerLvl.textContent = `Niv. ${appData.level || 1}`;
+      document.getElementById('goal-natation-text').innerText = `${appData.stats.natation} / ${appData.goals.natation} km`;
+      document.getElementById('goal-natation-bar').style.width = `${Math.min(100, (appData.stats.natation / appData.goals.natation) * 100)}%`;
+
+      document.getElementById('goal-velo-text').innerText = `${appData.stats.velo} / ${appData.goals.velo} km`;
+      document.getElementById('goal-velo-bar').style.width = `${Math.min(100, (appData.stats.velo / appData.goals.velo) * 100)}%`;
+
+      document.getElementById('goal-course-text').innerText = `${appData.stats.course} / ${appData.goals.course} km`;
+      document.getElementById('goal-course-bar').style.width = `${Math.min(100, (appData.stats.course / appData.goals.course) * 100)}%`;
+
+      const questTotal = appData.stats.velo + appData.stats.course;
+      document.getElementById('quest-progress-text').innerText = `${questTotal} / 40 km`;
+      document.getElementById('quest-bar').style.width = `${Math.min(100, (questTotal / 40) * 100)}%`;
+
+      renderRanks();
+      saveAppData();
+    }
+
+    function createEmptyAppData() {
+      return {
+        user: { name: '', age: 0, weight: 0, height: 0, sex: '', bio: '', city: '', department: '', photo: '', joinedAt: '', levelSportif: 'debutant', favoriteSports: [], visibility: 'private', privacy: { age: false, weight: false, heart: false, performance: false, city: false }, notifications: { sound: true, visual: true, trophies: true, friends: true, reminders: true, volume: 60 }, fcmaxCourse: 0, fcmaxVelo: 0, fcmaxNatation: 0 },
+        xp: 0, level: 1, xpBaseTotal: 0,
+        stats: { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, autres: 0, calories: 0 },
+        goals: { natation: 15, velo: 180, course: 40 },
+        trophies: [
+          { id: 'velo_100', title: 'Rouleur d’Acier', desc: 'Atteindre 100 km à vélo', unlocked: false, tier: 'Or', icon: 'fa-person-biking' },
+          { id: 'course_30', title: 'Sprinteur Fondu', desc: 'Atteindre 30 km en course à pied', unlocked: false, tier: 'Argent', icon: 'fa-person-running' },
+          { id: 'tri_master', title: 'Triathlète Complet', desc: 'Valider Natation, Vélo et Course à pied', unlocked: false, tier: 'Platine', icon: 'fa-medal' },
+          { id: 'hiit_king', title: 'Explosivité Pure', desc: 'Valider 150 min de HIIT', unlocked: false, tier: 'Bronze', icon: 'fa-bolt' },
+          { id: 'autres_first', title: 'Curieux du sport', desc: 'Enregistrer une première activité dans Autres sports', unlocked: false, tier: 'Bronze', icon: 'fa-medal' },
+          { id: 'autres_600', title: 'Polyvalent', desc: 'Cumuler 600 minutes dans Autres sports', unlocked: false, tier: 'Argent', icon: 'fa-award' }
+        ],
+        sessionsHistory: [],
+        integrations: { Strava: 'non_configuree', Garmin: 'non_configuree', Polar: 'non_configuree', Zwift: 'non_configuree' },
+        plannedSessions: []
+      };
+    }
+
+    function loadAppDataForUser(userId) {
+      activeUserId = userId || null;
+      appData = createEmptyAppData();
+      if (!activeUserId) return;
+      try {
+        const saved = localStorage.getItem(`dopamine_app_data_${activeUserId}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          appData = { ...appData, ...parsed, user: { ...appData.user, ...(parsed.user || {}), privacy: { ...appData.user.privacy, ...(parsed.user?.privacy || {}) }, notifications: { ...appData.user.notifications, ...(parsed.user?.notifications || {}) } } };
+          // Retire uniquement la séance de démonstration du 03/11/2026 si elle existe.
+          appData.plannedSessions = (appData.plannedSessions || []).filter(item => !(item.date === '2026-11-03' && String(item.sport || '').toLowerCase().includes('velo')));
+        }
+      } catch (error) { console.warn('Données du compte illisibles :', error); }
+    }
+
+    function refreshAppAfterAccountLoad() {
       ensureXpBaseline();
       renderHomeCalendar();
       recalculateStatsFromHistory();
       renderHistory();
       updateRaceCountdown();
       updateAICoachAdvice();
-    };
-  </script>
+      if (appData.user?.city) refreshProfileWeather();
+      if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
+    }
 
-  <!-- MODALE DE CONNEXION / INSCRIPTION SUPABASE -->
+    function saveAppData() {
+      try {
+        // Chaque compte et le mode invité ont un espace local distinct.
+        const storageKey = activeUserId ? `dopamine_app_data_${activeUserId}` : 'dopamine_app_data_guest';
+        localStorage.setItem(storageKey, JSON.stringify(appData));
+        return true;
+      } catch (error) {
+        console.error('Impossible de sauvegarder les données localement :', error);
+        alert("La sauvegarde locale a échoué (espace de stockage indisponible ou saturé). Exporte tes données JSON pour éviter de les perdre.");
+        return false;
+      }
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('evolutionChart');
+      if (!ctx) return;
+      if (chartInstance) { chartInstance.destroy(); }
+      
+      if (typeof Chart === 'undefined') { console.warn('Chart.js indisponible : graphique non affiché.'); return; }
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Natation (km)', 'Vélo (km)', 'Course à pied (km)', 'Marche (km)', 'HIIT (min)', 'Autres sports (min)'],
+          datasets: [{
+            label: 'Volume Total',
+            data: [appData.stats.natation, appData.stats.velo, appData.stats.course, appData.stats.marche, appData.stats.hiit, appData.stats.autres || 0],
+            backgroundColor: ['#00a2ff', '#ff6b00', '#22c55e', '#14b8a6', '#ec4899']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }
+        }
+      });
+    }
+
+window.onload = async function() {
+      try {
+        // Préserver les anciennes données : migration douce vers l'espace invité, sans suppression.
+        const legacyGuestData = localStorage.getItem('dopamine_app_data');
+        if (legacyGuestData && !localStorage.getItem('dopamine_app_data_guest')) {
+          localStorage.setItem('dopamine_app_data_guest', legacyGuestData);
+        }
+        const savedTheme = localStorage.getItem('dopamine_theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.dataset.theme = savedTheme;
+      } catch (error) { console.warn('Préférence de thème inaccessible.', error); }
+      // Sans compte connecté : recharger les données invitées au lieu de les perdre au rafraîchissement.
+      activeUserId = null;
+      appData = createEmptyAppData();
+      try {
+        const guestSaved = localStorage.getItem('dopamine_app_data_guest');
+        if (guestSaved) {
+          const parsed = JSON.parse(guestSaved);
+          appData = {
+            ...appData, ...parsed,
+            user: {
+              ...appData.user, ...(parsed.user || {}),
+              privacy: { ...appData.user.privacy, ...(parsed.user?.privacy || {}) },
+              notifications: { ...appData.user.notifications, ...(parsed.user?.notifications || {}) }
+            }
+          };
+        }
+      } catch (error) { console.warn('Données invitées illisibles :', error); }
+      if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session?.user?.id) { loadAppDataForUser(session.user.id); if (!appData.user.joinedAt) appData.user.joinedAt = session.user.created_at || ''; }
+      }
+      refreshAppAfterAccountLoad();
+      const weatherBox = document.getElementById('dopamine-weather-widget'); if (weatherBox && activeUserId) weatherBox.style.display = 'block';
+    };
+ </script>
+ 
+<!-- MODALE DE CONNEXION / INSCRIPTION SUPABASE -->
   <div class="modal-overlay" id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
     <div class="modal-content" style="background:var(--card-bg); padding:24px; border-radius:12px; width:90%; max-width:400px; border:1px solid var(--card-border);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -2039,74 +3070,324 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
         <button onclick="document.getElementById('auth-modal').style.display='none'" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
       </div>
       <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; color:var(--text-sub);">Pseudo (pour une nouvelle inscription)</label>
+        <input type="text" id="auth-username" maxlength="24" autocomplete="nickname" placeholder="Ex. Sportif35" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--card-border); background:rgba(255,255,255,0.05); color:var(--text-main);">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
         <label style="font-size:0.8rem; color:var(--text-sub);">Email</label>
         <input type="email" id="auth-email" placeholder="votre@email.com" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--card-border); background:rgba(255,255,255,0.05); color:var(--text-main);">
       </div>
-      <div class="form-group" style="margin-bottom:16px;">
+      <div class="form-group" style="margin-bottom:12px;">
         <label style="font-size:0.8rem; color:var(--text-sub);">Mot de passe</label>
-        <input type="password" id="auth-password" placeholder="••••••••" style="width:100%; padding:8px; border-radius:6px; border:1px solid var(--card-border); background:rgba(255,255,255,0.05); color:var(--text-main);">
+        <div style="display:flex; gap:6px;">
+          <input type="password" id="auth-password" autocomplete="current-password" placeholder="Au moins 6 caractères" style="flex:1; min-width:0; padding:8px; border-radius:6px; border:1px solid var(--card-border); background:rgba(255,255,255,0.05); color:var(--text-main);">
+          <button type="button" onclick="togglePasswordVisibility('auth-password', this)" aria-label="Afficher le mot de passe" title="Afficher / masquer" style="padding:0 12px;border-radius:6px;border:1px solid var(--card-border);background:rgba(255,255,255,.08);color:var(--text-main);cursor:pointer;"><i class="fa-solid fa-eye"></i></button>
+        </div>
+      </div>
+      <div class="form-group" id="auth-confirm-password-wrap" style="display:none; margin-bottom:12px;">
+        <label style="font-size:0.8rem; color:var(--text-sub);">Confirmer le mot de passe</label>
+        <div style="display:flex; gap:6px;">
+          <input type="password" id="auth-confirm-password" autocomplete="new-password" placeholder="Saisis à nouveau le mot de passe" style="flex:1; min-width:0; padding:8px; border-radius:6px; border:1px solid var(--card-border); background:rgba(255,255,255,0.05); color:var(--text-main);">
+          <button type="button" onclick="togglePasswordVisibility('auth-confirm-password', this)" aria-label="Afficher la confirmation" title="Afficher / masquer" style="padding:0 12px;border-radius:6px;border:1px solid var(--card-border);background:rgba(255,255,255,.08);color:var(--text-main);cursor:pointer;"><i class="fa-solid fa-eye"></i></button>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; gap:10px; margin:-4px 0 14px; flex-wrap:wrap;">
+        <button type="button" onclick="setAuthMode('login')" id="auth-mode-login" style="display:none;background:none;border:0;color:var(--text-sub);text-decoration:underline;cursor:pointer;font-size:.75rem;">Déjà un compte ? Connexion</button>
+        <button type="button" onclick="resetPasswordByEmail()" style="background:none;border:0;color:var(--bike-orange);text-decoration:underline;cursor:pointer;font-size:.75rem;">Mot de passe oublié ?</button>
       </div>
       <div style="display:flex; gap:8px;">
-        <button onclick="supabaseSignIn()" style="flex:1; padding:10px; background:var(--bike-orange); color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Se connecter</button>
-        <button onclick="supabaseSignUp()" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); color:var(--text-main); border:1px solid var(--card-border); border-radius:6px; font-weight:bold; cursor:pointer;">S'inscrire</button>
+        <button id="auth-submit-login" onclick="supabaseSignIn()" style="flex:1; padding:10px; background:var(--bike-orange); color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Se connecter</button>
+        <button id="auth-submit-signup" onclick="setAuthMode('signup')" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); color:var(--text-main); border:1px solid var(--card-border); border-radius:6px; font-weight:bold; cursor:pointer;">Créer un compte</button>
       </div>
     </div>
   </div>
 
+  <div class="modal-overlay" id="auth-recovery-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:10000;justify-content:center;align-items:center;">
+    <div class="modal-content" style="background:var(--card-bg);padding:24px;border-radius:12px;width:90%;max-width:400px;border:1px solid var(--card-border);">
+      <h3 style="margin-bottom:12px;color:var(--text-main);">Réinitialiser mon mot de passe</h3>
+      <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px;">Choisis un nouveau mot de passe pour ton compte À LA DOPAMINE.</p>
+      <input id="recovery-new-password" type="password" autocomplete="new-password" placeholder="Nouveau mot de passe (6 caractères minimum)" style="width:100%;padding:10px;margin-bottom:8px;border-radius:6px;border:1px solid var(--card-border);background:rgba(255,255,255,.05);color:var(--text-main);">
+      <input id="recovery-confirm-password" type="password" autocomplete="new-password" placeholder="Confirmer le nouveau mot de passe" style="width:100%;padding:10px;margin-bottom:12px;border-radius:6px;border:1px solid var(--card-border);background:rgba(255,255,255,.05);color:var(--text-main);">
+      <button type="button" onclick="saveRecoveredPassword()" class="btn-calc-orange" style="width:100%;">Enregistrer le nouveau mot de passe</button>
+    </div>
+  </div>
+
+ <!-- CONFIGURATION ET GESTION SUPABASE UNIFIÉE -->
   <script>
-    // Config Supabase & Clés d'accès
     const SUPABASE_URL = 'https://fxqepxcojiexvfvehcnq.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_7wkp4BFkFfE0ds8KJ6D7A_ec6nB...';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4cWVweGNvamlleHZmdmVoY25xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4ODc5MTgsImV4cCI6MjEwOTQ2MzkxOH0.oksu2ziXkPJmhDlTxZXuApU_Mf5b_-yhsi7iF71a9ow';
 
     let supabaseClient = null;
     if (window.supabase && SUPABASE_URL.startsWith('http')) {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
+// --- FONCTIONS DE BLOCAGE / DÉBLOCAGE ---
 
-    // Gestion automatique du profil connecté
-    async function checkUserSession() {
+async function blockUser(targetUserId) {
+  try {
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) throw new Error("Utilisateur non connecté.");
+
+    const { error } = await supabaseClient
+      .from('blocked_users')
+      .insert([
+        { user_id: user.id, blocked_id: targetUserId }
+      ]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur lors du blocage :", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+async function unblockUser(targetUserId) {
+  try {
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) throw new Error("Utilisateur non connecté.");
+
+    const { error } = await supabaseClient
+      .from('blocked_users')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('blocked_id', targetUserId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur lors du déblocage :", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+async function getBlockedUsersList() {
+  try {
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) return [];
+
+    const { data, error } = await supabaseClient
+      .from('blocked_users')
+      .select('blocked_id')
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+    return data.map(item => item.blocked_id);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des bloqués :", error.message);
+    return [];
+  }
+}// --- GESTION ET AFFICHAGE DES UTILISATEURS BLOQUÉS (INTERFACE SÉCURITÉ) ---
+
+async function loadBlockedUsersUI(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = "<p>Chargement des utilisateurs bloqués...</p>";
+
+  try {
+    const blockedIds = await getBlockedUsersList();
+
+    if (blockedIds.length === 0) {
+      container.innerHTML = "<p>Aucun utilisateur bloqué pour le moment.</p>";
+      return;
+    }
+
+    let html = '<ul style="list-style: none; padding: 0;">';
+    
+    for (const id of blockedIds) {
+      html += `
+        <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <span>Utilisateur ID : ${id.substring(0, 8)}...</span>
+          <button onclick="handleUnblock('${id}')" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+            Débloquer
+          </button>
+        </li>
+      `;
+    }
+    html += '</ul>';
+    container.innerHTML = html;
+
+  } catch (error) {
+    console.error("Erreur d'affichage des bloqués :", error);
+    container.innerHTML = "<p>Erreur lors du chargement des utilisateurs bloqués.</p>";
+  }
+}
+
+async function handleUnblock(targetUserId) {
+  const result = await unblockUser(targetUserId);
+  if (result.success) {
+    alert("Utilisateur débloqué avec succès !");
+    loadBlockedUsersUI('blocked-users-container');
+  } else {
+    alert("Erreur : " + result.error);
+  }
+}
+    // 1. Gestion de l'affichage dans le header (Profil vs Connexion)
+    async function updateHeaderAuthUI() {
       if (!supabaseClient) return;
       const { data: { session } } = await supabaseClient.auth.getSession();
       
+      const userBadge = document.getElementById('user-profile-badge');
+      const btnAuth = document.getElementById('btn-open-auth');
+      const btnSignOut = document.getElementById('btn-sign-out');
+      const usernameEl = document.getElementById('header-username');
+      const userLevelEl = document.getElementById('header-userlevel');
+
       if (session && session.user) {
-        appData.user.name = session.user.email.split('@')[0];
-        const nameElements = document.querySelectorAll('.user-name, #user-display-name');
-        nameElements.forEach(el => el.textContent = appData.user.name);
+        const displayName = (appData && appData.user && appData.user.name && appData.user.name !== "Sportif") 
+          ? appData.user.name 
+          : (session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'Sportif');
+        
+        if (usernameEl) usernameEl.textContent = displayName;
+        if (userLevelEl) userLevelEl.textContent = `Niv. ${appData.level || 1}`;
+        if (btnAuth) btnAuth.style.display = 'none';
+        if (userBadge) userBadge.style.display = 'flex';
+        if (btnSignOut) btnSignOut.style.display = 'flex';
+      } else {
+        if (btnAuth) btnAuth.style.display = 'flex';
+        if (userBadge) userBadge.style.display = 'none';
+        if (btnSignOut) btnSignOut.style.display = 'none';
       }
     }
 
-    // Inscription Supabase
+    // Modes du formulaire et affichage des mots de passe
+    function togglePasswordVisibility(inputId, button) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const visible = input.type === 'password';
+      input.type = visible ? 'text' : 'password';
+      const icon = button?.querySelector('i');
+      if (icon) icon.className = visible ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+      if (button) button.setAttribute('aria-label', visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+    }
+
+    function setAuthMode(mode) {
+      const signup = mode === 'signup';
+      const username = document.getElementById('auth-username')?.closest('.form-group');
+      const confirm = document.getElementById('auth-confirm-password-wrap');
+      if (username) username.style.display = signup ? 'block' : 'none';
+      if (confirm) confirm.style.display = signup ? 'block' : 'none';
+      const loginBtn = document.getElementById('auth-submit-login');
+      const signupBtn = document.getElementById('auth-submit-signup');
+      const backBtn = document.getElementById('auth-mode-login');
+      if (loginBtn) loginBtn.style.display = signup ? 'none' : 'block';
+      if (signupBtn) { signupBtn.style.display = 'block'; signupBtn.textContent = signup ? 'Valider mon inscription' : 'Créer un compte'; signupBtn.onclick = signup ? supabaseSignUp : () => setAuthMode('signup'); }
+      if (backBtn) backBtn.style.display = signup ? 'inline-block' : 'none';
+      const title = document.querySelector('#auth-modal h3');
+      if (title) title.innerHTML = `<i class="fa-solid fa-user-lock" style="color:var(--bike-orange)"></i> ${signup ? 'Créer mon compte À LA DOPAMINE' : 'Connexion À LA DOPAMINE'}`;
+    }
+
+    async function resetPasswordByEmail() {
+      if (!supabaseClient) { alert('Service de compte indisponible.'); return; }
+      const email = document.getElementById('auth-email').value.trim();
+      if (!email) { alert('Renseigne ton adresse e-mail pour recevoir le lien de réinitialisation.'); return; }
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? `${window.location.origin}${window.location.pathname}?reset-password=1` : 'https://dopamine-qm0ygj0rs-marclepallud-8436.vercel.app/?reset-password=1'
+      });
+      if (error) alert('Impossible d’envoyer le lien : ' + error.message);
+      else alert('Un e-mail de réinitialisation a été demandé. Consulte ta boîte de réception et tes courriers indésirables.');
+    }
+
+    async function saveRecoveredPassword() {
+      const password = document.getElementById('recovery-new-password').value;
+      const confirm = document.getElementById('recovery-confirm-password').value;
+      if (password.length < 6) { alert('Le nouveau mot de passe doit contenir au moins 6 caractères.'); return; }
+      if (password !== confirm) { alert('Les deux mots de passe ne sont pas identiques.'); return; }
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) alert('La modification a échoué : ' + error.message);
+      else { document.getElementById('auth-recovery-modal').style.display = 'none'; alert('Ton mot de passe À LA DOPAMINE a bien été modifié.'); }
+    }
+
+    // 2. Inscription
     async function supabaseSignUp() {
-      const email = document.getElementById('auth-email').value;
+      if (!supabaseClient) { alert('La connexion au service de compte est indisponible. Réessaie dans quelques instants.'); return; }
+      const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
-      if (!email || !password) { alert('Remplis ton email et ton mot de passe.'); return; }
-      
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
-      if (error) { alert('Erreur : ' + error.message); }
-      else { 
-        alert('Inscription réussie !'); 
+      const username = document.getElementById('auth-username').value.trim();
+      const confirmPassword = document.getElementById('auth-confirm-password').value;
+      if (!email || !password || !username) { alert('Pour créer un compte, renseigne ton pseudo, ton e-mail et ton mot de passe.'); return; }
+      if (username.length < 3) { alert('Ton pseudo doit contenir au moins 3 caractères.'); return; }
+      if (password.length < 6) { alert('Choisis un mot de passe d’au moins 6 caractères.'); return; }
+      if (password !== confirmPassword) { alert('Les deux mots de passe ne sont pas identiques. Vérifie ta saisie.'); return; }
+
+      const { error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username },
+          emailRedirectTo: 'https://dopamine-teal.vercel.app/'
+        }
+      });
+      if (error) {
+        alert('Erreur lors de l’inscription : ' + error.message);
+      } else {
+        alert('Bienvenue sur À LA DOPAMINE !\n\nTon compte est en cours de création. Ouvre le message de confirmation envoyé à ton adresse e-mail, puis clique sur le lien pour activer ton compte. Tu seras redirigé vers le site.');
         document.getElementById('auth-modal').style.display = 'none';
-        checkUserSession();
       }
     }
 
-    // Connexion Supabase
+    // 3. Connexion
     async function supabaseSignIn() {
-      const email = document.getElementById('auth-email'].value;
+      if (!supabaseClient) { alert('La connexion au service de compte est indisponible. Réessaie dans quelques instants.'); return; }
+      const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
-      if (!email || !password) { alert('Remplis ton email et ton mot de passe.'); return; }
+      if (!email || !password) { alert('Veuillez remplir votre e-mail et votre mot de passe.'); return; }
 
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) { alert('Erreur de connexion : ' + error.message); }
-      else { 
-        alert('Connexion réussie ! Bienvenue.'); 
-        document.getElementById('auth-modal').style.display = 'none'; 
-        checkUserSession();
+      if (error) { 
+        if (error.message.includes("Email not confirmed")) {
+          alert("⚠️ Compte non confirmé !\n\nVeuillez valider l'e-mail d'activation envoyé par À LA DOPAMINE avant de vous connecter.");
+        } else {
+          alert('Erreur de connexion : ' + error.message); 
+        }
+      } else { 
+        document.getElementById('auth-modal').style.display = 'none';
+        if (data.user?.id) {
+          loadAppDataForUser(data.user.id);
+          if (!appData.user.joinedAt) appData.user.joinedAt = data.user.created_at || '';
+          const metaName = data.user?.user_metadata?.username;
+          if (metaName && appData?.user) { appData.user.name = metaName; saveAppData(); }
+          refreshAppAfterAccountLoad();
+        }
+        updateHeaderAuthUI();
       }
     }
 
-    // Vérification de la session au chargement de la page
-    document.addEventListener('DOMContentLoaded', checkUserSession);
+    // 4. Déconnexion
+    async function handleSignOut() {
+      if (!supabaseClient) return;
+      await supabaseClient.auth.signOut();
+      activeUserId = null;
+      appData = createEmptyAppData();
+      refreshAppAfterAccountLoad();
+      alert("Vous êtes déconnecté.");
+      updateHeaderAuthUI();
+    }
+
+    // 5. Écouteur en direct au chargement et changement d'état
+    document.addEventListener('DOMContentLoaded', () => {
+      setAuthMode('login');
+      if (new URLSearchParams(window.location.search).get('reset-password') === '1' || window.location.hash.includes('type=recovery')) {
+        const recoveryModal = document.getElementById('auth-recovery-modal');
+        if (recoveryModal) recoveryModal.style.display = 'flex';
+      }
+      updateHeaderAuthUI();
+      if (supabaseClient) {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            document.getElementById('auth-recovery-modal').style.display = 'flex';
+          }
+          if (event === 'SIGNED_IN' && session?.user?.id && activeUserId !== session.user.id) {
+            loadAppDataForUser(session.user.id);
+            refreshAppAfterAccountLoad();
+          } else if (event === 'SIGNED_OUT') {
+            activeUserId = null;
+            appData = createEmptyAppData();
+            refreshAppAfterAccountLoad();
+          }
+          updateHeaderAuthUI();
+        });
+      }
+    });
   </script>
-</body>
-</html>
