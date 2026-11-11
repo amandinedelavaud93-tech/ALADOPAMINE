@@ -2,7 +2,11 @@
 <html lang="fr" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050a14">
+  <meta name="description" content="À LA DOPAMINE : carnet sportif multisport, calendrier, progression et trophées.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
   <title>À LA DOPAMINE - Application Sportive Gamifiée</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -55,7 +59,7 @@
       --bike-orange: #ff6b00;
       --run-green: #22c55e;
       --walk-teal: #14b8a6;
-      --hiit-pink: #ec4899;
+      --hiit-pink: #8854d0;
       --race-red: #ef4444;
       --heart-red: #ef4444;
       --watts-purple: #a855f7;
@@ -212,8 +216,9 @@
     .calendar-legend i { width:7px;height:7px;border-radius:50%;display:inline-block; }
 
     .sports-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
-    @media (max-width: 1200px) { .sports-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 768px) { .sports-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 1200px) { .sports-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 768px) { .sports-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 520px) { .sports-grid { grid-template-columns: 1fr; } }
 
     .sport-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease; }
     .sport-card:hover { transform: translateY(-3px); }
@@ -270,7 +275,8 @@
     .rank-card { background: rgba(0,0,0,0.4); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 10px; }
     .rank-badge-pill { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
     
-    .trophies-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+    .trophies-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+    @media (max-width: 700px) { .trophies-grid { grid-template-columns: 1fr; } }
     .trophy-card { background: rgba(0,0,0,0.4); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 10px; opacity: 0.5; }
     .trophy-card.unlocked { opacity: 1; border-color: var(--xp-gold); background: rgba(245, 158, 11, 0.06); }
     .trophy-icon { font-size: 1.4rem; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); }
@@ -434,11 +440,11 @@
       <button type="button" class="nav-discipline-btn" onclick="openCalc('marche')">
         <i class="fa-solid fa-person-walking" style="color: var(--walk-teal);"></i> Marche
       </button>
-      <button type="button" class="nav-discipline-btn" onclick="openCalc('hiit')">
-        <i class="fa-solid fa-bolt" style="color: var(--hiit-pink);"></i> HIIT
-      </button>
       <button type="button" class="nav-discipline-btn" onclick="openCalc('autres')">
-        <i class="fa-solid fa-table-tennis-paddle-ball" style="color: #a855f7;"></i> Autres sports
+        <i class="fa-solid fa-bolt" style="color: #8854d0;"></i> HIIT & autres sports
+      </button>
+      <button type="button" class="nav-discipline-btn" onclick="showPage('competition')">
+        <i class="fa-solid fa-trophy" style="color: #ff6b6b;"></i> Compétition
       </button>
     </div>
   </div>
@@ -483,6 +489,7 @@
               <li><i class="fa-solid fa-bolt" style="color: var(--hiit-pink)"></i> HIIT pour l'explosivité.</li>
             </ul>
             <div class="quote-badge">« La seule mauvaise sortie est celle qu'on ne fait pas. »</div>
+            <button id="pwa-install-button" type="button" class="medal-tab" onclick="installDopamineApp()" hidden style="margin-top:10px;"><i class="fa-solid fa-download"></i> Installer l’application</button>
           </div>
           <aside class="hero-feed-preview" aria-label="Aperçu du Fil Dopamine">
             <div class="hero-feed-preview-head"><i class="fa-solid fa-users" style="color:var(--bike-orange);font-size:1.15rem;"></i><span>Le Fil Dopamine</span></div>
@@ -587,27 +594,28 @@
           <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=80" alt="Autres sports" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/a855f7/ffffff?text=Autres+Sports'">
           <div class="sport-card-body">
             <ul class="features-list">
-              <li><i class="fa-solid fa-check" style="color: #a855f7;"></i> Foot, Tennis, Padel, Fitness...</li>
+              <li><i class="fa-solid fa-check" style="color: #8854d0;"></i> HIIT, Foot, Tennis, Padel, Fitness...</li>
               <li><i class="fa-solid fa-check" style="color: #a855f7;"></i> Durée, RPE & Distance optionnelle</li>
             </ul>
-            <button class="btn-action" style="background:#a855f7;" onclick="openCalc('autres')">Accéder aux autres sports <i class="fa-solid fa-arrow-right"></i></button>
+            <button class="btn-action" style="background:#8854d0;" onclick="openCalc('autres')">Accéder aux disciplines <i class="fa-solid fa-arrow-right"></i></button>
           </div>
         </div>
 
-        <div class="sport-card hiit">
+        <div class="sport-card competition-card">
           <div class="sport-card-header">
-            <div><h3 style="font-size: 0.85rem;">HIIT</h3><p style="font-size: 0.62rem; color: var(--hiit-pink);">Rose Intensité</p></div>
-            <span class="sport-rank-badge" id="card-rank-hiit" style="background: var(--tier-iron-bg);">Fer</span>
+            <div><h3 style="font-size:0.85rem;">COMPÉTITION</h3><p style="font-size:0.62rem;color:#ff6b6b;">Dossards & objectifs</p></div>
+            <span class="sport-rank-badge" style="background:rgba(255,107,107,.18);color:#ff8b8b;">Épreuve</span>
           </div>
-          <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80" alt="HIIT" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/ec4899/ffffff?text=HIIT'">
+          <img src="https://images.unsplash.com/photo-1533561052604-c3beb6d55b8d?auto=format&fit=crop&w=600&q=80" alt="Ligne d'arrivée d'une compétition sportive" class="sport-card-img" onerror="this.src='https://placehold.co/600x300/ff6b6b/ffffff?text=Competition'">
           <div class="sport-card-body">
             <ul class="features-list">
-              <li><i class="fa-solid fa-check" style="color: var(--hiit-pink);"></i> Séries & Répétitions</li>
-              <li><i class="fa-solid fa-check" style="color: var(--hiit-pink);"></i> Intensité RPE (1-10)</li>
+              <li><i class="fa-solid fa-check" style="color:#ff6b6b;"></i> Triathlon, duathlon, trail & courses</li>
+              <li><i class="fa-solid fa-check" style="color:#ff6b6b;"></i> Résultats, RPE & calendrier</li>
             </ul>
-            <button class="btn-action btn-hiit" onclick="openCalc('hiit')">Accéder au HIIT <i class="fa-solid fa-arrow-right"></i></button>
+            <button class="btn-action" style="background:#ff6b6b;" onclick="showPage('competition')">Accéder aux compétitions <i class="fa-solid fa-arrow-right"></i></button>
           </div>
         </div>
+
       </section>
 
       <section class="main-dashboard-box" id="dopamine-feed-preview" style="margin:18px 0;">
@@ -674,7 +682,7 @@
             <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
             <button class="medal-tab" onclick="openCalc('course')">Course</button>
             <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
-            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+            <button class="medal-tab" onclick="openCalc('autres')">HIIT</button>
           </div>
         </div>
         <div class="calc-grid-layout">
@@ -693,10 +701,6 @@
             </div>
           </div>
           <div class="form-group session-feedback-fields">
-              <label for="natation-feeling">Ressenti de la séance</label>
-              <select id="natation-feeling">
-                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
-              </select>
               <label for="natation-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="natation-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
@@ -704,10 +708,10 @@
           <div class="form-group rpe-container">
             <div class="rpe-header">
               <label for="natation-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
-              <span id="natation-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+              <span id="natation-rpe-badge" style="color:#eab308;">🙂 Bien / maîtrisé · RPE 5/10</span>
             </div>
             <input type="range" id="natation-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('natation', this.value)">
-            <div id="natation-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+            <div id="natation-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Bien / maîtrisé</div>
           </div>
 
           <div class="calc-action-box">
@@ -735,7 +739,7 @@
             <button class="medal-tab active" onclick="openCalc('velo')">Vélo</button>
             <button class="medal-tab" onclick="openCalc('course')">Course</button>
             <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
-            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+            <button class="medal-tab" onclick="openCalc('autres')">HIIT</button>
           </div>
         </div>
         <div class="calc-grid-layout">
@@ -753,10 +757,6 @@
             </div>
           </div>
           <div class="form-group session-feedback-fields">
-              <label for="velo-feeling">Ressenti de la séance</label>
-              <select id="velo-feeling">
-                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
-              </select>
               <label for="velo-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="velo-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
@@ -764,10 +764,10 @@
           <div class="form-group rpe-container">
             <div class="rpe-header">
               <label for="velo-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
-              <span id="velo-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+              <span id="velo-rpe-badge" style="color:#eab308;">🙂 Bien / maîtrisé · RPE 5/10</span>
             </div>
             <input type="range" id="velo-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('velo', this.value)">
-            <div id="velo-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+            <div id="velo-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Bien / maîtrisé</div>
           </div>
 
           <div class="calc-action-box">
@@ -795,7 +795,7 @@
             <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
             <button class="medal-tab active" onclick="openCalc('course')">Course</button>
             <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
-            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+            <button class="medal-tab" onclick="openCalc('autres')">HIIT</button>
           </div>
         </div>
         <div class="calc-grid-layout">
@@ -813,10 +813,6 @@
             </div>
           </div>
           <div class="form-group session-feedback-fields">
-              <label for="course-feeling">Ressenti de la séance</label>
-              <select id="course-feeling">
-                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
-              </select>
               <label for="course-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="course-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
@@ -824,10 +820,10 @@
           <div class="form-group rpe-container">
             <div class="rpe-header">
               <label for="course-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
-              <span id="course-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+              <span id="course-rpe-badge" style="color:#eab308;">🙂 Bien / maîtrisé · RPE 5/10</span>
             </div>
             <input type="range" id="course-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('course', this.value)">
-            <div id="course-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+            <div id="course-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Bien / maîtrisé</div>
           </div>
 
           <div class="calc-action-box">
@@ -855,7 +851,7 @@
             <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
             <button class="medal-tab" onclick="openCalc('course')">Course</button>
             <button class="medal-tab active" onclick="openCalc('marche')">Marche</button>
-            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+            <button class="medal-tab" onclick="openCalc('autres')">HIIT</button>
           </div>
         </div>
         <div class="calc-grid-layout">
@@ -872,10 +868,6 @@
             </div>
           </div>
           <div class="form-group session-feedback-fields">
-              <label for="marche-feeling">Ressenti de la séance</label>
-              <select id="marche-feeling">
-                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
-              </select>
               <label for="marche-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="marche-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
@@ -883,10 +875,10 @@
           <div class="form-group rpe-container">
             <div class="rpe-header">
               <label for="marche-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
-              <span id="marche-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+              <span id="marche-rpe-badge" style="color:#eab308;">🙂 Bien / maîtrisé · RPE 5/10</span>
             </div>
             <input type="range" id="marche-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('marche', this.value)">
-            <div id="marche-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+            <div id="marche-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Bien / maîtrisé</div>
           </div>
 
           <div class="calc-action-box">
@@ -914,20 +906,15 @@
             <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
             <button class="medal-tab" onclick="openCalc('course')">Course</button>
             <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
-            <button class="medal-tab active" onclick="openCalc('hiit')">HIIT</button>
+            <button class="medal-tab active" onclick="openCalc('autres')">HIIT</button>
           </div>
         </div>
         <div class="calc-grid-layout">
           <div class="calc-inputs-grid">
             <div class="form-group"><label>Durée Totale (Minutes)</label><input type="number" id="hiit-time" placeholder="ex: 35"></div>
             <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="hiit-bpm" placeholder="ex: 165"></div>
-            <div class="form-group"><label>Intensité perçue (RPE 1-10)</label><input type="number" id="hiit-rpe" placeholder="ex: 8" min="1" max="10"></div>
           </div>
           <div class="form-group session-feedback-fields">
-              <label for="hiit-feeling">Ressenti de la séance</label>
-              <select id="hiit-feeling">
-                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
-              </select>
               <label for="hiit-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
               <textarea id="hiit-comment" rows="2" maxlength="1000" placeholder="Ex. jambes lourdes, météo, douleur, bonnes sensations, point à revoir avec le coach…" style="width:100%;resize:vertical;"></textarea>
             </div>
@@ -935,10 +922,10 @@
           <div class="form-group rpe-container">
             <div class="rpe-header">
               <label for="hiit-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
-              <span id="hiit-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+              <span id="hiit-rpe-badge" style="color:#eab308;">🙂 Bien / maîtrisé · RPE 5/10</span>
             </div>
             <input type="range" id="hiit-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('hiit', this.value)">
-            <div id="hiit-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+            <div id="hiit-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Bien / maîtrisé</div>
           </div>
 
           <div class="calc-action-box">
@@ -961,13 +948,13 @@
     <main id="view-autres" class="app-page hidden">
       <section class="calculator-panel">
         <div class="card-title-flex" style="margin-bottom: 15px;">
-          <h3 style="font-size: 1.1rem; color: #a855f7;"><i class="fa-solid fa-table-tennis-paddle-ball"></i> Autres Sports & Activités</h3>
+          <h3 style="font-size: 1.1rem; color: #8854d0;"><i class="fa-solid fa-bolt"></i> HIIT & Autres sports</h3>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             <button class="medal-tab" onclick="openCalc('natation')">Natation</button>
             <button class="medal-tab" onclick="openCalc('velo')">Vélo</button>
             <button class="medal-tab" onclick="openCalc('course')">Course</button>
             <button class="medal-tab" onclick="openCalc('marche')">Marche</button>
-            <button class="medal-tab" onclick="openCalc('hiit')">HIIT</button>
+            <button class="medal-tab" onclick="openCalc('autres')">HIIT</button>
             <button class="medal-tab active" onclick="openCalc('autres')">Autres sports</button>
           </div>
         </div>
@@ -976,6 +963,7 @@
             <div class="form-group" style="grid-column: 1 / -1;">
               <label><i class="fa-solid fa-trophy" style="color:#a855f7;"></i> Sélectionne la discipline</label>
               <select id="autres-sport-select">
+                <option value="HIIT">⚡ HIIT / Circuit training</option>
                 <option value="Football">⚽ Football</option>
                 <option value="Basketball">🏀 Basket-ball</option>
                 <option value="Tennis">🎾 Tennis</option>
@@ -999,10 +987,6 @@
             </div>
           </div>
           <div class="form-group session-feedback-fields">
-              <label for="autres-feeling">Ressenti de la séance</label>
-              <select id="autres-feeling">
-                <option value="">Non renseigné</option><option value="facile">😎 Facile</option><option value="bien">🙂 Bien / maîtrisé</option><option value="dur">🥵 Dur</option><option value="difficile">🌧️ Difficile / galère</option><option value="excellent">🚀 En forme / excellent</option>
-              </select>
               <label for="autres-comment" style="display:block;margin-top:8px;">Commentaire / Détails du match ou de la séance</label>
               <textarea id="autres-comment" rows="2" maxlength="1000" placeholder="Ex. Victoire 6-4 6-3 au Padel, bonnes sensations physiquement..." style="width:100%;resize:vertical;"></textarea>
           </div>
@@ -1010,10 +994,10 @@
           <div class="form-group rpe-container">
             <div class="rpe-header">
               <label for="autres-rpe-slider" style="margin:0;"><i class="fa-solid fa-gauge-high" style="color:var(--bike-orange);"></i> Effort Perçu (RPE de 1 à 10)</label>
-              <span id="autres-rpe-badge" style="color:#eab308;">😐 RPE 5/10</span>
+              <span id="autres-rpe-badge" style="color:#eab308;">🙂 Bien / maîtrisé · RPE 5/10</span>
             </div>
             <input type="range" id="autres-rpe-slider" class="rpe-slider" min="1" max="10" value="5" oninput="updateRPEValue('autres', this.value)">
-            <div id="autres-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Allure soutenue, rythme actif</div>
+            <div id="autres-rpe-desc" class="rpe-feedback-display" style="color:var(--text-sub);">Bien / maîtrisé</div>
           </div>
 
           <div class="calc-action-box">
@@ -1028,6 +1012,37 @@
           </div>
         </div>
         <div id="calc-result-autres" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.5); border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.8rem; display: none;"></div>
+      </section>
+    </main>
+
+    <!-- NOUVEL ONGLET : COMPETITION -->
+    <main id="view-competition" class="app-page hidden">
+      <section class="calculator-panel">
+        <div class="card-title-flex" style="margin-bottom:15px;"><h3 style="font-size:1.1rem;color:#ff6b6b;"><i class="fa-solid fa-trophy"></i> Enregistrer une compétition</h3><span class="badge">Discipline dédiée</span></div>
+        <div class="calc-grid-layout">
+          <div class="calc-inputs-grid">
+            <div class="form-group"><label for="competition-kind">Type d'épreuve</label><select id="competition-kind" onchange="updateCompetitionFields()"><option value="triathlon">🏊🚴🏃 Triathlon</option><option value="duathlon">🏃🚴🏃 Duathlon</option><option value="trail">⛰️ Trail</option><option value="course">🏃 Course à pied</option><option value="velo">🚴 Cyclisme</option><option value="natation">🏊 Natation</option><option value="autre">🏆 Autre compétition</option></select></div>
+            <div class="form-group"><label for="competition-name">Nom de l'épreuve</label><input id="competition-name" type="text" maxlength="120" placeholder="Ex. Triathlon M de Deauville"></div>
+            <div class="form-group"><label for="competition-date">Date de l'épreuve</label><input id="competition-date" type="date"></div>
+            <div class="form-group"><label for="competition-format">Format officiel</label><select id="competition-format" onchange="document.getElementById('competition-custom-format-wrap').style.display=this.value==='personnalise'?'block':'none'"><option>XS</option><option>S</option><option selected>M</option><option>L</option><option>XL</option><option>XXL</option><option>Ironman</option><option value="personnalise">Format personnalisé</option></select></div>
+            <div class="form-group" id="competition-custom-format-wrap" style="display:none;"><label for="competition-custom-format">Format personnalisé</label><input id="competition-custom-format" type="text" maxlength="60" placeholder="Ex. 15 km / 60 km / 5 km"></div>
+            <div class="form-group"><label for="competition-duration">Durée totale (minutes)</label><input id="competition-duration" type="number" min="0" step="0.1" placeholder="Ex. 165"></div>
+            <div class="form-group"><label for="competition-distance">Distance totale (km)</label><input id="competition-distance" type="number" min="0" step="0.01" placeholder="Ex. 51.5"></div>
+            <div class="form-group"><label for="competition-elevation">D+ total (m)</label><input id="competition-elevation" type="number" min="0" step="1" placeholder="Ex. 450"></div>
+            <div class="form-group"><label for="competition-bpm">BPM moyen (facultatif)</label><input id="competition-bpm" type="number" min="0" max="250" placeholder="Ex. 158"></div>
+            <div class="form-group"><label for="competition-rpe">Effort perçu (RPE 1 à 10)</label><input id="competition-rpe" type="range" min="1" max="10" value="5" oninput="document.getElementById('competition-rpe-value').textContent=this.value+'/10'"><strong id="competition-rpe-value">5/10</strong></div>
+          </div>
+          <div id="competition-segments" style="padding:12px;border:1px solid var(--card-border);border-radius:10px;">
+            <h4 id="competition-segments-title" style="margin:0 0 10px;color:var(--text-main);">Détail des disciplines et transitions</h4>
+            <div class="calc-inputs-grid" id="competition-sport-fields"></div>
+          </div>
+          <div id="last-competition-card" style="padding:14px;border:1px solid var(--card-border);border-radius:10px;background:var(--card-bg);">
+            <h4 style="margin:0 0 8px;color:#ff6b6b;"><i class="fa-solid fa-medal"></i> Ma dernière compétition</h4>
+            <div id="last-competition-content" style="font-size:.82rem;color:var(--text-sub);">Aucune compétition terminée enregistrée pour le moment.</div>
+          </div>
+          <div class="form-group"><label for="competition-notes">Résultat, classement et notes</label><textarea id="competition-notes" rows="3" maxlength="1500" placeholder="Classement, conditions météo, sensations, lien résultat…" style="width:100%;resize:vertical;"></textarea></div>
+          <div class="calc-action-box"><p style="font-size:.75rem;color:var(--text-sub);">Les champs détaillés sont conservés dans les données de l'épreuve. Une date future crée un événement au calendrier ; une épreuve terminée rejoint l'historique.</p><button class="btn-save-green" style="background:#ff6b6b;" onclick="saveCompetitionEntry()">🏆 ENREGISTRER LA COMPÉTITION</button></div>
+        </div>
       </section>
     </main>
 
@@ -1143,6 +1158,18 @@
             <div class="ranks-grid" id="ranks-grid-container"></div>
           </div>
 
+          <div class="trophies-section" style="margin-top:15px;">
+            <h3 style="font-size:.9rem;color:var(--text-main);">Collection de trophées</h3>
+            <div id="trophy-summary" style="font-size:.78rem;color:var(--text-sub);margin:8px 0;">0 / 600 trophées débloqués</div>
+            <div class="progress-bar-bg"><div id="trophy-progress" class="progress-bar-fill" style="width:0%;background:var(--xp-gold);"></div></div>
+            <p style="font-size:.72rem;color:var(--text-sub);margin-top:8px;">70 trophées secrets existent. Ils restent affichés sous forme de mystère jusqu'à leur découverte. Les statistiques de communauté et les comparaisons entre sportifs seront activées après connexion sécurisée à Supabase.</p>
+            <div id="trophy-category-summary" class="calc-inputs-grid" style="margin-top:10px;"></div>
+            <div class="calc-inputs-grid" style="margin-top:10px;">
+              <div class="form-group"><label for="trophy-filter">Filtrer les trophées</label><select id="trophy-filter" onchange="renderTrophiesAndRanks()"><option value="all">Tous les trophées</option><option value="locked">À débloquer</option><option value="unlocked">Débloqués</option><option value="natation">Natation</option><option value="course">Course à pied & trail</option><option value="velo">Vélo</option><option value="marche">Marche</option><option value="autres">Autres sports & HIIT</option><option value="competition">Compétitions</option><option value="secrets">Trophées secrets</option></select>
+              <label for="trophy-search" style="margin-top:8px;">Rechercher</label><input id="trophy-search" type="search" placeholder="Nom, discipline ou identifiant…" oninput="renderTrophiesAndRanks()"></div>
+            </div>
+            <div class="trophies-section" style="margin-top:10px;background:rgba(255,255,255,.025);"><strong style="font-size:.78rem;">🌍 Communauté</strong><p style="font-size:.7rem;color:var(--text-sub);margin:5px 0 0;">Pourcentage de sportifs possédant chaque trophée : en attente de Supabase. Aucun chiffre fictif n'est affiché.</p></div>
+          </div>
           <div class="trophies-section" style="margin-top:15px;">
             <h3 style="font-size:0.85rem; font-weight:bold; color:var(--text-main); margin-bottom:8px;"><i class="fa-solid fa-medal" style="color:var(--xp-gold)"></i> Les 4 Grands Trophées Emblématiques</h3>
             <div class="trophies-grid" id="trophies-grid-container"></div>
@@ -1495,8 +1522,38 @@
     let chartInstance = null;
 
     // Navigation centrale : toutes les pages déjà présentes dans le HTML.
+    function buildTrophyCatalogue() {
+      if(Array.isArray(appData.trophies)&&appData.trophies.length===600)return;
+      const saved=Array.isArray(appData.trophies)?appData.trophies:[];
+      const groups=[
+        {key:'natation',code:'NTR',label:'Natation',count:80,icon:'fa-person-swimming',unit:'km',thresholds:[.1,.5,1,2,5,10,...Array.from({length:35},(_,i)=>20+i*10),500,520,540,560,580,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600]},
+        {key:'course',code:'CAP',label:'Course à pied & trail',count:120,icon:'fa-person-running',unit:'km',thresholds:[1,5,...Array.from({length:49},(_,i)=>10+i*5),...Array.from({length:40},(_,i)=>260+i*10),...Array.from({length:29},(_,i)=>710+i*25)]},
+        {key:'velo',code:'VEL',label:'Vélo & cyclisme',count:120,icon:'fa-person-biking',unit:'km',thresholds:[5,...Array.from({length:29},(_,i)=>10+i*10),...Array.from({length:60},(_,i)=>325+i*25),...Array.from({length:30},(_,i)=>1850+i*50)]},
+        {key:'marche',code:'MAR',label:'Marche & randonnée',count:60,icon:'fa-person-hiking',unit:'km',thresholds:Array.from({length:60},(_,i)=>5+i*5)},
+        {key:'autres',code:'SPO',label:'Autres sports & HIIT',count:80,icon:'fa-dumbbell',unit:'minutes',thresholds:Array.from({length:80},(_,i)=>30+i*60)},
+        {key:'competition',code:'COM',label:'Compétitions',count:70,icon:'fa-trophy',unit:'compétitions',thresholds:Array.from({length:70},(_,i)=>i+1)}
+      ];
+      const tierFor=n=>n>=50?'Challenger':n>=30?'Diamant':n>=20?'Platine':n>=10?'Or':n>=5?'Argent':'Bronze';
+      const publicItems=[];
+      groups.forEach(g=>{for(let i=0;i<g.count;i++){const threshold=g.thresholds[i]??(i+1);publicItems.push({id:`${g.code}-${String(i+1).padStart(3,'0')}`,title:i===0?`Premiers pas – ${g.label}`:`Palier ${i+1} – ${g.label}`,desc:`Atteindre ${threshold} ${g.unit} cumulés · ${g.label}`,category:g.key,threshold,metric:g.key==='autres'?'minutes':g.key==='competition'?'competitions':g.key==='marche'?'marche':g.key==='natation'?'natation':g.key==='velo'?'velo':'course',isSecret:false,unlocked:false,tier:tierFor(i+1),xp:Math.min(1000,50+i*10),icon:g.icon});}});
+      // 70 secrets définis dans le catalogue avec conditions stockées comme données, à vérifier côté serveur avant attribution.
+      const secretDefs=[
+        ['NTR-S01','Poisson des abysses','Nager entre 00h00 et 04h00','Or',300,'natation'],['NTR-S02','Bain de minuit givré','Nager en eau libre sous la pluie ou par température froide','Argent',200,'natation'],['NTR-S03','Le grand bleu','Première séance en eau libre (lac ou mer)','Argent',250,'natation'],['NTR-S04','SDF des bassins','3 séances de natation en moins de 48 heures','Or',400,'natation'],['NTR-S05','Apnée involontaire','RPE 10/10 et BPM supérieur à 90 % de FC max','Platine',500,'natation'],['NTR-S06','Le Titanic','Séance de moins de 5 min avec « cata » ou « abandon »','Bronze',50,'natation'],['NTR-S07','Maître nageur','Nager exactement 2 000 mètres en une séance','Or',350,'natation'],['NTR-S08',"Dauphin d'or",'Nager plus de 3 500 m en une séance','Argent',200,'natation'],['NTR-S09','Vagues et clapot','Nager en mer avec option Vagues / Houle','Argent',250,'natation'],['NTR-S10','Poséidon','Débloquer tous les trophées publics de natation','Challenger',2000,'natation'],
+        ['CAP-S01','Forrest Gump','Courir au moins 42,195 km en une sortie','Challenger',1000,'course'],['CAP-S02',"Chasseur d'arc-en-ciel",'Courir une séance complète sous la pluie','Argent',200,'course'],['CAP-S03','Matinal extrême','Courir avant 06h le 1er janvier','Or',500,'course'],['CAP-S04','Traileur des cimes','Cumuler au moins 1 000 m D+ sur un run','Or',400,'course'],['CAP-S05','Asphalte fondu','Courir au moins 60 min par chaleur intense','Argent',250,'course'],['CAP-S06','Mur du marathon','RPE 10/10 et commentaire « mur » ou « crampes »','Argent',250,'course'],['CAP-S07','Tapis volant','Faire 10 km sur tapis alors qu’il fait beau dehors','Bronze',100,'course'],['CAP-S08','Le Sprinteur pur','Allure inférieure à 3:30/km sur au moins 3 km','Argent',200,'course'],['CAP-S09','Chameau des sables','Courir plus de 90 min sans pause enregistrée','Argent',200,'course'],['CAP-S10','Vertige vertical','Réaliser 2 000 m D+ en un trail','Platine',600,'course'],['CAP-S11','Pieds de boue','Trail en forêt sous pluie battante','Bronze',150,'course'],['CAP-S12','Oiseau de nuit','Courir plus de 10 km après 22h','Argent',200,'course'],['CAP-S13',"Régularité d'horloge",'5 runs dans la même semaine à la même heure (±15 min)','Or',350,'course'],['CAP-S14','Le Semi parfait','Courir entre 21,09 et 21,20 km','Or',400,'course'],['CAP-S15','Légende des sentiers','Cumuler 10 000 m D+ en trail','Challenger',1500,'course'],
+        ['VEL-S01','Vent de face éternel','Sortie vélo de 50 km ou plus par vent fort','Or',400,'velo'],['VEL-S02','Home-trainer masochiste','Home-trainer pendant au moins 120 min','Argent',300,'velo'],['VEL-S03','Crevaison poisseuse','Commentaire contenant crevaison ou pneu','Bronze',100,'velo'],['VEL-S04','Vitesse supersonique','Moyenne ≥38 km/h sur au moins 30 km','Diamant',750,'velo'],['VEL-S05','Chasseur de cols','Au moins 2 000 m D+ sur une sortie vélo','Or',500,'velo'],['VEL-S06','Brevet des 200','Parcourir au moins 200 km en une sortie','Platine',800,'velo'],['VEL-S07','Puissance brute','Plus de 300 W moyens pendant au moins 45 min','Or',450,'velo'],['VEL-S08','Le Forçat de la route','Rouler sous la pluie plus de 2 heures','Argent',300,'velo'],['VEL-S09','Cuisses en feu','3 jours consécutifs avec plus de 40 km/jour','Argent',250,'velo'],['VEL-S10','Night Rider','Sortie commencée après 21h et supérieure à 30 km','Argent',200,'velo'],['VEL-S11','Mont Ventoux virtuel','1 600 m D+ sur home-trainer','Or',500,'velo'],['VEL-S12','Le Centenaire','Rouler 100 km ±500 m','Or',400,'velo'],['VEL-S13','Pédalage économique','40 km avec BPM moyen inférieur à 120','Bronze',150,'velo'],['VEL-S14','Gravel Maniac','Sortie Forêt / Gravel de plus de 60 km','Argent',250,'velo'],['VEL-S15','Le Tour de France','3 500 km cumulés à vélo sur une saison','Challenger',2000,'velo'],
+        ['MAR-S01','Le Hobbit','Atteindre 500 km de marche cumulée','Platine',800,'marche'],['MAR-S02','Ampoules aux pieds','Marche/rando de 30 km ou plus en une journée','Or',500,'marche'],['MAR-S03','Rando nocturne','Marcher plus de 2 h entre 22h et 05h','Argent',200,'marche'],['MAR-S04','Alpiniste à pied','Réaliser 1 200 m D+ en marche/randonnée','Or',450,'marche'],['MAR-S05','Promeneur du dimanche','Marcher chaque dimanche d’un même mois','Bronze',100,'marche'],['MAR-S06','Trekker extrême','Marcher au moins 15 km/jour pendant 4 jours','Platine',700,'marche'],['MAR-S07','Marcher sur l’eau','Marcher 10 km sous pluie battante','Argent',250,'marche'],['MAR-S08','Exploration urbaine','Enregistrer 20 km de marche en terrain urbain','Bronze',150,'marche'],
+        ['SPO-S01','Tie-break psychologique','Tennis/Padel ≥120 min avec RPE 9 ou 10','Or',450,'autres'],['SPO-S02','K.-O. debout','Boxe un vendredi après 18h','Argent',300,'autres'],['SPO-S03','Skieur intrépide','Ski/Snowboard avec RPE 10/10','Or',400,'autres'],['SPO-S04','Marathon du Fitness','3 h de musculation/fitness le même jour','Or',350,'autres'],['SPO-S05','Escalade sans fin','2h30 d’escalade avec RPE ≥8','Argent',300,'autres'],['SPO-S06','Légende du Futsal','Football/Futsal BPM >165 et RPE ≥9','Argent',250,'autres'],['SPO-S07','HIIT surchauffe','45 min de HIIT sans pause avec RPE 10','Argent',200,'autres'],['SPO-S08',"Cavalier d'acier",'2 h d’équitation intensive','Bronze',150,'autres'],['SPO-S09','Polyvalent suprême','Pratiquer 5 disciplines Autres sports en 1 mois','Platine',600,'autres'],['SPO-S10','Addict au Padel','Jouer au Padel plus de 4 fois dans la même semaine','Or',400,'autres'],
+        ['COM-S01','Finisher invincible','Terminer 3 compétitions officielles dans la même saison','Challenger',1500,'competition'],['COM-S02','Podium surprise','Compétition avec Podium ou Victoire en commentaire','Or',1000,'competition'],['COM-S03','Iron Human','Terminer un Triathlon XXL / Ironman','Challenger',2500,'competition'],['COM-S04','Le Phoenix des neiges','Sport extérieur par température inférieure à 0°C','Or',400,'competition'],['COM-S05','Double dose de dopamine','Valider 2 entraînements différents le même jour','Argent',250,'competition'],['COM-S06','Le Serial-Plaider','S’entraîner au moins une fois par jour 7 jours','Platine',600,'competition'],['COM-S07','Hibou nocturne','Valider une séance entre 23h et 03h','Argent',200,'competition'],['COM-S08','Résilience pure','RPE 10/10 et commentaire fatigue ou dur','Argent',250,'competition'],['COM-S09','Le Centenaire Dopamine','Enregistrer la 100e séance','Platine',800,'competition'],['COM-S10','Année parfaite','Enregistrer 150 séances sur 365 jours','Challenger',3000,'competition'],['COM-S11',"Décrocheur d'étoiles",'Passer du niveau 1 au niveau 10','Or',500,'competition'],['COM-S12','Le Guerrier du Dimanche','Cumuler plus de 4 h de sport un dimanche','Argent',200,'competition']
+      ];
+      const secrets=secretDefs.map(([id,title,desc,tier,xp,category])=>({id,title,desc,tier,xp,category,icon:'fa-question',isSecret:true,unlocked:saved.some(t=>t.id===id&&t.unlocked),hint:'Trophée secret : découvre la condition en pratiquant.'}));
+      const oldUnlocked=new Set(saved.filter(t=>t.unlocked).map(t=>t.id));
+      appData.trophies=[...publicItems,...secrets];appData.trophies.forEach(t=>{if(oldUnlocked.has(t.id))t.unlocked=true;});
+      if(appData.trophies.length!==600) console.error('Catalogue trophées incorrect',appData.trophies.length);
+      saveAppData();
+    }
+
     function showPage(page) {
-      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'stats', 'trophies'];
+      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'competition', 'stats', 'trophies'];
       if (!allowedPages.includes(page)) return;
       document.querySelectorAll('.app-page').forEach(el => el.classList.add('hidden'));
       const target = document.getElementById(`view-${page}`);
@@ -1507,7 +1564,7 @@
       if (activeNav) activeNav.classList.add('active');
       document.querySelectorAll('.nav-discipline-btn').forEach(btn => btn.classList.toggle('active', (btn.getAttribute('onclick') || '').includes(`openCalc('${page}')`)));
       const submenu = document.getElementById('activity-submenu');
-      if (submenu && ['home', 'stats', 'trophies'].includes(page)) submenu.classList.remove('open');
+      if (submenu && ['home', 'stats', 'trophies', 'competition'].includes(page)) submenu.classList.remove('open');
       if (page === 'stats') { renderChart(); renderHistory(); }
       if (page === 'trophies') renderTrophiesAndRanks();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1516,7 +1573,7 @@
     function openCalc(sport) {
       const sportPages = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres'];
       if (!sportPages.includes(sport)) return;
-      showPage(sport);
+      showPage(sport === 'hiit' ? 'autres' : sport);
       const submenu = document.getElementById('activity-submenu');
       if (submenu) submenu.classList.remove('open');
       const trigger = document.getElementById('nav-activities');
@@ -1538,14 +1595,7 @@ let appData = {
   level: 1,
   stats: { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, autres: 0, calories: 0 },
   goals: { natation: 15, velo: 180, course: 40 },
-  trophies: [
-    { id: 'velo_100', title: 'Rouleur d’Acier', desc: 'Atteindre 100 km à vélo', unlocked: false, tier: 'Or', icon: 'fa-person-biking' },
-    { id: 'course_30', title: 'Sprinteur Fondu', desc: 'Atteindre 30 km en course à pied', unlocked: false, tier: 'Argent', icon: 'fa-person-running' },
-    { id: 'tri_master', title: 'Triathlète Complet', desc: 'Valider Natation, Vélo et Course à pied', unlocked: false, tier: 'Platine', icon: 'fa-medal' },
-    { id: 'hiit_king', title: 'Explosivité Pure', desc: 'Valider 150 min de HIIT', unlocked: false, tier: 'Bronze', icon: 'fa-bolt' },
-          { id: 'autres_first', title: 'Curieux du sport', desc: 'Enregistrer une première activité dans Autres sports', unlocked: false, tier: 'Bronze', icon: 'fa-medal' },
-          { id: 'autres_600', title: 'Polyvalent', desc: 'Cumuler 600 minutes dans Autres sports', unlocked: false, tier: 'Argent', icon: 'fa-award' }
-  ],
+  trophies: [],
   sessionsHistory: [],
   integrations: { Strava: 'non_configuree', Garmin: 'non_configuree', Polar: 'non_configuree', Zwift: 'non_configuree' },
   plannedSessions: []
@@ -2164,10 +2214,10 @@ Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. A
             alert("Fichier JSON invalide ou incomplet. Aucune donnée n'a été remplacée.");
             return;
           }
-          const allowedSports = ['natation', 'velo', 'course', 'marche', 'hiit'];
+          const allowedSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'competition'];
           const validSessions = imported.sessionsHistory.every(s =>
             s && allowedSports.includes(s.sport) &&
-            Number.isFinite(Number(s.rawVal)) && Number(s.rawVal) > 0 &&
+            Number.isFinite(Number(s.rawVal)) && (s.sport === 'competition' ? Number(s.rawVal) >= 0 : Number(s.rawVal) > 0) &&
             Number.isFinite(Number(s.xp || 0)) && Number(s.xp || 0) >= 0
           );
           if (!validSessions) {
@@ -2323,23 +2373,60 @@ function resetActiveForm(sport) {
       });
     }
 
+    function getTrophyMetricValue(trophy) {
+      const history = Array.isArray(appData.sessionsHistory) ? appData.sessionsHistory : [];
+      if (trophy.metric === 'competitions') return history.filter(s => s && (s.type === 'competition' || s.sport === 'competition')).length;
+      if (trophy.metric === 'minutes') return history.filter(s => s && ['hiit','autres'].includes(s.sport)).reduce((n,s) => n + (Number(s.durationMinutes) || parseFloat(s.duration) || 0), 0);
+      const key = trophy.metric || trophy.category;
+      return Math.max(0, Number(appData.stats?.[key]) || 0);
+    }
+
+    function getTrophyProgress(trophy) {
+      if (trophy.isSecret) return { value: trophy.unlocked ? 1 : 0, target: 1, percent: trophy.unlocked ? 100 : 0 };
+      const value = getTrophyMetricValue(trophy);
+      const target = Math.max(1, Number(trophy.threshold) || 1);
+      return { value, target, percent: Math.min(100, Math.round(value / target * 100)) };
+    }
+
     function renderTrophiesAndRanks() {
       renderRanks();
       const grid = document.getElementById('trophies-grid-container');
       if (!grid) return;
       grid.innerHTML = '';
-      appData.trophies.forEach(t => {
-        grid.innerHTML += `
-          <div class="trophy-card ${t.unlocked ? 'unlocked' : ''}">
-            <div class="trophy-icon"><i class="fa-solid ${t.icon}"></i></div>
-            <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="font-size:0.75rem; color:var(--text-main);">${t.title}</strong>
-                <span style="font-size:0.55rem; padding:1px 5px; border-radius:4px; background:rgba(255,255,255,0.1); color:${t.unlocked ? 'var(--xp-gold)' : 'var(--text-sub)'};">${t.tier}</span>
-              </div>
-              <div style="font-size:0.65rem; color:var(--text-sub); margin-top:2px;">${t.desc}</div>
-            </div>
-          </div>`;
+      const filter = document.getElementById('trophy-filter')?.value || 'all';
+      const search = (document.getElementById('trophy-search')?.value || '').trim().toLocaleLowerCase('fr');
+      const all = Array.isArray(appData.trophies) ? appData.trophies : [];
+      const visible = all.filter(t => {
+        if (filter === 'secrets' && !t.isSecret) return false;
+        if (filter === 'locked' && (t.unlocked || t.isSecret)) return false;
+        if (filter === 'unlocked' && !t.unlocked) return false;
+        if (['natation','course','velo','marche','autres','competition'].includes(filter) && t.category !== filter) return false;
+        const haystack = `${t.id} ${t.title} ${t.desc} ${t.category}`.toLocaleLowerCase('fr');
+        return !search || haystack.includes(search);
+      });
+      const unlocked = all.filter(t => t.unlocked).length;
+      const publicAll = all.filter(t => !t.isSecret);
+      const publicUnlocked = publicAll.filter(t => t.unlocked).length;
+      const secretUnlocked = all.filter(t => t.isSecret && t.unlocked).length;
+      const summary=document.getElementById('trophy-summary');
+      if(summary) summary.textContent=`${unlocked} / 600 débloqués · ${publicUnlocked} / 530 publics · ${secretUnlocked} / 70 secrets découverts`;
+      const progress=document.getElementById('trophy-progress');
+      if(progress) progress.style.width=(unlocked/600*100)+'%';
+      const categoryBox=document.getElementById('trophy-category-summary');
+      if(categoryBox) {
+        const groups=[['Natation','natation',80],['Course & trail','course',120],['Vélo','velo',120],['Marche','marche',60],['Autres sports','autres',80],['Compétitions','competition',70]];
+        categoryBox.innerHTML=groups.map(([label,key,total])=>{const items=publicAll.filter(t=>t.category===key);const done=items.filter(t=>t.unlocked).length;return `<div style="background:rgba(255,255,255,.035);border:1px solid var(--card-border);border-radius:8px;padding:8px;"><div style="display:flex;justify-content:space-between;font-size:.68rem;gap:5px;"><strong>${label}</strong><span>${done}/${total}</span></div><div class="progress-bar-bg" style="height:5px;margin-top:6px;"><div class="progress-bar-fill" style="width:${total?done/total*100:0}%;background:var(--xp-gold);"></div></div></div>`;}).join('');
+      }
+      if (!visible.length) { grid.innerHTML='<p style="color:var(--text-sub);font-size:.75rem;padding:12px;">Aucun trophée ne correspond à cette recherche.</p>'; return; }
+      visible.forEach(t => {
+        const hiddenSecret=t.isSecret&&!t.unlocked;
+        const title=hiddenSecret?'❓ Trophée secret':t.title;
+        const desc=hiddenSecret?'Trophée mystère : continue tes activités pour le découvrir.':t.desc;
+        const prog=getTrophyProgress(t);
+        const progressLine=hiddenSecret?'Condition secrète':`${prog.value.toLocaleString('fr-FR',{maximumFractionDigits:1})} / ${prog.target.toLocaleString('fr-FR',{maximumFractionDigits:1})} · ${prog.percent}%`;
+        const safeTitle=String(title).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const safeDesc=String(desc).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        grid.innerHTML += `<div class="trophy-card ${t.unlocked?'unlocked':''}" style="opacity:${t.unlocked?1:(hiddenSecret?.62:.82)};align-items:flex-start;"><div class="trophy-icon"><i class="fa-solid ${hiddenSecret?'fa-question':t.icon||'fa-medal'}"></i></div><div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;align-items:center;gap:5px;"><strong style="font-size:.75rem;color:var(--text-main);">${safeTitle}</strong><span style="font-size:.55rem;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.1);white-space:nowrap;color:${t.unlocked?'var(--xp-gold)':'var(--text-sub)'};">${hiddenSecret?'SECRET':t.tier||'Bronze'}</span></div><div style="font-size:.65rem;color:var(--text-sub);margin-top:3px;">${safeDesc}</div><div style="font-size:.62rem;color:var(--xp-gold);margin-top:5px;">${progressLine}${!hiddenSecret?` · +${t.xp||0} XP`:''}</div>${!hiddenSecret?`<div class="progress-bar-bg" style="height:4px;margin-top:4px;"><div class="progress-bar-fill" style="width:${prog.percent}%;background:var(--xp-gold);"></div></div>`:''}</div></div>`;
       });
     }
 
@@ -2400,116 +2487,160 @@ function resetActiveForm(sport) {
         res.innerHTML = `🏅 ${activity} · ${time} min · RPE ${rpe}/10${fcInfo}`;
       } else if (sport === 'hiit') {
         const time = parseFloat(document.getElementById('hiit-time').value) || 0;
-        const rpe = parseFloat(document.getElementById('hiit-rpe').value) || 7;
+        const rpe = parseFloat(document.getElementById('hiit-rpe-slider')?.value) || 5;
         if (!time) { res.innerText = "Entrez la durée."; return; }
         res.innerHTML = `⚡ Session HIIT (RPE ${rpe}): <span style="color:var(--hiit-pink)">Intensité Validée (${time} min)</span>${fcInfo}`;
       }
       playDopamineSound('click');
     }
 
+    // XP multi-facteurs : formule validée pour les 6 disciplines + coefficient compétition.
+    function calculateSessionXp({ sport, durationMinutes, distanceKm = 0, elevationM = 0, averageBpm = 0, isCompetition = false }) {
+      const coefficients = { natation: 2.0, velo: 1.0, course: 1.5, marche: 0.8, hiit: 1.8, autres: 1.0, competition: 3.0 };
+      const key = isCompetition ? 'competition' : sport;
+      const coefficient = coefficients[key] ?? 1.0;
+      const duration = Math.max(0, Number(durationMinutes) || 0);
+      const distance = Math.max(0, Number(distanceKm) || 0);
+      const elevation = Math.max(0, Number(elevationM) || 0);
+      const bpm = Math.max(0, Number(averageBpm) || 0);
+      return Math.round((duration * coefficient) + (distance * 5) + (elevation * 0.2) + (Math.max(0, bpm - 110) * 0.5));
+    }
+
     function saveCurrentSession(sport) {
       const supportedSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres'];
-      if (!supportedSports.includes(sport)) {
-        alert("Le sport sélectionné n'est pas reconnu."); return;
-      }
+      if (!supportedSports.includes(sport)) { alert("Le sport sélectionné n'est pas reconnu."); return; }
 
+      // HIIT et autres sports utilisent désormais le même formulaire et le même curseur RPE.
+      const formSport = sport === 'hiit' ? 'autres' : sport;
+      const selectedActivity = formSport === 'autres' ? (document.getElementById('autres-sport-select')?.value || 'Autre') : '';
+      const actualSport = formSport === 'autres' ? (selectedActivity === 'HIIT' ? 'hiit' : 'autres') : formSport;
       let dist = 0, time = 0, elev = 0;
-      if (sport === 'natation') {
-        dist = (parseFloat(document.getElementById('natation-dist').value) || 0) / 1000;
-        time = parseFloat(document.getElementById('natation-time').value);
-      } else if (sport === 'velo') {
-        dist = parseFloat(document.getElementById('velo-dist').value);
-        time = parseFloat(document.getElementById('velo-time').value);
-        elev = parseFloat(document.getElementById('velo-elev').value) || 0;
-      } else if (sport === 'course') {
-        dist = parseFloat(document.getElementById('course-dist').value);
-        time = parseFloat(document.getElementById('course-time').value);
-        elev = parseFloat(document.getElementById('course-elev').value) || 0;
-      } else if (sport === 'marche') {
-        dist = parseFloat(document.getElementById('marche-dist').value);
-        time = parseFloat(document.getElementById('marche-time').value);
-        elev = parseFloat(document.getElementById('marche-elev').value) || 0;
-      } else if (sport === 'hiit') {
-        time = parseFloat(document.getElementById('hiit-time').value);
-        dist = 0;
+      if (formSport === 'natation') { dist = (parseFloat(document.getElementById('natation-dist').value) || 0) / 1000; time = parseFloat(document.getElementById('natation-time').value); }
+      else if (formSport === 'velo' || formSport === 'course' || formSport === 'marche') {
+        dist = parseFloat(document.getElementById(`${formSport}-dist`).value);
+        time = parseFloat(document.getElementById(`${formSport}-time`).value);
+        elev = parseFloat(document.getElementById(`${formSport}-elev`)?.value) || 0;
       } else {
         time = parseFloat(document.getElementById('autres-time').value);
-        dist = parseFloat(document.getElementById('autres-dist').value) || 0;
+        dist = actualSport === 'hiit' ? 0 : (parseFloat(document.getElementById('autres-dist').value) || 0);
       }
-
-      if (!Number.isFinite(time) || time <= 0) {
-        alert("La durée doit être un nombre supérieur à zéro."); return;
-      }
-      if (!['hiit', 'autres'].includes(sport) && (!Number.isFinite(dist) || dist <= 0)) {
-        alert("La distance doit être un nombre supérieur à zéro."); return;
-      }
-      if (!Number.isFinite(elev) || elev < 0) {
-        alert("Le dénivelé ne peut pas être négatif."); return;
-      }
-      if (['hiit', 'autres'].includes(sport)) {
-        const rpeInput = parseFloat(document.getElementById(sport === 'autres' ? 'autres-rpe-slider' : 'hiit-rpe').value);
-        if (Number.isFinite(rpeInput) && (rpeInput < 1 || rpeInput > 10)) { alert("L'intensité perçue doit être comprise entre 1 et 10."); return; }
-      }
-      // Garde-fous pour éviter les erreurs de saisie manifestes.
-      if (time > 24 * 60) { alert("La durée doit être inférieure ou égale à 24 heures."); return; }
-      if (!['hiit', 'autres'].includes(sport) && dist > 1000) { alert("La distance semble trop élevée. Vérifie la valeur saisie."); return; }
+      if (!Number.isFinite(time) || time <= 0) { alert("La durée doit être un nombre supérieur à zéro."); return; }
+      if (!['hiit', 'autres'].includes(actualSport) && (!Number.isFinite(dist) || dist <= 0)) { alert("La distance doit être un nombre supérieur à zéro."); return; }
+      if (!Number.isFinite(elev) || elev < 0) { alert("Le dénivelé ne peut pas être négatif."); return; }
+      if (time > 1440) { alert("La durée doit être inférieure ou égale à 24 heures."); return; }
+      if (dist > 1000) { alert("La distance semble trop élevée. Vérifie la valeur saisie."); return; }
       if (elev > 20000) { alert("Le dénivelé semble trop élevé. Vérifie la valeur saisie."); return; }
 
-      const rawVal = ['hiit', 'autres'].includes(sport) ? time : dist;
-      let baseXp = Math.round((['hiit', 'autres'].includes(sport) ? time * 1.5 : dist * 10) + (time * 0.5) + (elev * 0.2));
-      baseXp = Math.max(30, baseXp);
-
-      // Initialiser le socle avant d'ajouter la séance pour préserver l'XP historique.
+      const bpmInput = document.getElementById(`${formSport}-bpm`);
+      const averageBpm = bpmInput ? (parseFloat(bpmInput.value) || 0) : 0;
+      if (averageBpm < 0 || averageBpm > 250) { alert('Le BPM moyen doit être compris entre 0 et 250.'); return; }
+      const rpeValue = parseFloat(document.getElementById(`${formSport}-rpe-slider`)?.value) || 5;
+      const baseXp = calculateSessionXp({ sport: actualSport, durationMinutes: time, distanceKm: dist, elevationM: elev, averageBpm });
       ensureXpBaseline();
-      const activityName = sport === 'autres' ? (document.getElementById('autres-sport-select')?.value || 'Autre sport') : sport.toUpperCase();
-      const sessionTitle = sport === 'autres' ? activityName : `Séance ${activityName}`;
-      const sessionDist = ['hiit', 'autres'].includes(sport) ? `${time} min` : `${Number(dist.toFixed(2))} km`;
-      const feelingEl = document.getElementById(`${sport}-feeling`);
-      const commentEl = document.getElementById(`${sport}-comment`);
-      const feeling = feelingEl ? feelingEl.value : '';
-      const comment = commentEl ? commentEl.value.trim().slice(0, 1000) : '';
+      const activityName = actualSport === 'hiit' ? 'HIIT' : (actualSport === 'autres' ? selectedActivity : actualSport.toUpperCase());
+      const commentEl = document.getElementById(`${formSport}-comment`);
       const session = {
-        id: Date.now(),
-        sport,
-        feeling,
-        comment,
-        title: sessionTitle,
-        distance: sessionDist,
-        rawVal,
-        duration: `${time} min`,
-        date: localDateISO(new Date()),
-        xp: baseXp,
+        id: Date.now(), sport: actualSport, feeling: getRPEFeeling(rpeValue), rpe: rpeValue,
+        comment: commentEl ? commentEl.value.trim().slice(0, 1000) : '',
+        title: `Séance ${activityName}`, distance: ['hiit','autres'].includes(actualSport) ? `${time} min` : `${Number(dist.toFixed(2))} km`,
+        rawVal: ['hiit','autres'].includes(actualSport) ? time : dist, duration: `${time} min`,
+        date: localDateISO(new Date()), xp: baseXp, averageBpm, elevationM: elev,
+        watts: parseFloat(document.getElementById(`${formSport}-watts`)?.value) || null,
+        cadence: parseFloat(document.getElementById(`${formSport}-cadence`)?.value) || null,
+        terrain: document.getElementById(`${formSport}-terrain`)?.value || null,
+        weather: document.getElementById(`${formSport}-weather`)?.value || null,
         calories: Math.round(time * 9)
       };
       appData.sessionsHistory.unshift(session);
-      if (feelingEl) feelingEl.value = '';
       if (commentEl) commentEl.value = '';
-      recalculateStatsFromHistory();
-      checkTrophiesUnlock();
-      renderHistory();
+      if (bpmInput) bpmInput.value = '';
+      recalculateStatsFromHistory(); checkTrophiesUnlock(); renderHistory();
       triggerAchievementPopup(`Séance validée ! +${baseXp} XP`);
       showPage('stats');
     }
 
+    function updateCompetitionFields() {
+      const kind = document.getElementById('competition-kind')?.value || 'triathlon';
+      const wrap = document.getElementById('competition-sport-fields');
+      const panel = document.getElementById('competition-segments');
+      const title = document.getElementById('competition-segments-title');
+      const lastCard = document.getElementById('last-competition-card');
+      if (!wrap || !panel || !lastCard) return;
+      const showSplits = kind === 'triathlon' || kind === 'duathlon';
+      panel.style.display = showSplits ? 'block' : 'none';
+      lastCard.style.display = showSplits ? 'none' : 'block';
+      if (!showSplits) {
+        renderLastCompetitionCard();
+        return;
+      }
+      if (title) title.textContent = kind === 'triathlon' ? 'Détail du triathlon : natation, vélo, course et transitions' : 'Détail du duathlon : course, vélo, course et transitions';
+      const field = (id, label, unit, ph = '') => `<div class="form-group"><label for="competition-${id}">${label} (${unit})</label><input id="competition-${id}" type="number" min="0" step="0.1" placeholder="${ph}"></div>`;
+      let html = '';
+      if (kind === 'triathlon') {
+        html = field('swim','Natation','min','32') + field('swim-distance','Distance natation','km','1.5') + field('t1','Transition T1','min','3') + field('bike','Vélo','min','85') + field('bike-distance','Distance vélo','km','40') + field('bike-elevation','D+ vélo','m','400') + field('t2','Transition T2','min','2') + field('run','Course à pied','min','48') + field('run-distance','Distance CAP','km','10') + field('run-elevation','D+ CAP','m','50');
+      } else {
+        html = field('run1','Course à pied 1','min','20') + field('run1-distance','Distance CAP 1','km','5') + field('run1-elevation','D+ CAP 1','m','') + field('t1','Transition T1','min','2') + field('bike','Vélo','min','45') + field('bike-distance','Distance vélo','km','20') + field('bike-elevation','D+ vélo','m','') + field('t2','Transition T2','min','2') + field('run','Course à pied 2','min','10') + field('run-distance','Distance CAP 2','km','2.5') + field('run-elevation','D+ CAP 2','m','');
+      }
+      wrap.innerHTML = html;
+    }
+
+    function renderLastCompetitionCard() {
+      const target = document.getElementById('last-competition-content');
+      if (!target) return;
+      const latest = (appData.sessionsHistory || []).filter(s => s && (s.type === 'competition' || s.competitionDetails)).slice().sort((a,b) => String(b.date || '').localeCompare(String(a.date || '')))[0];
+      if (!latest) {
+        target.innerHTML = 'Aucune compétition terminée enregistrée pour le moment. Enregistre ton premier résultat pour le retrouver ici.';
+        return;
+      }
+      const safe = value => String(value ?? '—').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      const d = latest.competitionDetails || {};
+      const format = latest.format || d.format || '—';
+      const duration = latest.duration || (d.durationMinutes ? `${d.durationMinutes} min` : '—');
+      const distance = latest.distance || (d.totalDistanceKm ? `${d.totalDistanceKm} km` : '—');
+      const elevation = latest.elevationM ?? d.totalElevationM;
+      const rpe = latest.rpe ?? d.rpe;
+      target.innerHTML = `<strong style="color:var(--text-main);font-size:.95rem;">${safe(latest.title || 'Compétition')}</strong><div style="margin-top:5px;line-height:1.8;">📅 ${safe(latest.date)} · Format ${safe(format)}<br>⏱️ ${safe(duration)} · 📏 ${safe(distance)}<br>⛰️ D+ ${safe(elevation ?? '—')} m · 💪 RPE ${safe(rpe ?? '—')}/10${latest.xp != null ? `<br>⭐ ${safe(latest.xp)} XP gagnés` : ''}</div>${latest.comment ? `<p style="margin:7px 0 0;overflow-wrap:anywhere;">${safe(latest.comment)}</p>` : ''}`;
+    }
+
+    function saveCompetitionEntry() {
+      const val=id=>document.getElementById('competition-'+id)?.value;
+      const num=id=>Math.max(0,Number(val(id))||0);
+      const name=(val('name')||'').trim(), date=val('date'), kind=val('kind')||'triathlon';
+      const f=val('format')||'M', format=f==='personnalise'?(val('custom-format')||'').trim():f;
+      const duration=num('duration'), distance=num('distance'), elevation=num('elevation'), bpm=num('bpm'), rpe=num('rpe')||5;
+      if(!name||!date||!format){alert("Renseigne le type, le nom, la date et le format de l'épreuve.");return;}
+      if(bpm>250){alert('Le BPM moyen doit être inférieur ou égal à 250.');return;}
+      const detailIds=['swim','swim-distance','t1','bike','bike-distance','bike-elevation','t2','run1','run1-distance','run1-elevation','run','run-distance','run-elevation','other-duration','other-distance'];
+      const details={}; detailIds.forEach(k=>{if(document.getElementById('competition-'+k)) details[k]=num(k);});
+      const notes=(val('notes')||'').trim().slice(0,1500);
+      const splitMinutes=Object.entries(details).filter(([k])=>!k.includes('distance')&&!k.includes('elevation')).reduce((a,[,v])=>a+v,0);
+      const effectiveDuration=duration||splitMinutes;
+      const totalDistance=distance||['swim-distance','bike-distance','run1-distance','run-distance','other-distance'].reduce((a,k)=>a+(details[k]||0),0);
+      const totalElevation=elevation||['bike-elevation','run1-elevation','run-elevation'].reduce((a,k)=>a+(details[k]||0),0);
+      const today=localDateISO(new Date());
+      if(date<=today&&effectiveDuration<=0){alert('Indique la durée totale ou les temps détaillés pour enregistrer un résultat.');return;}
+      const title=name, sportMap={triathlon:'triathlon',duathlon:'duathlon',trail:'trail',course:'course',velo:'velo',natation:'natation',autre:'competition'}, eventSport=sportMap[kind]||'competition';
+      const record={kind,format,details,totalDistanceKm:totalDistance,totalElevationM:totalElevation,durationMinutes:effectiveDuration,averageBpm:bpm,rpe,notes};
+      if(date>today){if(!Array.isArray(appData.plannedSessions))appData.plannedSessions=[];appData.plannedSessions.push({id:Date.now(),title,date,time:'',sport:eventSport,type:'competition',format,details:record});saveAppData();renderHomeCalendar();updateRaceCountdown();renderLastCompetitionCard();alert('Compétition ajoutée au calendrier. Les détails sont conservés ; aucun XP avant le résultat.');}
+      else {const xp=calculateSessionXp({sport:'competition',isCompetition:true,durationMinutes:effectiveDuration,distanceKm:totalDistance,elevationM:totalElevation,averageBpm:bpm});ensureXpBaseline();appData.sessionsHistory.unshift({id:Date.now(),type:'competition',sport:'competition',title,date,format,eventKind:kind,duration:`${effectiveDuration} min`,distance:`${totalDistance} km`,rawVal:0,xp,averageBpm:bpm,elevationM:totalElevation,rpe,competitionDetails:record,comment:notes,calories:Math.round(effectiveDuration*9)});recalculateXpFromHistory();saveAppData();renderHistory();renderChart();renderLastCompetitionCard();checkCompetitionTrophies?.();checkTrophiesUnlock();triggerAchievementPopup(`Compétition enregistrée ! +${xp} XP`);}
+      ['name','custom-format','duration','distance','elevation','bpm','notes','rpe'].forEach(k=>{const el=document.getElementById('competition-'+k);if(el)el.value=k==='rpe'?5:'';});document.getElementById('competition-date').value=today;document.getElementById('competition-format').value='M';document.getElementById('competition-kind').value='triathlon';document.getElementById('competition-rpe-value').textContent='5/10';updateCompetitionFields();
+    }
+
     function checkTrophiesUnlock() {
-      if (appData.stats.velo >= 100) {
-        const t = appData.trophies.find(x => x.id === 'velo_100');
-        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Rouleur d'Acier !"); }
-      }
-      if (appData.stats.course >= 30) {
-        const t = appData.trophies.find(x => x.id === 'course_30');
-        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Sprinteur Fondu !"); }
-      }
-      if (appData.stats.natation > 0 && appData.stats.velo > 0 && appData.stats.course > 0) {
-        const t = appData.trophies.find(x => x.id === 'tri_master');
-        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Triathlète Complet !"); }
-      }
-      if (appData.stats.hiit >= 150) {
-        const t = appData.trophies.find(x => x.id === 'hiit_king');
-        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Explosivité Pure !"); }
-      }
-      if ((appData.stats.autres || 0) > 0) { const t = appData.trophies.find(x => x.id === 'autres_first'); if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup('🏆 Trophée : Curieux du sport !'); } }
-      if ((appData.stats.autres || 0) >= 600) { const t = appData.trophies.find(x => x.id === 'autres_600'); if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup('🏆 Trophée : Polyvalent !'); } }
+      if (!Array.isArray(appData.trophies) || !appData.trophies.length) buildTrophyCatalogue();
+      let changed = false;
+      appData.trophies.forEach(t => {
+        if (t.isSecret || t.unlocked || !t.threshold) return;
+        const progress = getTrophyMetricValue(t);
+        if (progress >= Number(t.threshold)) {
+          t.unlocked = true;
+          t.unlockedAt = new Date().toISOString();
+          changed = true;
+          triggerAchievementPopup(`🏆 Trophée débloqué : ${t.title} · +${t.xp || 0} XP`);
+        }
+      });
+      if (changed) saveAppData();
+      if (!document.getElementById('view-trophies')?.classList.contains('hidden')) renderTrophiesAndRanks();
     }
 
     function filterHistory(filter, btn) {
@@ -2767,41 +2898,41 @@ function resetActiveForm(sport) {
 
     
     // POINT 1 : Gestion Dynamique du RPE (1 à 10)
+    function getRPEFeeling(value) {
+      if (value <= 3) return '🚀 Facile / en forme';
+      if (value <= 6) return '🙂 Bien / maîtrisé';
+      if (value <= 8) return '🥵 Dur';
+      return '🌧️ Difficile / galère';
+    }
+
+    // Un seul indicateur subjectif : le curseur RPE pilote aussi le ressenti affiché.
     function updateRPEValue(sport, val) {
-      const value = parseInt(val, 10);
+      const value = Math.max(1, Math.min(10, parseInt(val, 10) || 1));
       const badge = document.getElementById(`${sport}-rpe-badge`);
       const desc = document.getElementById(`${sport}-rpe-desc`);
       const slider = document.getElementById(`${sport}-rpe-slider`);
-      
       if (!badge || !desc || !slider) return;
 
-      let emoji = "😎";
-      let color = "#22c55e"; 
-      let text = "Récupération / Très facile";
-
-      if (value >= 3 && value <= 4) {
-        emoji = "🙂";
-        color = "#3b82f6"; 
-        text = "Endurance fondamentale (discussion possible)";
-      } else if (value >= 5 && value <= 6) {
-        emoji = "😐";
-        color = "#eab308"; 
-        text = "Allure soutenue, rythme actif";
-      } else if (value >= 7 && value <= 8) {
-        emoji = "🥵";
-        color = "#f97316"; 
-        text = "Effort dur, seuil anaérobie";
-      } else if (value >= 9 && value <= 10) {
-        emoji = "🚀";
-        color = "#ef4444"; 
-        text = "Effort maximal absolu (Explosion / Sprint)";
+      let emoji, color, text;
+      if (value <= 3) {
+        emoji = '🚀'; color = '#22c55e'; text = 'Facile / en forme';
+      } else if (value <= 6) {
+        emoji = '🙂'; color = '#3b82f6'; text = 'Bien / maîtrisé';
+      } else if (value <= 8) {
+        emoji = '🥵'; color = '#f97316'; text = 'Dur';
+      } else {
+        emoji = '🌧️'; color = '#ef4444'; text = 'Difficile / galère';
       }
-
-      badge.textContent = `${emoji} RPE ${value}/10`;
+      badge.textContent = `${emoji} ${text} · RPE ${value}/10`;
       badge.style.color = color;
       desc.textContent = text;
       slider.style.accentColor = color;
     }
+
+    ['natation', 'velo', 'course', 'marche', 'hiit', 'autres'].forEach(sport => {
+      const slider = document.getElementById(`${sport}-rpe-slider`);
+      if (slider) updateRPEValue(sport, slider.value);
+    });
 
     // POINT 2 : Calculateur de régularité basée sur les semaines consécutives (>= 2 séances / semaine)
     function calculateWeeklyStreak() {
@@ -3011,11 +3142,11 @@ function resetActiveForm(sport) {
       chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['Natation (km)', 'Vélo (km)', 'Course à pied (km)', 'Marche (km)', 'HIIT (min)', 'Autres sports (min)'],
+          labels: ['Natation (km)', 'Vélo (km)', 'Course à pied (km)', 'Marche (km)', 'HIIT (min)', 'Autres sports (min)', 'Compétitions (épreuves)'],
           datasets: [{
             label: 'Volume Total',
-            data: [appData.stats.natation, appData.stats.velo, appData.stats.course, appData.stats.marche, appData.stats.hiit, appData.stats.autres || 0],
-            backgroundColor: ['#00a2ff', '#ff6b00', '#22c55e', '#14b8a6', '#ec4899']
+            data: [appData.stats.natation, appData.stats.velo, appData.stats.course, appData.stats.marche, appData.stats.hiit, appData.stats.autres || 0, (appData.sessionsHistory || []).filter(s => s && s.type === 'competition').length],
+            backgroundColor: ['#00d2ff', '#ff9f43', '#10ac84', '#1dd1a1', '#8854d0', '#8854d0', '#ff6b6b']
           }]
         },
         options: {
@@ -3027,6 +3158,9 @@ function resetActiveForm(sport) {
     }
 
 window.onload = async function() {
+      const competitionDateInput = document.getElementById('competition-date');
+      if (competitionDateInput) competitionDateInput.value = localDateISO(new Date());
+      updateCompetitionFields();
       try {
         // Préserver les anciennes données : migration douce vers l'espace invité, sans suppression.
         const legacyGuestData = localStorage.getItem('dopamine_app_data');
@@ -3057,6 +3191,7 @@ window.onload = async function() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session?.user?.id) { loadAppDataForUser(session.user.id); if (!appData.user.joinedAt) appData.user.joinedAt = session.user.created_at || ''; }
       }
+      buildTrophyCatalogue();
       refreshAppAfterAccountLoad();
       const weatherBox = document.getElementById('dopamine-weather-widget'); if (weatherBox && activeUserId) weatherBox.style.display = 'block';
     };
@@ -3348,6 +3483,7 @@ async function handleUnblock(targetUserId) {
           if (!appData.user.joinedAt) appData.user.joinedAt = data.user.created_at || '';
           const metaName = data.user?.user_metadata?.username;
           if (metaName && appData?.user) { appData.user.name = metaName; saveAppData(); }
+          buildTrophyCatalogue();
           refreshAppAfterAccountLoad();
         }
         updateHeaderAuthUI();
@@ -3360,13 +3496,16 @@ async function handleUnblock(targetUserId) {
       await supabaseClient.auth.signOut();
       activeUserId = null;
       appData = createEmptyAppData();
+      buildTrophyCatalogue();
       refreshAppAfterAccountLoad();
       alert("Vous êtes déconnecté.");
       updateHeaderAuthUI();
     }
 
     // 5. Écouteur en direct au chargement et changement d'état
-    document.addEventListener('DOMContentLoaded', () => {
+    buildTrophyCatalogue();
+
+document.addEventListener('DOMContentLoaded', () => {
       setAuthMode('login');
       if (new URLSearchParams(window.location.search).get('reset-password') === '1' || window.location.hash.includes('type=recovery')) {
         const recoveryModal = document.getElementById('auth-recovery-modal');
