@@ -388,7 +388,7 @@
       <li><a id="nav-trophies" onclick="showPage('trophies')"><i class="fa-solid fa-trophy"></i> Trophées</a></li>
       <li><a id="nav-calendar" onclick="showPage('home'); document.getElementById('home-calendar').scrollIntoView({behavior:'smooth'});"><i class="fa-solid fa-calendar-days"></i> Mon calendrier</a></li>
       <li><a id="nav-feed" onclick="showFeedComingSoon()"><i class="fa-solid fa-users"></i> Fil Dopamine</a></li>
-      <li><a id="nav-search-friends" onclick="openSearchFriendsModal()"><i class="fa-solid fa-magnifying-glass" style="color:var(--bike-orange);"></i></a></li>
+      <li><a id="nav-search-friends" onclick="openSearchFriendsModal()"><i class="fa-solid fa-magnifying-glass" style="color:var(--bike-orange);"></i><span id="requests-badge" style="display:none;background:var(--heart-red);color:white;border-radius:50%;padding:1px 5px;font-size:.6rem;margin-left:3px;">0</span></a></li>
     </ul>
 
     <!-- BLOC DROITE : METEO (Point 4) + AVATAR PHOTO & PROFIL (Point 5) -->
@@ -625,6 +625,56 @@
             <p style="color:var(--text-sub);font-size:.82rem;margin-top:5px;">Le fil affichera les séances que tes amis choisissent de partager, avec photos, distance, durée, allure, D+, J'aime et commentaires. Le partage réel sera activé après la mise en place des comptes et de la base de données sécurisée.</p>
           </div>
         </div>
+      </section>
+
+      <section class="main-dashboard-box" id="social-friends-hub" style="margin:18px 0;">
+        <div class="card-title-flex"><h3 style="font-size:1rem;"><i class="fa-solid fa-user-group" style="color:var(--bike-orange);"></i> Mes amis & coéquipiers</h3><span style="font-size:.75rem;color:var(--text-sub);">Communauté À LA DOPAMINE</span></div>
+        <!-- Hub Social / Espace Amis & Coéquipiers -->
+<div class="social-hub" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+  
+  <!-- Barre des 4 onglets sportifs -->
+  <div style="display: flex; gap: 6px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; overflow-x: auto;">
+      <button onclick="switchFriendTab('search')" id="tab-btn-search" style="background: var(--bike-orange, #ff9f43); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">
+        🔍 Rechercher
+      </button>
+      <button onclick="switchFriendTab('friends')" id="tab-btn-friends" style="background: rgba(255,255,255,0.05); color: var(--text-sub); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">
+        🏅 Mes coéquipiers
+      </button>
+      <button onclick="switchFriendTab('requests')" id="tab-btn-requests" style="background: rgba(255,255,255,0.05); color: var(--text-sub); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">
+        🔔 Invitations <span id="requests-badge-hub" style="display: none; background: var(--heart-red, #ff6b6b); color: white; border-radius: 50%; padding: 1px 5px; font-size: 0.6rem; margin-left: 4px;">0</span>
+      </button>
+      <button onclick="switchFriendTab('pending')" id="tab-btn-pending" style="background: rgba(255,255,255,0.05); color: var(--text-sub); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">
+        ⏳ En attente
+      </button>
+    </div>
+
+  <!-- Contenu 1 : 🔍 Rechercher -->
+  <div id="friend-tab-search" class="friend-tab-content">
+    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+      <input type="text" id="search-friend-input" placeholder="Entrer un pseudo d'athlète..." style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px 12px; border-radius: 8px; color: var(--text-main); font-size: 0.9rem;" oninput="performFriendSearch()">
+    </div>
+    <div id="friend-search-results"></div>
+  </div>
+
+  <!-- Contenu 2 : 🏅 Mes coéquipiers (Avec emplacement futur pour message/notification à côté du profil) -->
+  <div id="friend-tab-friends" class="friend-tab-content" style="display: none;">
+    <div id="friends-list-container"></div>
+  </div>
+
+  <!-- Contenu 3 : 🔔 Invitations reçues -->
+  <div id="friend-tab-requests" class="friend-tab-content" style="display: none;">
+    <div id="friend-requests-container"></div>
+  </div>
+
+  <!-- Contenu 4 : ⏳ En attente (Demandes envoyées) -->
+  <div id="friend-tab-pending" class="friend-tab-content" style="display: none;">
+    <div id="friend-pending-container" style="padding: 15px; color: var(--text-sub); text-align: center; font-size: 0.85rem;">
+      Vos demandes en attente s'afficheront ici.
+    </div>
+  </div>
+
+</div>
+
       </section>
 
       <section class="dashboard-layout" style="margin-top: 20px;">
@@ -1464,16 +1514,7 @@
         <h3 style="color:var(--text-main); font-size:1rem;"><i class="fa-solid fa-magnifying-glass" style="color:var(--bike-orange)"></i> Rechercher des amis sur À LA DOPAMINE</h3>
         <button onclick="document.getElementById('search-friends-modal').style.display='none'" style="background:none; border:none; color:var(--text-main); font-size:1.3rem; cursor:pointer;">&times;</button>
       </div>
-      <div class="form-group">
-        <input type="text" id="search-friend-input" placeholder="Saisir un pseudo ou un numéro de téléphone..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--card-border); background:rgba(0,0,0,0.3); color:var(--text-main);">
-      </div>
-      <button class="btn-calc-orange" style="width:100%; margin-bottom:15px;" onclick="performFriendSearch()"><i class="fa-solid fa-search"></i> Rechercher</button>
-      
-      <div id="friend-search-results" style="margin-bottom:15px; font-size:0.8rem; color:var(--text-sub);">
-        Renseigne un pseudo pour chercher des membres inscrits.
-      </div>
-
-      <hr style="border:0; border-top:1px solid var(--card-border); margin:12px 0;">
+<hr style="border:0; border-top:1px solid var(--card-border); margin:12px 0;">
       <h4 style="font-size:0.85rem; color:var(--text-main); margin-bottom:10px;"><i class="fa-solid fa-share-nodes" style="color:var(--run-green);"></i> Inviter des amis à rejoindre l'appli</h4>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
         <button type="button" class="btn-action" style="background:#25D366;" onclick="shareInvite('whatsapp')"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
@@ -3072,10 +3113,11 @@ function resetActiveForm(sport) {
     }
 
     function openSearchFriendsModal() {
-      document.getElementById('search-friends-modal').style.display = 'flex';
-    }
-
-    function toggleRaceFormatDropdown(sport) {
+      showPage('home');
+      const hub = document.getElementById('social-friends-hub');
+      if (hub) hub.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      switchFriendTab('search');
+    }    function toggleRaceFormatDropdown(sport) {
       const formatGroup = document.getElementById('race-format-group');
       if (!formatGroup) return;
       if (['triathlon', 'duathlon', 'trail'].includes(sport)) {
@@ -3085,59 +3127,208 @@ function resetActiveForm(sport) {
       }
     }
 
- async function performFriendSearch() {
+function escapeFriendText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+async function getCurrentSupabaseUser() {
+  if (!supabaseClient) throw new Error('Supabase est indisponible.');
+  const { data, error } = await supabaseClient.auth.getUser();
+  if (error) throw error;
+  if (!data?.user) throw new Error('Connecte-toi pour utiliser la communauté.');
+  return data.user;
+}
+
+async function performFriendSearch() {
   const queryInput = document.getElementById('search-friend-input');
   const resultsDiv = document.getElementById('friend-search-results');
-  
   if (!queryInput || !resultsDiv) return;
-  
   const query = queryInput.value.trim();
-  
-  if (!query) {
-    resultsDiv.innerHTML = '<span style="color:var(--heart-red);">Veuillez entrer un pseudo.</span>';
+  if (query.length < 2) {
+    resultsDiv.innerHTML = '<span style="color:var(--text-sub);">Saisis au moins 2 caractères pour rechercher un pseudo.</span>';
     return;
   }
-
-  resultsDiv.innerHTML = `<div style="padding:10px; color:var(--text-sub);">Recherche en cours pour "<b>${query}</b>"...</div>`;
-
+  resultsDiv.innerHTML = '<div style="padding:10px;color:var(--text-sub);">Recherche en cours…</div>';
   try {
-    // On interroge la table 'profiles' de Supabase
-    const { data: profiles, error } = await supabaseClient
-      .from('profiles')
+    const user = await getCurrentSupabaseUser();
+    const { data: profiles, error } = await supabaseClient.from('profiles')
       .select('id, username, city, photo_url')
-      .ilike('username', `%${query}%`)
-      .limit(10);
-
-    if (error) {
-      throw error;
-    }
-
-    if (!profiles || profiles.length === 0) {
-      resultsDiv.innerHTML = '<div style="padding:10px; color:var(--text-sub);">Aucun utilisateur trouvé.</div>';
+      .ilike('username', `%${query}%`).neq('id', user.id).limit(10);
+    if (error) throw error;
+    if (!profiles?.length) {
+      resultsDiv.innerHTML = '<div style="padding:10px;color:var(--text-sub);">Aucun utilisateur trouvé.</div>';
       return;
     }
-
-    // Affichage des résultats trouvés
-    let html = '<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">';
-    profiles.forEach(profile => {
-      html += `
-        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px;">
-          <div>
-            <strong style="color: var(--text-main);">${profile.username || 'Utilisateur'}</strong>
-            <div style="font-size: 0.75rem; color: var(--text-sub);">${profile.city || 'Ville non renseignée'}</div>
-          </div>
-        </div>
-      `;
-    });
-    html += '</div>';
-    
-    resultsDiv.innerHTML = html;
-
+    const blocked = await getBlockedUsersList();
+    const { data: existing, error: relError } = await supabaseClient.from('friendships')
+      .select('sender_id, receiver_id, status')
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+    if (relError) throw relError;
+    resultsDiv.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">' + profiles.map(profile => {
+      const relation = (existing || []).find(r => (r.sender_id === user.id && r.receiver_id === profile.id) || (r.sender_id === profile.id && r.receiver_id === user.id));
+      let action = '';
+      if (blocked.includes(profile.id)) action = '<span style="color:var(--text-sub);font-size:.75rem;">Utilisateur bloqué</span>';
+      else if (relation?.status === 'accepted') action = '<span style="color:var(--run-green);font-size:.75rem;">Déjà ami(e)</span>';
+      else if (relation?.status === 'pending' && relation.sender_id === user.id) action = '<span style="color:var(--text-sub);font-size:.75rem;">Demande envoyée</span>';
+      else if (relation?.status === 'pending') action = '<span style="color:var(--xp-gold);font-size:.75rem;">Cette personne vous a invité</span>';
+      else action = `<button type="button" onclick="addFriend('${profile.id}')" style="background:var(--bike-orange);color:white;border:0;padding:6px 12px;border-radius:6px;cursor:pointer;">+ Ajouter</button>`;
+      const avatar = profile.photo_url ? `<img src="${escapeFriendText(profile.photo_url)}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">` : '<i class="fa-solid fa-user-circle" style="font-size:2rem;color:var(--text-sub);"></i>';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.04);padding:9px 12px;border-radius:9px;"><div style="display:flex;align-items:center;gap:9px;min-width:0;">${avatar}<div><strong>${escapeFriendText(profile.username || 'Athlète')}</strong><div style="font-size:.75rem;color:var(--text-sub);">${escapeFriendText(profile.city || 'Ville non renseignée')}</div></div></div><div>${action}</div></div>`;
+    }).join('') + '</div>';
   } catch (err) {
-    console.error("Erreur de recherche :", err);
-    resultsDiv.innerHTML = '<span style="color:var(--heart-red);">Erreur lors de la recherche.</span>';
+    console.error('Recherche amis :', err);
+    resultsDiv.innerHTML = `<span style="color:var(--heart-red);">${escapeFriendText(err.message || 'Erreur lors de la recherche.')}</span>`;
   }
 }
+
+async function addFriend(receiverId) {
+  try {
+    const user = await getCurrentSupabaseUser();
+    if (!receiverId || receiverId === user.id) throw new Error('Tu ne peux pas t’ajouter toi-même.');
+    const blocked = await getBlockedUsersList();
+    if (blocked.includes(receiverId)) throw new Error('Tu as bloqué cet utilisateur. Débloque-le avant de lui envoyer une invitation.');
+    const { data: relation, error: checkError } = await supabaseClient.from('friendships')
+      .select('id,status,sender_id,receiver_id')
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${user.id})`)
+      .limit(1).maybeSingle();
+    if (checkError) throw checkError;
+    if (relation?.status === 'accepted') throw new Error('Vous êtes déjà amis.');
+    if (relation?.status === 'pending') throw new Error(relation.sender_id === user.id ? 'Une demande est déjà en attente.' : 'Cette personne vous a déjà envoyé une invitation.');
+    const { error } = await supabaseClient.from('friendships').insert({ sender_id:user.id, receiver_id:receiverId, status:'pending' });
+    if (error) throw error;
+    alert('Demande d’ami envoyée !');
+    await Promise.all([loadPendingSentRequests(), updateFriendRequestBadge()]);
+    await performFriendSearch();
+  } catch (err) {
+    console.error('Envoi demande ami :', err);
+    alert(err.message || 'Impossible d’envoyer la demande. Vérifie les règles RLS de friendships.');
+  }
+}
+
+async function loadFriendRequests() {
+  const container = document.getElementById('friend-requests-container');
+  if (!container) return;
+  try {
+    const user = await getCurrentSupabaseUser();
+    const { data: requests, error } = await supabaseClient.from('friendships')
+      .select('id,sender_id,created_at').eq('receiver_id', user.id).eq('status','pending').order('created_at',{ascending:false});
+    if (error) throw error;
+    if (!requests?.length) {
+      container.innerHTML = '<div style="padding:15px;color:var(--text-sub);text-align:center;">Aucune demande d’ami en attente.</div>';
+      await updateFriendRequestBadge(); return;
+    }
+    const ids = requests.map(r => r.sender_id);
+    const { data: profiles, error: profileError } = await supabaseClient.from('profiles').select('id,username,city,photo_url').in('id',ids);
+    if (profileError) throw profileError;
+    const byId = new Map((profiles || []).map(p => [p.id,p]));
+    container.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;">' + requests.map(req => {
+      const p = byId.get(req.sender_id) || {};
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.04);padding:10px 12px;border-radius:9px;"><div><strong>${escapeFriendText(p.username || 'Athlète')}</strong><div style="font-size:.75rem;color:var(--text-sub);">${escapeFriendText(p.city || 'Ville non renseignée')}</div></div><div style="display:flex;gap:6px;"><button onclick="respondFriendRequest('${req.id}','accepted')" style="background:var(--run-green);color:white;border:0;padding:6px 9px;border-radius:6px;cursor:pointer;">Accepter</button><button onclick="respondFriendRequest('${req.id}','rejected')" style="background:transparent;color:var(--heart-red);border:1px solid var(--heart-red);padding:6px 9px;border-radius:6px;cursor:pointer;">Refuser</button></div></div>`;
+    }).join('') + '</div>';
+    await updateFriendRequestBadge();
+  } catch (err) {
+    console.error('Chargement demandes reçues :',err);
+    container.innerHTML = `<span style="color:var(--heart-red);">${escapeFriendText(err.message || 'Impossible de charger les demandes.')}</span>`;
+  }
+}
+
+async function respondFriendRequest(friendshipId, newStatus) {
+  if (!['accepted','rejected'].includes(newStatus)) return;
+  try {
+    const user = await getCurrentSupabaseUser();
+    let query = supabaseClient.from('friendships').delete().eq('id',friendshipId).eq('receiver_id',user.id).eq('status','pending');
+    if (newStatus === 'accepted') query = supabaseClient.from('friendships').update({status:'accepted'}).eq('id',friendshipId).eq('receiver_id',user.id).eq('status','pending');
+    const { data, error } = await query.select('id');
+    if (error) throw error;
+    if (!data?.length) throw new Error('Demande introuvable ou tu n’es pas autorisé à y répondre.');
+    alert(newStatus === 'accepted' ? 'Demande acceptée ! Vous êtes désormais amis.' : 'Demande refusée.');
+    await Promise.all([loadFriendRequests(),updateFriendRequestBadge(),loadFriendsList()]);
+  } catch (err) {
+    console.error('Réponse demande ami :',err);
+    alert(err.message || 'Impossible de répondre à cette demande.');
+  }
+}
+
+async function loadPendingSentRequests() {
+  const container = document.getElementById('friend-pending-container');
+  if (!container) return;
+  try {
+    const user = await getCurrentSupabaseUser();
+    const { data: rows, error } = await supabaseClient.from('friendships').select('id,receiver_id,created_at')
+      .eq('sender_id',user.id).eq('status','pending').order('created_at',{ascending:false});
+    if (error) throw error;
+    if (!rows?.length) { container.innerHTML = '<div style="padding:15px;color:var(--text-sub);text-align:center;">Aucune demande envoyée en attente.</div>'; return; }
+    const { data: profiles, error: pError } = await supabaseClient.from('profiles').select('id,username,city,photo_url').in('id',rows.map(r=>r.receiver_id));
+    if (pError) throw pError;
+    const byId = new Map((profiles||[]).map(p=>[p.id,p]));
+    container.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;">' + rows.map(r=>{const p=byId.get(r.receiver_id)||{};return `<div style="display:flex;justify-content:space-between;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:9px;"><div><strong>${escapeFriendText(p.username||'Athlète')}</strong><div style="font-size:.75rem;color:var(--text-sub);">${escapeFriendText(p.city||'Ville non renseignée')}</div></div><span style="color:var(--xp-gold);font-size:.8rem;">En attente…</span></div>`;}).join('')+'</div>';
+  } catch(err) { console.error('Demandes envoyées :',err); container.innerHTML=`<span style="color:var(--heart-red);">${escapeFriendText(err.message||'Impossible de charger les demandes.')}</span>`; }
+}
+
+async function loadFriendsList() {
+  const container = document.getElementById('friends-list-container');
+  if (!container) return;
+  try {
+    const user = await getCurrentSupabaseUser();
+    const { data: rows, error } = await supabaseClient.from('friendships').select('id,sender_id,receiver_id')
+      .eq('status','accepted').or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+    if (error) throw error;
+    if (!rows?.length) { container.innerHTML='<div style="padding:15px;color:var(--text-sub);text-align:center;">Tu n’as pas encore d’amis. Recherche un pseudo pour commencer !</div>'; return; }
+    const friendIds = rows.map(r=>r.sender_id===user.id?r.receiver_id:r.sender_id);
+    const { data: profiles, error: pError } = await supabaseClient.from('profiles').select('id,username,city,photo_url').in('id',friendIds);
+    if (pError) throw pError;
+    const byId = new Map((profiles||[]).map(p=>[p.id,p]));
+    container.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;">'+rows.map(r=>{const friendId=r.sender_id===user.id?r.receiver_id:r.sender_id;const p=byId.get(friendId)||{};const avatar=p.photo_url?`<img src="${escapeFriendText(p.photo_url)}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`:'<i class="fa-solid fa-user-circle" style="font-size:2rem;color:var(--text-sub);"></i>';return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:9px;"><div style="display:flex;align-items:center;gap:9px;">${avatar}<div><strong>${escapeFriendText(p.username||'Athlète')}</strong><div style="font-size:.75rem;color:var(--text-sub);">${escapeFriendText(p.city||'Ville non renseignée')}</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;"><button onclick="blockFriend('${r.id}','${friendId}')" style="background:transparent;color:var(--heart-red);border:1px solid var(--heart-red);padding:6px 8px;border-radius:6px;cursor:pointer;font-size:.75rem;">Bloquer</button><button onclick="removeFriend('${r.id}')" style="background:rgba(255,107,107,.12);color:var(--heart-red);border:1px solid var(--heart-red);padding:6px 8px;border-radius:6px;cursor:pointer;font-size:.75rem;">Retirer</button></div></div>`;}).join('')+'</div>';
+  } catch(err) { console.error('Liste amis :',err); container.innerHTML=`<span style="color:var(--heart-red);">${escapeFriendText(err.message||'Impossible de charger la liste des amis.')}</span>`; }
+}
+
+async function removeFriend(friendshipId, friendName = 'cet ami') {
+  if (!confirm(`Voulez-vous vraiment retirer ${friendName} de vos amis ?`)) return;
+  try {
+    const user=await getCurrentSupabaseUser();
+    const { data,error }=await supabaseClient.from('friendships').delete().eq('id',friendshipId).eq('status','accepted').or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`).select('id');
+    if(error) throw error;
+    if(!data?.length) throw new Error('Relation introuvable ou accès refusé.');
+    await loadFriendsList();
+  } catch(err) { console.error('Retrait ami :',err); alert(err.message||'Impossible de retirer cet ami.'); }
+}
+
+async function blockFriend(friendshipId, targetUserId, friendName = 'cet utilisateur') {
+  if (!confirm(`Bloquer ${friendName} ? Cette personne sera retirée de ta liste d’amis.`)) return;
+  const result=await blockUser(targetUserId);
+  if(!result?.success) { alert(result?.error||'Le blocage a échoué.'); return; }
+  try {
+    const user=await getCurrentSupabaseUser();
+    const { error }=await supabaseClient.from('friendships').delete().eq('id',friendshipId).or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+    if(error) throw error;
+    alert(`${friendName} a été bloqué et retiré de tes amis.`);
+    await loadFriendsList();
+  } catch(err) { console.error('Nettoyage relation après blocage :',err); alert('Utilisateur bloqué, mais la relation d’amitié n’a pas pu être retirée.'); }
+}
+
+async function updateFriendRequestBadge() {
+  const badges=[document.getElementById('requests-badge'),document.getElementById('requests-badge-hub')].filter(Boolean);
+  if(!badges.length || !supabaseClient) return;
+  try {
+    const user=await getCurrentSupabaseUser();
+    const { count,error }=await supabaseClient.from('friendships').select('id',{count:'exact',head:true}).eq('receiver_id',user.id).eq('status','pending');
+    if(error) throw error;
+    badges.forEach(badge=>{badge.textContent=String(count||0);badge.style.display=count>0?'inline-block':'none';});
+  } catch(err) { console.warn('Badge demandes amis :',err.message); badges.forEach(badge=>badge.style.display='none'); }
+}
+
+function switchFriendTab(tabName) {
+  const tabs=['search','friends','requests','pending'];
+  tabs.forEach(t=>{
+    const content=document.getElementById(`friend-tab-${t}`), btn=document.getElementById(`tab-btn-${t}`);
+    if(content) content.style.display=t===tabName?'block':'none';
+    if(btn){btn.style.background=t===tabName?'var(--bike-orange)':'rgba(255,255,255,.05)';btn.style.color=t===tabName?'white':'var(--text-sub)';btn.style.fontWeight=t===tabName?'bold':'normal';}
+  });
+  if(tabName==='friends') loadFriendsList();
+  if(tabName==='requests') loadFriendRequests();
+  if(tabName==='pending') loadPendingSentRequests();
+}
+
     function showFeedComingSoon() {
       alert('Le Fil Dopamine est en préparation. Le partage entre amis, les photos, les likes et les commentaires seront activés après la mise en place des comptes et du stockage en ligne.');
     }
@@ -3364,6 +3555,7 @@ function resetActiveForm(sport) {
       updateAICoachAdvice();
       if (appData.user?.city) refreshProfileWeather();
       if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
+      if (typeof updateFriendRequestBadge === 'function') updateFriendRequestBadge();
     }
 
     function saveAppData() {
@@ -3735,6 +3927,7 @@ async function handleUnblock(targetUserId) {
           refreshAppAfterAccountLoad();
         }
         updateHeaderAuthUI();
+        updateFriendRequestBadge();
       }
     }
 
@@ -3795,6 +3988,6 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
   <p style="font-size:.72rem;color:var(--text-sub);">Les XP et statistiques seront recalculés. La discipline d’origine est conservée.</p>
   <div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px;"><button type="button" class="medal-tab" onclick="closeEditSession()">Annuler</button><button type="button" class="btn-save-green" onclick="saveEditedSession()">Enregistrer les modifications</button></div>
- </div>
+ </div></div>
 </div>
 
