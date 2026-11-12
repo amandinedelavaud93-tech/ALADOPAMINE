@@ -3085,28 +3085,59 @@ function resetActiveForm(sport) {
       }
     }
 
-    function performFriendSearch() {
-      const query = document.getElementById('search-friend-input').value.trim();
-      const resultsDiv = document.getElementById('friend-search-results');
-      if (!query) {
-        resultsDiv.innerHTML = '<span style="color:var(--heart-red);">Veuillez entrer un pseudo ou un numéro.</span>';
-        return;
-      }
-      resultsDiv.innerHTML = `<div style="background:rgba(255,107,0,0.1); border:1px solid var(--bike-orange); padding:10px; border-radius:8px;">
-        🔍 Recherche en cours pour "<b>${query}</b>"...<br>
-        <span style="font-size:0.72rem; color:var(--text-sub);">Aucun résultat en local. La recherche globale de membres sera active dès la synchronisation Supabase !</span>
-      </div>`;
+ async function performFriendSearch() {
+  const queryInput = document.getElementById('search-friend-input');
+  const resultsDiv = document.getElementById('friend-search-results');
+  
+  if (!queryInput || !resultsDiv) return;
+  
+  const query = queryInput.value.trim();
+  
+  if (!query) {
+    resultsDiv.innerHTML = '<span style="color:var(--heart-red);">Veuillez entrer un pseudo.</span>';
+    return;
+  }
+
+  resultsDiv.innerHTML = `<div style="padding:10px; color:var(--text-sub);">Recherche en cours pour "<b>${query}</b>"...</div>`;
+
+  try {
+    // On interroge la table 'profiles' de Supabase
+    const { data: profiles, error } = await supabaseClient
+      .from('profiles')
+      .select('id, username, city, photo_url')
+      .ilike('username', `%${query}%`)
+      .limit(10);
+
+    if (error) {
+      throw error;
     }
 
-    function shareInvite(platform) {
-      const message = encodeURIComponent("Rejoins-moi sur l'application À LA DOPAMINE pour suivre nos entraînements et relever des défis ensemble !");
-      if (platform === 'whatsapp') {
-        window.open(`https://api.whatsapp.com/send?text=${message}`, '_blank');
-      } else if (platform === 'facebook') {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
-      }
+    if (!profiles || profiles.length === 0) {
+      resultsDiv.innerHTML = '<div style="padding:10px; color:var(--text-sub);">Aucun utilisateur trouvé.</div>';
+      return;
     }
 
+    // Affichage des résultats trouvés
+    let html = '<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">';
+    profiles.forEach(profile => {
+      html += `
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px;">
+          <div>
+            <strong style="color: var(--text-main);">${profile.username || 'Utilisateur'}</strong>
+            <div style="font-size: 0.75rem; color: var(--text-sub);">${profile.city || 'Ville non renseignée'}</div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    resultsDiv.innerHTML = html;
+
+  } catch (err) {
+    console.error("Erreur de recherche :", err);
+    resultsDiv.innerHTML = '<span style="color:var(--heart-red);">Erreur lors de la recherche.</span>';
+  }
+}
     function showFeedComingSoon() {
       alert('Le Fil Dopamine est en préparation. Le partage entre amis, les photos, les likes et les commentaires seront activés après la mise en place des comptes et du stockage en ligne.');
     }
