@@ -1148,7 +1148,7 @@
           </div>
 
           <div class="goals-box">
-            <div class="goals-header" style="font-weight:bold; font-size:0.85rem; margin-bottom:8px;"><span>Objectifs annuels par discipline</span></div>
+            <div class="goals-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:bold;font-size:0.85rem;margin-bottom:8px;"><span>Objectifs annuels par discipline</span><button type="button" class="medal-tab" onclick="editAnnualGoals()">Modifier</button></div>
             <div class="goal-row"><span style="color:var(--swim-blue)">Natation</span><span id="goal-natation-text">0 / 15 km</span></div>
             <div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-natation-bar" style="width: 0%; background: var(--swim-blue);"></div></div>
             <div class="goal-row"><span style="color:var(--bike-orange)">Vélo</span><span id="goal-velo-text">0 / 180 km</span></div>
@@ -2001,7 +2001,8 @@ async function sendProfilePhoneOtp() {
   const btn = document.getElementById('phone-send-code-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
   try {
-    // updateUser rattache le téléphone au compte déjà connecté ; signInWithOtp pourrait créer une autre session.
+    // Le téléphone est rattaché au compte connecté : ne pas utiliser signInWithOtp ici.
+    // Supabase doit avoir Phone Auth activé et un fournisseur SMS correctement configuré.
     const { error } = await supabaseClient.auth.updateUser({ phone });
     if (error) throw error;
     appData.user.phone = phone;
@@ -2011,7 +2012,7 @@ async function sendProfilePhoneOtp() {
     saveAppData();
     const panel = document.getElementById('phone-otp-panel'); if (panel) panel.style.display = 'block';
     updatePhoneVerificationBadge();
-    alert('Code SMS demandé. Saisis le code reçu pour confirmer ce numéro.');
+    alert('Demande envoyée à Supabase. Si aucun SMS n’arrive, vérifie dans Supabase : Authentication > Providers > Phone, le fournisseur SMS, le modèle de message et les limites d’envoi. Le code ne peut pas être envoyé par le seul HTML.');
   } catch (error) {
     console.error('Envoi OTP téléphone :', error);
     alert('Impossible d’envoyer le SMS : ' + (error.message || 'vérifie la configuration Phone Auth et le fournisseur SMS dans Supabase.'));
@@ -2036,7 +2037,7 @@ async function confirmProfilePhoneOtp() {
     appData.user.phoneSynced = false;
     appData.user.phoneVerificationPending = false;
     saveAppData();
-    const { error: dbError } = await supabaseClient.from('profiles').upsert({ id: activeUserId, phone, phone_e164: phone, phone_verified: true, phone_verified_at: new Date().toISOString() }, { onConflict: 'id' });
+    const { error: dbError } = await supabaseClient.from('profiles').upsert({ id: activeUserId, phone, phone_verified: true }, { onConflict: 'id' });
     if (dbError) console.warn('Téléphone confirmé dans Auth, mais mise à jour profiles impossible :', dbError.message);
     else appData.user.phoneSynced = true;
     saveAppData();
@@ -2099,12 +2100,13 @@ async function saveUserProfile() {
   const selectedCity = window.selectedProfileCity;
   const typedCity = val('user-profile-city').trim();
 
-  if (typedCity && (!selectedCity || selectedCity.nom !== typedCity)) {
-    alert('Sélectionne une ville dans la liste des propositions pour renseigner automatiquement le département.');
+  const sameSavedCity = typedCity && typedCity.toLocaleLowerCase('fr') === String(u.city || '').toLocaleLowerCase('fr');
+  if (typedCity && (!selectedCity || selectedCity.nom !== typedCity) && !sameSavedCity) {
+    alert('Pour une nouvelle ville, sélectionne une proposition dans la liste. Ta ville déjà enregistrée peut rester telle quelle.');
     return;
   }
 
-  if (selectedCity) {
+  if (selectedCity && selectedCity.nom === typedCity) {
     u.cityLatitude = selectedCity.latitude;
     u.cityLongitude = selectedCity.longitude;
     u.cityCode = selectedCity.code;
@@ -2207,9 +2209,7 @@ async function saveUserProfile() {
           height: u.height,
           sex: u.sex,
           phone: u.phone,
-          phone_e164: normalizeFrenchPhoneNumber(u.phone) || null,
           phone_verified: !!u.phoneVerified,
-          phone_verified_at: u.phoneVerified ? new Date().toISOString() : null,
           photo_url: u.photo,
           avatar_url: u.photo,
           level_sportif: u.levelSportif,
@@ -2255,8 +2255,10 @@ function setupProfileCityAutocomplete() {
     // ... le reste de ton code d'autocomplétion ...
     const query = input.value.trim();
     window.selectedProfileCity = null;
-    if (appData.user) { appData.user.cityLatitude = null; appData.user.cityLongitude = null; appData.user.cityCode = ''; appData.user.cityDepartmentCode = ''; }
-    const dep = document.getElementById('user-profile-department'); if (dep) dep.value = '';
+    const isExistingCity = query.toLocaleLowerCase('fr') === String(appData.user?.city || '').toLocaleLowerCase('fr');
+    if (!isExistingCity && appData.user) { appData.user.cityLatitude = null; appData.user.cityLongitude = null; appData.user.cityCode = ''; appData.user.cityDepartmentCode = ''; }
+    const dep = document.getElementById('user-profile-department'); if (dep && !isExistingCity) dep.value = '';
+    if (isExistingCity) { window.selectedProfileCity = { nom: appData.user.city, code: appData.user.cityCode || '', codeDepartement: appData.user.cityDepartmentCode || '', latitude: Number(appData.user.cityLatitude), longitude: Number(appData.user.cityLongitude) }; if (status) status.textContent = 'Ville déjà enregistrée : ses informations sont conservées.'; }
     if (status) status.textContent = 'Recherche des communes françaises…';
     clearTimeout(timer);
     if (query.length < 2) { hide(); if (status) status.textContent = 'Tape au moins 2 caractères.'; return; }
@@ -2856,8 +2858,31 @@ function resetActiveForm(sport) {
     function isPublicTrophyEligible(t) {
       const threshold = getPublicTrophyThreshold(t);
       if (!threshold) return false;
-      if (threshold.kind === 'distance') return getTrophyProgress(t.category) >= threshold.value;
-      if (threshold.kind === 'hours') return getTrophyProgress(t.category) >= threshold.value;
+      if (threshold.kind === 'distance') {
+        const desc = String(t.desc || '').toLowerCase();
+        const single = /en un seul|une seule sortie|une seule séance|sur une sortie|sur un run|finir un|terminer un|réaliser un/.test(desc);
+        if (single) return (appData.sessionsHistory || []).some(s => {
+          const correctSport = t.category === 'natation' ? s.sport === 'natation' : s.sport === t.category;
+          return correctSport && getSessionDistanceKm(s) >= threshold.value;
+        });
+        return getTrophyProgress(t.category) >= threshold.value;
+      }
+      if (threshold.kind === 'hours') {
+        const desc = String(t.desc || '').toLowerCase();
+        const sportMatch = desc.match(/(fitness|musculation|muscu|padel|tennis|sport collectif|football|foot|basket|rugby|escalade|ski)/i);
+        const subtype = sportMatch ? sportMatch[1].toLowerCase() : '';
+        const matching = (appData.sessionsHistory || []).filter(s => {
+          if (!['autres','hiit'].includes(s.sport)) return false;
+          if (!subtype) return true;
+          const hay = `${s.title || ''} ${s.subSport || ''} ${s.activityType || ''}`.toLowerCase();
+          if (['fitness','musculation','muscu'].includes(subtype)) return /fitness|musculation|muscu/.test(hay);
+          if (['padel','tennis'].includes(subtype)) return new RegExp(subtype).test(hay);
+          if (['sport collectif','football','foot','basket','rugby'].includes(subtype)) return /football|foot|basket|rugby/.test(hay);
+          if (['escalade','ski'].includes(subtype)) return new RegExp(subtype).test(hay);
+          return true;
+        });
+        return matching.reduce((sum,s)=>sum+getSessionDurationMinutes(s),0)/60 >= threshold.value;
+      }
       if (threshold.kind === 'competition-format') return (appData.sessionsHistory || []).some(s => {
         const fmt = String(s.format || s.competitionDetails?.format || '').toUpperCase();
         return (s.type === 'competition' || s.is_competition || s.competitionDetails) && fmt.includes(threshold.value);
@@ -2930,6 +2955,16 @@ function resetActiveForm(sport) {
       session.is_competition = session.type === 'competition' || !!session.competitionDetails || session.sport === 'competition';
       return session;
     }
+
+    function refreshEditSessionFriendSuggestions() {
+      const list = document.getElementById('edit-session-friend-options'); if (!list) return;
+      list.innerHTML = '';
+      const candidates = window.currentFriends || window.friendsList || window.cachedFriends || [];
+      candidates.forEach(friend => { const name = friend.username || friend.name || friend.profile?.username; if (!name) return; const option = document.createElement('option'); option.value = name; list.appendChild(option); });
+      const help = document.getElementById('edit-session-partner-help');
+      if (help) help.textContent = candidates.length ? `${candidates.length} ami(s) proposé(s).` : 'La liste des amis n’est pas encore disponible dans cette fenêtre.';
+    }
+
     function openEditSession(id) {
       const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
       if (!session) { alert('Cette activité est introuvable.'); return; }
@@ -2944,7 +2979,7 @@ function resetActiveForm(sport) {
       set('watts',session.watts??''); set('cadence',session.cadence??''); set('terrain',session.terrain||''); set('weather',session.weather||''); set('format',session.format||session.competitionDetails?.format||'');
       const partners=Array.isArray(session.partners)?session.partners.map(p=>typeof p==='string'?p:(p.username||p.name||'')).filter(Boolean).join(', '):'';
       set('partners',partners); set('comment',session.comment||session.competitionDetails?.notes||'');
-      document.getElementById('edit-session-modal').style.display='block';
+      document.getElementById('edit-session-modal').style.display='block'; refreshEditSessionFriendSuggestions();
     }
     function closeEditSession() { const modal = document.getElementById('edit-session-modal'); if (modal) modal.style.display = 'none'; }
     function saveEditedSession() {
@@ -3377,6 +3412,7 @@ async function loadFriendsList() {
     const { data: profiles, error: pError } = await supabaseClient.from('profiles').select('id,username,city,photo_url').in('id',friendIds);
     if (pError) throw pError;
     const byId = new Map((profiles||[]).map(p=>[p.id,p]));
+    window.currentFriends = profiles || [];
     container.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;">'+rows.map(r=>{const friendId=r.sender_id===user.id?r.receiver_id:r.sender_id;const p=byId.get(friendId)||{};const avatar=p.photo_url?`<img src="${escapeFriendText(p.photo_url)}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`:'<i class="fa-solid fa-user-circle" style="font-size:2rem;color:var(--text-sub);"></i>';return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:9px;"><div style="display:flex;align-items:center;gap:9px;">${avatar}<div><strong>${escapeFriendText(p.username||'Athlète')}</strong><div style="font-size:.75rem;color:var(--text-sub);">${escapeFriendText(p.city||'Ville non renseignée')}</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;"><button onclick="blockFriend('${r.id}','${friendId}')" style="background:transparent;color:var(--heart-red);border:1px solid var(--heart-red);padding:6px 8px;border-radius:6px;cursor:pointer;font-size:.75rem;">Bloquer</button><button onclick="removeFriend('${r.id}')" style="background:rgba(255,107,107,.12);color:var(--heart-red);border:1px solid var(--heart-red);padding:6px 8px;border-radius:6px;cursor:pointer;font-size:.75rem;">Retirer</button></div></div>`;}).join('')+'</div>';
   } catch(err) { console.error('Liste amis :',err); container.innerHTML=`<span style="color:var(--heart-red);">${escapeFriendText(err.message||'Impossible de charger la liste des amis.')}</span>`; }
 }
@@ -3675,6 +3711,14 @@ async function refreshFriendHub(){
         alert("La sauvegarde locale a échoué (espace de stockage indisponible ou saturé). Exporte tes données JSON pour éviter de les perdre.");
         return false;
       }
+    }
+
+
+    function editAnnualGoals() {
+      const current = appData.goals || (appData.goals = {natation:15,velo:180,course:40});
+      const ask = (label, key) => { const raw = prompt(`${label} — objectif annuel en km`, String(current[key] ?? 0)); if (raw === null) return null; const n = Number(String(raw).replace(',', '.')); if (!Number.isFinite(n) || n <= 0 || n > 100000) { alert('Saisis un objectif positif valide.'); return false; } current[key] = n; return true; };
+      for (const [label,key] of [['Natation','natation'],['Vélo','velo'],['Course à pied','course']]) { const result = ask(label,key); if (result === null || result === false) return; }
+      saveAppData(); updateSummaryUI(); alert('Objectifs annuels enregistrés sur cet appareil.');
     }
 
     function renderChart() {
@@ -4106,7 +4150,7 @@ document.addEventListener('DOMContentLoaded', () => {
    <div class="form-group"><label for="edit-session-terrain">Terrain</label><input id="edit-session-terrain" type="text" maxlength="100" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-weather">Météo / conditions</label><input id="edit-session-weather" type="text" maxlength="100" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-format">Format compétition</label><input id="edit-session-format" type="text" maxlength="80" style="width:100%;"></div>
-   <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-partners">Partenaires (pseudos séparés par des virgules)</label><input id="edit-session-partners" type="text" maxlength="500" style="width:100%;"></div>
+   <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-partners">Partenaires (pseudos séparés par des virgules)</label><input id="edit-session-partners" type="text" maxlength="500" list="edit-session-friend-options" placeholder="Choisir un ami ou saisir un pseudo" style="width:100%;"><datalist id="edit-session-friend-options"></datalist><small id="edit-session-partner-help" style="color:var(--text-sub);font-size:.68rem;">Les suggestions apparaîtront après chargement de ta liste d’amis.</small></div>
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-comment">Commentaire</label><textarea id="edit-session-comment" rows="3" maxlength="1500" style="width:100%;"></textarea></div>
   </div>
   <p style="font-size:.72rem;color:var(--text-sub);margin-top:8px;">Les statistiques, la vitesse moyenne et les trophées vérifiables seront recalculés après l’enregistrement. La VAP nécessite un tracé GPX détaillé.</p>
