@@ -3810,19 +3810,20 @@ function getWorkoutsByStrictDiscipline(disciplineKey) {
   return workouts.filter(w => allowedKeywords.includes(w.discipline));
 }
 
-// --- ÉTAPE 3 : Calcul dissocié (Cumuls vs Records Unitaires) ---
-function evaluateMetric(disciplineKey, mode, targetValue) {
-  const filteredWorkouts = getWorkoutsByStrictDiscipline(disciplineKey);
+// --- ÉTAPE 3 : Calcul dissocié (Cumuls vs Records Unitaires & Durées) ---
+function evaluateMetric(disciplineKey, mode, targetValue, metricType = 'distance') {
+  const filteredWorkouts = (disciplineKey === 'all' || !disciplineKey) ? getNormalizedWorkouts() : getWorkoutsByStrictDiscipline(disciplineKey);
+  const property = metricType === 'duration' ? 'duration' : 'distance';
+
   if (mode === 'sum') {
-    const total = filteredWorkouts.reduce((acc, w) => acc + w.distance, 0);
+    const total = filteredWorkouts.reduce((acc, w) => acc + (w[property] || 0), 0);
     return { current: total, achieved: total >= targetValue, percent: Math.min(100, (total / targetValue) * 100) };
   } else if (mode === 'max') {
-    const maxSingle = filteredWorkouts.reduce((max, w) => Math.max(max, w.distance), 0);
+    const maxSingle = filteredWorkouts.reduce((max, w) => Math.max(max, w[property] || 0), 0);
     return { current: maxSingle, achieved: maxSingle >= targetValue, percent: Math.min(100, (maxSingle / targetValue) * 100) };
   }
   return { current: 0, achieved: false, percent: 0 };
 }
-
 // --- ÉTAPE 4 : Nettoyage de l'état local et Recalcul Intégral ---
 function recalculateAllTrophiesAndStats() {
   console.warn("🔄 Réinitialisation et recalcul complet de l'historique...");
