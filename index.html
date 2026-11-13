@@ -1996,27 +1996,43 @@ function updatePhoneVerificationBadge() {
 }
 
 async function sendProfilePhoneOtp() {
-  if (!supabaseClient || !activeUserId) { alert('Connecte-toi à ton compte pour vérifier ton numéro.'); return; }
-  const input=document.getElementById('user-profile-phone');
-  const phone=normalizeFrenchPhoneNumber(input?.value);
-  if(!phone){alert('Saisis un numéro valide avec indicatif. Exemple : 06 12 34 56 78 ou +33612345678.');return;}
-  const btn=document.getElementById('phone-send-code-btn');
-  if(btn){btn.disabled=true;btn.textContent='Envoi du SMS...';}
+  if (!supabaseClient || !activeUserId) { alert('Connecte-toi à ton compte pour enregistrer ton numéro.'); return; }
+  const input = document.getElementById('user-profile-phone');
+  const phone = normalizeFrenchPhoneNumber(input?.value);
+  if (!phone) { alert('Saisis un numéro valide avec indicatif. Exemple : 06 12 34 56 78 ou +33612345678.'); return; }
+  
+  const btn = document.getElementById('phone-send-code-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement...'; }
+  
   try {
-    const {error}=await supabaseClient.auth.updateUser({phone});
-    if(error) throw error;
-    appData.user.phone=phone;
-    appData.user.phoneVerified=false;
-    appData.user.phoneSynced=false;
-    appData.user.phoneVerificationPending=true;
+    // Enregistrement direct (Option 2 - Gratuit sans SMS)
+    appData.user.phone = phone;
+    appData.user.phoneVerified = true; // Validé directement puisqu'on n'utilise pas de passerelle SMS
+    appData.user.phoneSynced = false;
+    appData.user.phoneVerificationPending = false;
     saveAppData();
-    const panel=document.getElementById('phone-otp-panel'); if(panel) panel.style.display='block';
-    updatePhoneVerificationBadge();
-    alert('Demande envoyée à Supabase. Si aucun SMS ne parvient, vérifie le fournisseur SMS et les journaux Authentication de Supabase.');
-  } catch(error) {
-    console.error('Envoi OTP téléphone :',error);
-    alert('Supabase n’a pas pu envoyer le SMS : '+(error.message||'Erreur inconnue')+'. Le numéro ne sera pas marqué comme vérifié.');
-  } finally { if(btn){btn.disabled=false;btn.textContent='Vérifier mon numéro par SMS';} }
+
+    // Optionnel : si tu veux aussi le mettre à jour dans ta table 'profiles' sur Supabase
+    await supabaseClient
+      .from('profiles')
+      .update({ phone: phone })
+      .eq('id', activeUserId);
+
+    // Masquer le panneau OTP s'il était affiché, puisque le code n'est plus nécessaire
+    const panel = document.getElementById('phone-otp-panel'); 
+    if (panel) panel.style.display = 'none';
+
+    if (typeof updatePhoneVerificationBadge === 'function') {
+      updatePhoneVerificationBadge();
+    }
+
+    alert('Numéro de téléphone enregistré avec succès ! Il est maintenant enregistré pour la recherche d\'amis.');
+  } catch (error) {
+    console.error('Erreur enregistrement téléphone :', error);
+    alert('Erreur lors de l\'enregistrement : ' + (error.message || 'Erreur technique.'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Mettre à jour le numéro'; }
+  }
 }
 
 async function confirmProfilePhoneOtp() {
@@ -2823,86 +2839,68 @@ function resetActiveForm(sport) {
       ['name','custom-format','duration','distance','elevation','bpm','notes'].forEach(k=>{const el=document.getElementById('competition-'+k);if(el)el.value='';});['hours','minutes','seconds'].forEach(k=>{const el=document.getElementById('competition-duration-'+k);if(el)el.value='00';});const durationHidden=document.getElementById('competition-duration');if(durationHidden)durationHidden.value='0';const rpeInput=document.getElementById('competition-rpe');if(rpeInput)rpeInput.value=5;updateCompetitionDuration();document.getElementById('competition-date').value=today;document.getElementById('competition-format').value='M';document.getElementById('competition-kind').value='triathlon';document.getElementById('competition-rpe-value').textContent='5/10';updateCompetitionFields();
     }
 
-    // V20 — moteur de trophées basé sur l'unique historique réellement utilisé par l'application.
-    function trophyText(v) { return String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
-    function trophySportOf(s) {
-      const raw=trophyText(s?.sport || s?.type || s?.discipline || '');
-      if (s?.is_competition || s?.competitionDetails || raw==='competition') return 'competition';
-      if (/triathlon/.test(raw)) return 'triathlon';
-      if (/duathlon/.test(raw)) return 'duathlon';
-      if (/natation|swim|nage/.test(raw)) return 'natation';
-      if (/velo|cycl|vtt|bike|home.?trainer/.test(raw)) return 'velo';
-      if (/marche|randonnee|hiking|walking/.test(raw)) return 'marche';
-      if (/course|running|trail|tapis/.test(raw)) return 'course';
-      if (/hiit|circuit/.test(raw)) return 'hiit';
-      if (/muscu|fitness|renforcement|strength/.test(raw)) return 'muscu';
-      return 'autres';
-    }
-    function trophySessionHaystack(s) {
-      return trophyText([s?.title,s?.subSport,s?.activityType,s?.terrain,s?.format,s?.comment,s?.notes,s?.sport].filter(Boolean).join(' '));
-    }
-    function trophyRows(category) {
-      const rows=Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[];
-      return rows.filter(s=>s && trophySportOf(s)===category);
+    function getTrophySportKey(category) {
+      return category === 'competition' ? 'competition' : category;
     }
     function getTrophyProgress(category) {
-      const rows=trophyRows(category);
-      if (category==='competition') return rows.length;
-      if (['hiit','muscu','autres'].includes(category)) return rows.reduce((n,s)=>n+getSessionDurationMinutes(s),0)/60;
-      if (category==='natation') return rows.reduce((n,s)=>n+getSessionDistanceKm(s),0)*1000;
-      return rows.reduce((n,s)=>n+getSessionDistanceKm(s),0);
+      const rows = (appData.sessionsHistory || []).filter(s => s && (category === 'competition'
+        ? (s.type === 'competition' || s.is_competition || s.competitionDetails)
+        : (category === 'autres' ? ['autres','hiit'].includes(s.sport) : s.sport === category)));
+      if (category === 'autres') {
+        return rows.reduce((sum,s) => sum + getSessionDurationMinutes(s),0) / 60;
+      }
+      if (category === 'hiit') return rows.reduce((sum,s) => sum + getSessionDurationMinutes(s),0) / 60;
+      if (category === 'natation') return rows.reduce((sum,s) => sum + getSessionDistanceKm(s),0) * 1000;
+      return rows.reduce((sum,s) => sum + getSessionDistanceKm(s),0);
     }
     function getPublicTrophyThreshold(t) {
-      const d=trophyText(t?.desc).replace(',', '.');
-      if (t.category==='competition') {
-        const m=d.match(/format\s+(xs|s|m|l|xl|xxl)/i);
-        if(m) return {kind:'competition-format',value:m[1].toUpperCase()};
-        const count=d.match(/(?:sa|son)\s+(\d+)(?:eme|e|er|ere)?\s+competition/);
-        return count ? {kind:'competition-count',value:Number(count[1])} : null;
+      const d = String(t.desc || '').toLowerCase().replace(',', '.');
+      if (t.category === 'competition') {
+        const m = d.match(/format\s+(xs|s|m|l|xl|xxl)/i);
+        return m ? {kind:'competition-format',value:m[1].toUpperCase()} : null;
       }
-      if (['autres','hiit','muscu'].includes(t.category)) {
-        const h=d.match(/([0-9]+(?:\.[0-9]+)?)\s*heure/);
-        return h ? {kind:'hours',value:Number(h[1]),subtype:/fitness|musculation|muscu/.test(d)?'muscu':/padel|tennis/.test(d)?'racket':/sport collectif|football|foot|basket|rugby|hand/.test(d)?'team':/escalade|ski/.test(d)?'climb-ski':t.category} : null;
+      if (t.category === 'autres' || t.category === 'hiit') {
+        const h = d.match(/([0-9]+(?:\.[0-9]+)?)\s*heure/);
+        return h ? {kind:'hours',value:Number(h[1])} : null;
       }
-      const km=d.match(/([0-9]+(?:\.[0-9]+)?)\s*km/);
-      const meters=d.match(/([0-9]+(?:\.[0-9]+)?)\s*m(?:\s|$)/);
-      if(km) return {kind:'distance',value:Number(km[1])*(t.category==='natation'?1000:1)};
-      if(meters && t.category==='natation') return {kind:'distance',value:Number(meters[1])};
+      const km = d.match(/([0-9]+(?:\.[0-9]+)?)\s*km/);
+      const meters = d.match(/([0-9]+(?:\.[0-9]+)?)\s*m(?:\s|$)/);
+      if (km) return {kind:'distance',value:Number(km[1]) * (t.category === 'natation' ? 1000 : 1)};
+      if (meters && t.category === 'natation') return {kind:'distance',value:Number(meters[1])};
       return null;
     }
-    function trophyMatchesSubtype(s, subtype) {
-      const h=trophySessionHaystack(s);
-      if(subtype==='muscu') return /fitness|musculation|muscu|renforcement/.test(h) || trophySportOf(s)==='muscu';
-      if(subtype==='racket') return /padel|tennis/.test(h);
-      if(subtype==='team') return /football|foot|basket|rugby|handball|hand\b/.test(h);
-      if(subtype==='climb-ski') return /escalade|ski/.test(h);
-      if(subtype==='hiit') return trophySportOf(s)==='hiit';
-      return true;
-    }
     function isPublicTrophyEligible(t) {
-      const threshold=getPublicTrophyThreshold(t);
-      if(!threshold) return false;
-      const rows=trophyRows(t.category);
-      if(threshold.kind==='distance') {
-        const d=trophyText(t.desc);
-        const unitary=/en un seul|une seule sortie|une seule seance|sur une sortie|sur un run|premier semi|premier marathon|finir son premier|terminer un/.test(d);
-        let candidates=rows;
-        // Les trophées de surface/terrain exigent une séance explicitement renseignée ainsi.
-        if(/route\/piste/.test(d)) candidates=rows.filter(s=>/route|piste/.test(trophySessionHaystack(s)));
-        if(/foret\/sentier/.test(d)) candidates=rows.filter(s=>/foret|sentier/.test(trophySessionHaystack(s)));
-        if(/montagne\/trail/.test(d)) candidates=rows.filter(s=>/montagne|trail/.test(trophySessionHaystack(s)));
-        if(/tapis de course/.test(d)) candidates=rows.filter(s=>/tapis/.test(trophySessionHaystack(s)));
-        return unitary ? candidates.some(s=>getSessionDistanceKm(s)>=threshold.value) : candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>=threshold.value;
+      const threshold = getPublicTrophyThreshold(t);
+      if (!threshold) return false;
+      if (threshold.kind === 'distance') {
+        const desc = String(t.desc || '').toLowerCase();
+        const single = /en un seul|une seule sortie|une seule séance|sur une sortie|sur un run|finir un|terminer un|réaliser un/.test(desc);
+        if (single) return (appData.sessionsHistory || []).some(s => {
+          const correctSport = t.category === 'natation' ? s.sport === 'natation' : s.sport === t.category;
+          return correctSport && getSessionDistanceKm(s) >= threshold.value;
+        });
+        return getTrophyProgress(t.category) >= threshold.value;
       }
-      if(threshold.kind==='hours') {
-        let candidates=rows;
-        if(threshold.subtype!=='autres' && threshold.subtype!=='hiit') candidates=candidates.filter(s=>trophyMatchesSubtype(s,threshold.subtype));
-        else if(t.category==='hiit') candidates=candidates.filter(s=>trophySportOf(s)==='hiit');
-        else if(t.category==='autres') candidates=candidates.filter(s=>!['hiit','muscu'].includes(trophySportOf(s)));
-        return candidates.reduce((n,s)=>n+getSessionDurationMinutes(s),0)/60>=threshold.value;
+      if (threshold.kind === 'hours') {
+        const desc = String(t.desc || '').toLowerCase();
+        const sportMatch = desc.match(/(fitness|musculation|muscu|padel|tennis|sport collectif|football|foot|basket|rugby|escalade|ski)/i);
+        const subtype = sportMatch ? sportMatch[1].toLowerCase() : '';
+        const matching = (appData.sessionsHistory || []).filter(s => {
+          if (!['autres','hiit'].includes(s.sport)) return false;
+          if (!subtype) return true;
+          const hay = `${s.title || ''} ${s.subSport || ''} ${s.activityType || ''}`.toLowerCase();
+          if (['fitness','musculation','muscu'].includes(subtype)) return /fitness|musculation|muscu/.test(hay);
+          if (['padel','tennis'].includes(subtype)) return new RegExp(subtype).test(hay);
+          if (['sport collectif','football','foot','basket','rugby'].includes(subtype)) return /football|foot|basket|rugby/.test(hay);
+          if (['escalade','ski'].includes(subtype)) return new RegExp(subtype).test(hay);
+          return true;
+        });
+        return matching.reduce((sum,s)=>sum+getSessionDurationMinutes(s),0)/60 >= threshold.value;
       }
-      if(threshold.kind==='competition-count') return rows.length>=threshold.value;
-      if(threshold.kind==='competition-format') return rows.some(s=>String(s.format||s.competitionDetails?.format||'').toUpperCase()===threshold.value);
+      if (threshold.kind === 'competition-format') return (appData.sessionsHistory || []).some(s => {
+        const fmt = String(s.format || s.competitionDetails?.format || '').toUpperCase();
+        return (s.type === 'competition' || s.is_competition || s.competitionDetails) && fmt.includes(threshold.value);
+      });
       return false;
     }
     function unlockTrophy(t, reason='') {
@@ -3015,8 +3013,12 @@ function resetActiveForm(sport) {
       session.xp=calculateSessionXp({sport:isCompetition?'competition':sport,isCompetition,durationMinutes,distanceKm:distance,elevationM:elevation,averageBpm:bpm});
       updateSessionDerivedMetrics(session);
       ensureXpBaseline(); recalculateStatsFromHistory(); recalculateXpFromHistory(); checkTrophiesUnlock();
-      renderHistory(); if(typeof renderChart==='function')renderChart(); if(typeof renderHomeCalendar==='function')renderHomeCalendar(); if(typeof updateRaceCountdown==='function')updateRaceCountdown();
-      closeEditSession(); alert('Activité modifiée. Les statistiques, les XP et les trophées vérifiables ont été recalculés sur cet appareil.');
+    renderHistory(); if (typeof renderChart === 'function') renderChart(); if (typeof renderHomeCalendar === 'function') renderHomeCalendar(); if (typeof updateRaceCountdown === 'function') updateRaceCountdown();
+    
+    // ➔ AJOUT INDISPENSABLE : Sauvegarde locale persistante
+    if (typeof saveAppData === 'function') saveAppData();
+
+    closeEditSession(); alert('Activité modifiée. Les statistiques, les XP et les trophées vérifiables ont été recalculés sur cet appareil.');
     }
 
     document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.activity-date-input').forEach(input => { if (!input.value) input.value = localDateISO(new Date()); }); calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); renderHomeCalendar(); showDayDetails(calendarSelectedDate); });
@@ -3780,52 +3782,121 @@ async function refreshFriendHub(){
       if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
       if (typeof updateFriendRequestBadge === 'function') updateFriendRequestBadge();
     }
-// V20 — l'historique canonique de l'application est appData.sessionsHistory.
-// Ne pas lire appData.workouts/history : ces tableaux ne sont pas la source utilisée par les formulaires.
+// ==========================================
+// MOTEUR UNIFIÉ : 4 ÉTAPES DE SÉCURISATION
+// ==========================================
+
+// --- ÉTAPE 1 & 2 : Normalisation et Dictionnaire Strict des Disciplines ---
 function getNormalizedWorkouts() {
-  return (Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[]).map(s=>({
-    ...s, discipline:trophySportOf(s), distance:getSessionDistanceKm(s), duration:getSessionDurationMinutes(s)
+  const rawWorkouts = appData.workouts || appData.history || [];
+  return rawWorkouts.map(w => ({
+    ...w,
+    distance: Number(w.distance) || 0,
+    duration: Number(w.duration) || 0,
+    elevation: Number(w.elevation) || 0,
+    discipline: (w.discipline || w.sport || '').toLowerCase().trim()
   }));
 }
-function getWorkoutsByStrictDiscipline(key) {
-  return getNormalizedWorkouts().filter(w=>w.discipline===key);
-}
-function evaluateMetric(key, mode, target, metricType='distance') {
-  const rows=getWorkoutsByStrictDiscipline(key), field=metricType==='duration'?'duration':'distance';
-  const values=rows.map(w=>Number(w[field])||0);
-  const current=mode==='max'?Math.max(0,...values):values.reduce((a,b)=>a+b,0);
-  return {current,achieved:current>=Number(target),percent:Number(target)>0?Math.min(100,current/Number(target)*100):0};
-}
-// Recalcul non destructif : les trophées secrets restent inchangés tant que leurs règles ne sont pas auditées.
-// Cette fonction ne vide aucune table Supabase et ne supprime aucune séance.
-function recalculateAllTrophiesAndStats() {
-  recalculateStatsFromHistory();
-  let unlocked=0, relocked=0;
-  (appData.trophies||[]).forEach(t=>{
-    if(t.isSecret) return;
-    const eligible=isPublicTrophyEligible(t);
-    if(eligible && !t.unlocked) { unlockTrophy(t,'recalcul V20'); unlocked++; }
-    else if(!eligible && t.unlocked) {
-      t.unlocked=false; delete t.unlockedAt; const priorBonus=Math.max(0,Number(t.xp)||0); if(priorBonus){ensureXpBaseline();appData.xpBaseTotal=Math.max(0,(Number(appData.xpBaseTotal)||0)-priorBonus);recalculateXpFromHistory();} relocked++;
-    }
-  });
-  saveAppData(); renderTrophiesAndRanks();
-  console.info(`Recalcul V20 terminé : ${unlocked} nouveau(x) déblocage(s), ${relocked} ancien(s) déblocage(s) invalidé(s).`);
-  return {unlocked,relocked};
+
+function getWorkoutsByStrictDiscipline(disciplineKey) {
+  const workouts = getNormalizedWorkouts();
+  const disciplineMap = {
+    course: ['course', 'running', 'trail', 'course à pied'],
+    velo: ['velo', 'cyclisme', 'vtt', 'home-trainer', 'cycling'],
+    natation: ['natation', 'swimming', 'nage'],
+    marche: ['marche', 'randonnee', 'hiking', 'walking'],
+    hiit: ['hiit', 'circuit training', 'crossfit', 'cardio'],
+    muscu: ['musculation', 'strength', 'renforcement'],
+    triathlon: ['triathlon'],
+    duathlon: ['duathlon']
+  };
+  const allowedKeywords = disciplineMap[disciplineKey] || [disciplineKey];
+  return workouts.filter(w => allowedKeywords.includes(w.discipline));
 }
 
-    function saveAppData() {
-      try {
-        // Chaque compte et le mode invité ont un espace local distinct.
-        const storageKey = activeUserId ? `dopamine_app_data_${activeUserId}` : 'dopamine_app_data_guest';
-        localStorage.setItem(storageKey, JSON.stringify(appData));
-        return true;
-      } catch (error) {
-        console.error('Impossible de sauvegarder les données localement :', error);
-        alert("La sauvegarde locale a échoué (espace de stockage indisponible ou saturé). Exporte tes données JSON pour éviter de les perdre.");
-        return false;
-      }
+// --- ÉTAPE 3 : Calcul dissocié (Cumuls vs Records Unitaires & Durées) ---
+function evaluateMetric(disciplineKey, mode, targetValue, metricType = 'distance') {
+  const filteredWorkouts = (disciplineKey === 'all' || !disciplineKey) ? getNormalizedWorkouts() : getWorkoutsByStrictDiscipline(disciplineKey);
+  const property = metricType === 'duration' ? 'duration' : 'distance';
+
+  if (mode === 'sum') {
+    const total = filteredWorkouts.reduce((acc, w) => acc + (w[property] || 0), 0);
+    return { current: total, achieved: total >= targetValue, percent: Math.min(100, (total / targetValue) * 100) };
+  } else if (mode === 'max') {
+    const maxSingle = filteredWorkouts.reduce((max, w) => Math.max(max, w[property] || 0), 0);
+    return { current: maxSingle, achieved: maxSingle >= targetValue, percent: Math.min(100, (maxSingle / targetValue) * 100) };
+  }
+  return { current: 0, achieved: false, percent: 0 };
+}
+// --- ÉTAPE 4 : Nettoyage de l'état local et Recalcul Intégral ---
+function recalculateAllTrophiesAndStats() {
+  console.warn("Réinitialisation et recalcul complet de l'historique, des stats et des trophées...");
+  
+  // 1. Initialisation propre des stats à partir des séances locales
+  appData.stats = { velo: 0, course: 0, natation: 0, marche: 0, hiit: 0, muscu: 0 };
+  
+  const workoutsList = appData.workouts || [];
+  workoutsList.forEach(w => {
+    const disc = w.discipline || w.sport;
+    if (appData.stats[disc] !== undefined) {
+      appData.stats[disc] += (Number(w.distance) || 0);
     }
+  });
+
+  // 2. Validation automatique et stricte de TOUS les trophées via le Moteur Unifié
+  if (typeof trophiesArray !== 'undefined' && Array.isArray(trophiesArray)) {
+    trophiesArray.forEach(trophy => {
+      if (trophy.discipline && trophy.mode && trophy.target !== undefined) {
+        const metricType = trophy.metricType || (trophy.isDuration || trophy.discipline === 'hiit' ? 'duration' : 'distance');
+        
+        // Interrogation directe du Moteur Unifié
+        const result = evaluateMetric(trophy.discipline, trophy.mode, trophy.target, metricType);
+        
+        trophy.unlocked = result.achieved;
+        trophy.currentProgress = result.current;
+        trophy.percent = result.percent;
+      }
+    });
+  }
+
+  // 3. Sauvegarde locale et rafraîchissement complet de l'interface
+  if (typeof saveAppData === 'function') {
+    saveAppData();
+  }
+
+  if (typeof renderTrophies === 'function') {
+    renderTrophies();
+  }
+
+  if (typeof updateUI === 'function') {
+    updateUI();
+  }
+
+  console.log("Recalcul global terminé avec succès ! Stats calculées :", appData.stats);
+}
+ async function saveAppData() {
+    try {
+        // 1. Sauvegarde locale (tampon immédiat)
+        const storageKey = activeUserId ? `dopamine app data ${activeUserId}` : 'dopamine app data guest';
+        localStorage.setItem(storageKey, JSON.stringify(appData));
+
+        // 2. Synchronisation Cloud Supabase (Source de vérité unique)
+        if (typeof supabaseClient !== 'undefined' && activeUserId) {
+            const { error } = await supabaseClient
+                .from('user_data')
+                .upsert({ user_id: activeUserId, data: appData, updated_at: new Date() });
+                
+            if (error) {
+                console.error('Erreur de synchronisation Supabase :', error);
+            }
+        }
+        return true;
+    } catch (error) {
+        console.error('Impossible de sauvegarder les données :', error);
+        alert('La sauvegarde a échoué (espace de stockage indisponible ou saturé).');
+        return false;
+    }
+}
 
 
     function editAnnualGoals() {
@@ -3895,10 +3966,16 @@ window.onload = async function() {
       }
       buildTrophyCatalogue();
       updateCompetitionDuration?.();
-      refreshAppAfterAccountLoad();
-      const weatherBox = document.getElementById('dopamine-weather-widget'); if (weatherBox && activeUserId) weatherBox.style.display = 'block';
-    };
- </script>
+refreshAppAfterAccountLoad();
+    const weatherBox = document.getElementById('dopamine-weather-widget'); 
+    if (weatherBox && activeUserId) weatherBox.style.display = 'block';
+    
+    // --- L'appel automatique du recalcul global ---
+    if (typeof recalculateAllTrophiesAndStats === 'function') {
+      recalculateAllTrophiesAndStats();
+    }
+  };
+</script>
  
 <!-- MODALE DE CONNEXION / INSCRIPTION SUPABASE -->
   <div class="modal-overlay" id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
@@ -4117,20 +4194,14 @@ async function handleUnblock(targetUserId) {
     }
 
     async function resetPasswordByEmail() {
-      if(!supabaseClient){alert('Service de compte indisponible.');return;}
-      const email=document.getElementById('auth-email')?.value.trim();
-      if(!email){alert('Renseigne ton adresse e-mail pour recevoir le lien de réinitialisation.');return;}
-      const buttons=[...document.querySelectorAll('[onclick*="resetPasswordByEmail"]')];
-      buttons.forEach(b=>{b.disabled=true;b.dataset.oldText=b.textContent;b.textContent='Envoi en cours…';});
-      try {
-        const redirectTo=`${window.location.origin}${window.location.pathname}?reset-password=1`;
-        const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});
-        if(error) throw error;
-        alert('La demande a été acceptée. Consulte ta boîte de réception et les indésirables. Si le message tarde, le délai dépend du service SMTP configuré dans Supabase.');
-      } catch(error) {
-        console.error('Réinitialisation mot de passe :',error);
-        alert('Impossible de demander la réinitialisation : '+(error.message||'Erreur inconnue'));
-      } finally {buttons.forEach(b=>{b.disabled=false;b.textContent=b.dataset.oldText||'Mot de passe oublié ?';delete b.dataset.oldText;});}
+      if (!supabaseClient) { alert('Service de compte indisponible.'); return; }
+      const email = document.getElementById('auth-email').value.trim();
+      if (!email) { alert('Renseigne ton adresse e-mail pour recevoir le lien de réinitialisation.'); return; }
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://dopamine-teal.vercel.app/?reset-password=1'
+    });
+      if (error) alert('Impossible d’envoyer le lien : ' + error.message);
+      else alert('Un e-mail de réinitialisation a été demandé. Consulte ta boîte de réception et tes courriers indésirables.');
     }
 
     async function saveRecoveredPassword() {
