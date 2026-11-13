@@ -148,7 +148,22 @@
     .activity-submenu button { display:flex; justify-content:center; align-items:center; gap:8px; padding:10px 8px; border:1px solid var(--card-border); border-radius:9px; color:var(--text-main); background:var(--card-bg); cursor:pointer; font-weight:700; }
     .activity-submenu button:hover { border-color:var(--bike-orange); transform:translateY(-1px); }
     @media(max-width:900px) { .activity-submenu-inner { grid-template-columns:repeat(3,minmax(0,1fr)); } .navbar { justify-content:center; } }
-    @media(max-width:520px) { .activity-submenu-inner { grid-template-columns:repeat(2,minmax(0,1fr)); } .nav-brand { font-size:1.15rem; } .nav-brand img.brand-logo, .brand-logo-fallback { height:48px; width:48px; } }
+    @media(max-width:520px) {
+      .activity-submenu { padding:12px 10px 14px; }
+      .activity-submenu-inner { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .activity-submenu button { min-height:48px; padding:12px 8px; font-size:.82rem; gap:7px; }
+      .nav-brand { font-size:1.15rem; }
+      .nav-brand img.brand-logo, .brand-logo-fallback { height:48px; width:48px; }
+      .social-hub { padding:10px !important; }
+      .social-hub .friend-tabs-nav { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px !important; overflow:visible !important; border-bottom:0 !important; }
+      .social-hub .friend-tabs-nav button { min-width:0; min-height:44px; white-space:normal !important; line-height:1.2; padding:9px 7px !important; font-size:.76rem !important; }
+      .social-hub .friend-tab-content { min-width:0; width:100%; overflow-wrap:anywhere; }
+      .social-hub .friend-tab-content > div { max-width:100%; }
+      .social-hub #friend-search-results > div, .social-hub #friend-requests-container > div > div, .social-hub #friend-pending-container > div > div, .social-hub #friends-list-container > div > div { flex-wrap:wrap; }
+      .social-hub #friend-requests-container button, .social-hub #friends-list-container button { min-height:38px; }
+      .edit-session-dialog { margin:2vh auto !important; padding:14px !important; width:100%; }
+      #edit-session-modal input, #edit-session-modal select, #edit-session-modal textarea { min-height:42px; font-size:16px !important; }
+    }
 
     .app-page { display: block; animation: fadeIn 0.3s ease-in-out; }
     .app-page.hidden { display: none !important; }
@@ -633,7 +648,7 @@
 <div class="social-hub" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
   
   <!-- Barre des 4 onglets sportifs -->
-  <div style="display: flex; gap: 6px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; overflow-x: auto;">
+  <div class="friend-tabs-nav" style="display: flex; gap: 6px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; overflow-x: auto;">
       <button onclick="switchFriendTab('search')" id="tab-btn-search" style="background: var(--bike-orange, #ff9f43); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">
         🔍 Rechercher
       </button>
@@ -2804,29 +2819,92 @@ function resetActiveForm(sport) {
       const title=name, sportMap={triathlon:'triathlon',duathlon:'duathlon',trail:'trail',course:'course',velo:'velo',natation:'natation',autre:'competition'}, eventSport=sportMap[kind]||'competition';
       const record={kind,format,details,totalDistanceKm:totalDistance,totalElevationM:totalElevation,durationMinutes:effectiveDuration,durationSeconds,durationHours:timeParts.hours,durationRemainderMinutes:timeParts.minutes,durationRemainderSeconds:timeParts.seconds,averageBpm:bpm,rpe,notes};
       if(date>today){if(!Array.isArray(appData.plannedSessions))appData.plannedSessions=[];appData.plannedSessions.push({id:Date.now(),title,date,time:'',sport:eventSport,type:'competition',format,details:record});saveAppData();renderHomeCalendar();updateRaceCountdown();renderLastCompetitionCard();alert('Compétition ajoutée au calendrier. Les détails sont conservés ; aucun XP avant le résultat.');}
-      else {const xp=calculateSessionXp({sport:'competition',isCompetition:true,durationMinutes:effectiveDuration,distanceKm:totalDistance,elevationM:totalElevation,averageBpm:bpm});ensureXpBaseline();appData.sessionsHistory.unshift({id:Date.now(),type:'competition',sport:'competition',title,date,format,eventKind:kind,duration:`${String(timeParts.hours).padStart(2,'0')} h ${String(timeParts.minutes).padStart(2,'0')} min ${String(timeParts.seconds).padStart(2,'0')} s`,durationSeconds,distance:`${totalDistance} km`,rawVal:0,xp,averageBpm:bpm,elevationM:totalElevation,rpe,competitionDetails:record,comment:notes,calories:Math.round(effectiveDuration*9),source:'manual',partners:[],is_competition:true});updateSessionDerivedMetrics(appData.sessionsHistory[0]);recalculateXpFromHistory();saveAppData();renderHistory();renderChart();renderLastCompetitionCard();checkCompetitionTrophies?.();triggerAchievementPopup(`Compétition enregistrée ! +${xp} XP`);}
+      else {const xp=calculateSessionXp({sport:'competition',isCompetition:true,durationMinutes:effectiveDuration,distanceKm:totalDistance,elevationM:totalElevation,averageBpm:bpm});ensureXpBaseline();appData.sessionsHistory.unshift({id:Date.now(),type:'competition',sport:'competition',title,date,format,eventKind:kind,duration:`${String(timeParts.hours).padStart(2,'0')} h ${String(timeParts.minutes).padStart(2,'0')} min ${String(timeParts.seconds).padStart(2,'0')} s`,durationSeconds,distance:`${totalDistance} km`,rawVal:0,xp,averageBpm:bpm,elevationM:totalElevation,rpe,competitionDetails:record,comment:notes,calories:Math.round(effectiveDuration*9),source:'manual',partners:[],is_competition:true});updateSessionDerivedMetrics(appData.sessionsHistory[0]);recalculateXpFromHistory();saveAppData();renderHistory();renderChart();renderLastCompetitionCard();checkCompetitionTrophies?.();checkTrophiesUnlock();triggerAchievementPopup(`Compétition enregistrée ! +${xp} XP`);}
       ['name','custom-format','duration','distance','elevation','bpm','notes'].forEach(k=>{const el=document.getElementById('competition-'+k);if(el)el.value='';});['hours','minutes','seconds'].forEach(k=>{const el=document.getElementById('competition-duration-'+k);if(el)el.value='00';});const durationHidden=document.getElementById('competition-duration');if(durationHidden)durationHidden.value='0';const rpeInput=document.getElementById('competition-rpe');if(rpeInput)rpeInput.value=5;updateCompetitionDuration();document.getElementById('competition-date').value=today;document.getElementById('competition-format').value='M';document.getElementById('competition-kind').value='triathlon';document.getElementById('competition-rpe-value').textContent='5/10';updateCompetitionFields();
     }
 
+    function getTrophySportKey(category) {
+      return category === 'competition' ? 'competition' : category;
+    }
+    function getTrophyProgress(category) {
+      const rows = (appData.sessionsHistory || []).filter(s => s && (category === 'competition'
+        ? (s.type === 'competition' || s.is_competition || s.competitionDetails)
+        : (category === 'autres' ? ['autres','hiit'].includes(s.sport) : s.sport === category)));
+      if (category === 'autres') {
+        return rows.reduce((sum,s) => sum + getSessionDurationMinutes(s),0) / 60;
+      }
+      if (category === 'hiit') return rows.reduce((sum,s) => sum + getSessionDurationMinutes(s),0) / 60;
+      if (category === 'natation') return rows.reduce((sum,s) => sum + getSessionDistanceKm(s),0) * 1000;
+      return rows.reduce((sum,s) => sum + getSessionDistanceKm(s),0);
+    }
+    function getPublicTrophyThreshold(t) {
+      const d = String(t.desc || '').toLowerCase().replace(',', '.');
+      if (t.category === 'competition') {
+        const m = d.match(/format\s+(xs|s|m|l|xl|xxl)/i);
+        return m ? {kind:'competition-format',value:m[1].toUpperCase()} : null;
+      }
+      if (t.category === 'autres' || t.category === 'hiit') {
+        const h = d.match(/([0-9]+(?:\.[0-9]+)?)\s*heure/);
+        return h ? {kind:'hours',value:Number(h[1])} : null;
+      }
+      const km = d.match(/([0-9]+(?:\.[0-9]+)?)\s*km/);
+      const meters = d.match(/([0-9]+(?:\.[0-9]+)?)\s*m(?:\s|$)/);
+      if (km) return {kind:'distance',value:Number(km[1]) * (t.category === 'natation' ? 1000 : 1)};
+      if (meters && t.category === 'natation') return {kind:'distance',value:Number(meters[1])};
+      return null;
+    }
+    function isPublicTrophyEligible(t) {
+      const threshold = getPublicTrophyThreshold(t);
+      if (!threshold) return false;
+      if (threshold.kind === 'distance') return getTrophyProgress(t.category) >= threshold.value;
+      if (threshold.kind === 'hours') return getTrophyProgress(t.category) >= threshold.value;
+      if (threshold.kind === 'competition-format') return (appData.sessionsHistory || []).some(s => {
+        const fmt = String(s.format || s.competitionDetails?.format || '').toUpperCase();
+        return (s.type === 'competition' || s.is_competition || s.competitionDetails) && fmt.includes(threshold.value);
+      });
+      return false;
+    }
+    function unlockTrophy(t, reason='') {
+      if (!t || t.unlocked) return false;
+      t.unlocked = true;
+      t.unlockedAt = new Date().toISOString();
+      const bonus = Math.max(0, Number(t.xp) || 0);
+      if (bonus > 0) { ensureXpBaseline(); appData.xpBaseTotal = (Number(appData.xpBaseTotal) || 0) + bonus; recalculateXpFromHistory(); }
+      saveAppData();
+      triggerAchievementPopup(`🏆 Trophée débloqué : ${t.isSecret ? t.title : t.title}${bonus ? ` · +${bonus} XP` : ''}`);
+      return true;
+    }
     function checkTrophiesUnlock() {
-      if (appData.stats.velo >= 100) {
-        const t = appData.trophies.find(x => x.id === 'velo_100');
-        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Rouleur d'Acier !"); }
-      }
-      if (appData.stats.course >= 30) {
-        const t = appData.trophies.find(x => x.id === 'course_30');
-        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Sprinteur Fondu !"); }
-      }
-      if (appData.stats.natation > 0 && appData.stats.velo > 0 && appData.stats.course > 0) {
-        const t = appData.trophies.find(x => x.id === 'tri_master');
-        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Triathlète Complet !"); }
-      }
-      if (appData.stats.hiit >= 150) {
-        const t = appData.trophies.find(x => x.id === 'hiit_king');
-        if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup("🏆 Trophée : Explosivité Pure !"); }
-      }
-      if ((appData.stats.autres || 0) > 0) { const t = appData.trophies.find(x => x.id === 'autres_first'); if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup('🏆 Trophée : Curieux du sport !'); } }
-      if ((appData.stats.autres || 0) >= 600) { const t = appData.trophies.find(x => x.id === 'autres_600'); if (t && !t.unlocked) { t.unlocked = true; triggerAchievementPopup('🏆 Trophée : Polyvalent !'); } }
+      if (!Array.isArray(appData.trophies) || !appData.trophies.length) buildTrophyCatalogue();
+      let changed = false;
+      // Les trophées publics dont le descriptif exprime un seuil cumulatif ou un format précis sont évalués automatiquement.
+      appData.trophies.filter(t => !t.isSecret && !t.unlocked).forEach(t => { if (isPublicTrophyEligible(t)) changed = unlockTrophy(t) || changed; });
+      // Secrets dont les conditions peuvent être vérifiées sans inventer de données absentes.
+      const rows = appData.sessionsHistory || [];
+      const secretRules = {
+        'NTR-S07': s => s.sport==='natation' && Math.round(getSessionDistanceKm(s)*1000)===2000,
+        'NTR-S08': s => s.sport==='natation' && getSessionDistanceKm(s)*1000>3500,
+        'CAP-S01': s => s.sport==='course' && getSessionDistanceKm(s)>=42.195,
+        'CAP-S04': s => s.sport==='course' && Number(s.elevationM||0)>=1000,
+        'CAP-S10': s => s.sport==='course' && Number(s.elevationM||0)>=2000,
+        'CAP-S14': s => s.sport==='course' && getSessionDistanceKm(s)>=21.09 && getSessionDistanceKm(s)<=21.20,
+        'VEL-S04': s => s.sport==='velo' && getSessionDistanceKm(s)>=30 && Number(s.avg_speed||0)>=38,
+        'VEL-S05': s => s.sport==='velo' && Number(s.elevationM||0)>=2000,
+        'MAR-S02': s => s.sport==='marche' && getSessionDistanceKm(s)>=30,
+        'MAR-S04': s => s.sport==='marche' && Number(s.elevationM||0)>=1200,
+        'SPO-S01': s => s.sport==='autres' && /tennis|padel/i.test(s.title||'') && getSessionDurationMinutes(s)>=120 && Number(s.rpe)>=9,
+        'SPO-S04': s => s.sport==='autres' && /muscu|fitness/i.test(s.title||'') && getSessionDurationMinutes(s)>=180,
+        'SPO-S05': s => s.sport==='autres' && /escalade/i.test(s.title||'') && getSessionDurationMinutes(s)>=150 && Number(s.rpe)>=8,
+        'COM-S03': s => (s.type==='competition'||s.is_competition||s.competitionDetails) && /xxl|ironman/i.test(String(s.format||s.competitionDetails?.format||''))
+      };
+      Object.entries(secretRules).forEach(([id,rule]) => { const t=appData.trophies.find(x=>x.id===id); if(t&&!t.unlocked&&rows.some(rule)) changed=unlockTrophy(t)||changed; });
+      // Trophée transversal : triathlon multi-discipline, sans condition cachée inventée.
+      const hasSwim=rows.some(s=>s.sport==='natation'), hasBike=rows.some(s=>s.sport==='velo'), hasRun=rows.some(s=>s.sport==='course');
+      const transversal=appData.trophies.find(t=>t.id==='COM-S12');
+      if(transversal&&!transversal.unlocked&&hasSwim&&hasBike&&hasRun) changed=unlockTrophy(transversal)||changed;
+      if (changed) { recalculateStatsFromHistory(); renderTrophiesAndRanks(); }
+      else saveAppData();
+      return changed;
     }
 
     function getSessionDurationMinutes(session) {
@@ -2855,46 +2933,39 @@ function resetActiveForm(sport) {
     function openEditSession(id) {
       const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
       if (!session) { alert('Cette activité est introuvable.'); return; }
-      document.getElementById('edit-session-id').value = String(session.id);
-      document.getElementById('edit-session-title').value = session.title || '';
-      document.getElementById('edit-session-date').value = session.date || localDateISO(new Date());
-      document.getElementById('edit-session-duration').value = getSessionDurationMinutes(session).toFixed(2).replace(/\.?0+$/, '');
-      document.getElementById('edit-session-distance').value = getSessionDistanceKm(session);
-      document.getElementById('edit-session-elevation').value = Number(session.elevationM || session.competitionDetails?.totalElevationM || 0);
-      document.getElementById('edit-session-bpm').value = Number(session.averageBpm || 0);
-      document.getElementById('edit-session-rpe').value = Number(session.rpe || 5);
-      document.getElementById('edit-session-comment').value = session.comment || session.competitionDetails?.notes || '';
-      document.getElementById('edit-session-modal').style.display = 'block';
+      const set=(key,value)=>{const el=document.getElementById('edit-session-'+key);if(el)el.value=value??'';};
+      set('id',String(session.id)); set('title',session.title||''); set('date',session.date||localDateISO(new Date()));
+      let totalSeconds=Number(session.durationSeconds)||Math.round(getSessionDurationMinutes(session)*60);
+      set('hours',Math.floor(totalSeconds/3600)); set('minutes',Math.floor((totalSeconds%3600)/60)); set('seconds',totalSeconds%60);
+      set('sport',session.type==='competition'||session.competitionDetails?'competition':(session.sport||'course'));
+      set('distance',getSessionDistanceKm(session)); set('elevation',Number(session.elevationM||session.competitionDetails?.totalElevationM||0));
+      set('bpm',Number(session.averageBpm||0)); set('rpe',Number(session.rpe||5)); set('calories',Number(session.calories||0));
+      set('feeling',session.feeling||session.feelingLabel||getRPEFeeling(Number(session.rpe||5))); set('source',session.source||'manual');
+      set('watts',session.watts??''); set('cadence',session.cadence??''); set('terrain',session.terrain||''); set('weather',session.weather||''); set('format',session.format||session.competitionDetails?.format||'');
+      const partners=Array.isArray(session.partners)?session.partners.map(p=>typeof p==='string'?p:(p.username||p.name||'')).filter(Boolean).join(', '):'';
+      set('partners',partners); set('comment',session.comment||session.competitionDetails?.notes||'');
+      document.getElementById('edit-session-modal').style.display='block';
     }
     function closeEditSession() { const modal = document.getElementById('edit-session-modal'); if (modal) modal.style.display = 'none'; }
     function saveEditedSession() {
-      const id = document.getElementById('edit-session-id')?.value;
-      const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
+      const val=id=>document.getElementById('edit-session-'+id)?.value;
+      const session = appData.sessionsHistory.find(item => String(item.id) === String(val('id')));
       if (!session) { alert('Cette activité est introuvable.'); closeEditSession(); return; }
-      const title = document.getElementById('edit-session-title').value.trim(), date = document.getElementById('edit-session-date').value;
-      const duration = Number(document.getElementById('edit-session-duration').value), distance = Number(document.getElementById('edit-session-distance').value || 0);
-      const elevation = Number(document.getElementById('edit-session-elevation').value || 0), bpm = Number(document.getElementById('edit-session-bpm').value || 0);
-      const rpe = Number(document.getElementById('edit-session-rpe').value || 5), comment = document.getElementById('edit-session-comment').value.trim().slice(0,1500);
-      if (!title || !date || !Number.isFinite(duration) || duration <= 0 || duration > 1440) { alert('Vérifie le nom, la date et la durée (entre 0 et 1 440 minutes).'); return; }
-      if (!Number.isFinite(distance) || distance < 0 || distance > 1000 || !Number.isFinite(elevation) || elevation < 0 || elevation > 20000 || !Number.isFinite(bpm) || bpm < 0 || bpm > 250 || !Number.isInteger(rpe) || rpe < 1 || rpe > 10) { alert('Vérifie la distance, le D+, le BPM et le RPE.'); return; }
-      const isCompetition = session.type === 'competition' || !!session.competitionDetails;
-      Object.assign(session, {title,date,comment,rpe,feeling:getRPEFeeling(rpe),averageBpm:bpm,elevationM:Math.round(elevation),updatedAt:new Date().toISOString()});
-      if (isCompetition) {
-        const totalSeconds = Math.round(duration * 60), hours = Math.floor(totalSeconds/3600), minutes = Math.floor((totalSeconds%3600)/60), seconds = totalSeconds%60;
-        session.durationSeconds = totalSeconds; session.duration = `${String(hours).padStart(2,'0')} h ${String(minutes).padStart(2,'0')} min ${String(seconds).padStart(2,'0')} s`;
-        session.distance = `${distance} km`; session.rawVal = 0;
-        session.competitionDetails = {...(session.competitionDetails||{}),durationMinutes:duration,durationSeconds:totalSeconds,durationHours:hours,durationRemainderMinutes:minutes,durationRemainderSeconds:seconds,totalDistanceKm:distance,totalElevationM:Math.round(elevation),averageBpm:bpm,rpe,notes:comment};
-        session.xp = calculateSessionXp({sport:'competition',isCompetition:true,durationMinutes:duration,distanceKm:distance,elevationM:elevation,averageBpm:bpm});
-      } else {
-        session.duration = `${Number(duration.toFixed(2))} min`;
-        session.distance = ['hiit','autres'].includes(session.sport) ? `${Number(duration.toFixed(2))} min` : `${Number(distance.toFixed(3))} km`;
-        session.rawVal = ['hiit','autres'].includes(session.sport) ? duration : distance;
-        session.xp = calculateSessionXp({sport:session.sport,durationMinutes:duration,distanceKm:distance,elevationM:elevation,averageBpm:bpm});
-      }
+      const title=String(val('title')||'').trim(), date=val('date'), sport=val('sport');
+      const h=Number(val('hours')||0),m=Number(val('minutes')||0),sec=Number(val('seconds')||0),durationSeconds=h*3600+m*60+sec,durationMinutes=durationSeconds/60;
+      const distance=Number(val('distance')||0),elevation=Number(val('elevation')||0),bpm=Number(val('bpm')||0),rpe=Number(val('rpe')||5),calories=Number(val('calories')||0),watts=Number(val('watts')||0),cadence=Number(val('cadence')||0);
+      if(!title||!date||!['natation','velo','course','marche','hiit','autres','competition'].includes(sport)){alert('Vérifie le titre, la date et la discipline.');return;}
+      if(durationSeconds<=0||h>999||m>59||sec>59||distance<0||distance>1000||elevation<0||elevation>20000||bpm<0||bpm>250||!Number.isInteger(rpe)||rpe<1||rpe>10||calories<0||calories>50000||watts<0||watts>3000||cadence<0||cadence>300){alert('Vérifie la durée, la distance, le D+, le BPM, le RPE et les calories.');return;}
+      const previousSport=session.sport;
+      const isCompetition=sport==='competition';
+      Object.assign(session,{title,date,sport,type:isCompetition?'competition':'activity',durationSeconds,duration:`${String(h).padStart(2,'0')} h ${String(m).padStart(2,'0')} min ${String(sec).padStart(2,'0')} s`,distance:`${distance} km`,rawVal:['hiit','autres'].includes(sport)?durationMinutes:distance,elevationM:Math.round(elevation),averageBpm:bpm,rpe,feeling:val('feeling')||getRPEFeeling(rpe),comment:String(val('comment')||'').trim().slice(0,1500),calories:Math.round(calories),source:val('source')||'manual',partners:String(val('partners')||'').split(',').map(x=>x.trim()).filter(Boolean),watts:watts||null,cadence:cadence||null,terrain:String(val('terrain')||'').trim()||null,weather:String(val('weather')||'').trim()||null,format:String(val('format')||'').trim()||session.format||null,updatedAt:new Date().toISOString()});
+      if(isCompetition){session.is_competition=true;session.competitionDetails={...(session.competitionDetails||{}),format:session.format||session.competitionDetails?.format||'',durationMinutes,durationSeconds,totalDistanceKm:distance,totalElevationM:Math.round(elevation),averageBpm:bpm,rpe,notes:session.comment};}
+      else {session.is_competition=false; if(session.competitionDetails) session.competitionDetails={...session.competitionDetails,totalDistanceKm:distance,totalElevationM:Math.round(elevation),durationMinutes,durationSeconds,averageBpm:bpm,rpe,notes:session.comment};}
+      session.xp=calculateSessionXp({sport:isCompetition?'competition':sport,isCompetition,durationMinutes,distanceKm:distance,elevationM:elevation,averageBpm:bpm});
       updateSessionDerivedMetrics(session);
-      recalculateStatsFromHistory(); if (typeof checkTrophiesUnlock === 'function') checkTrophiesUnlock();
-      renderHistory(); if (typeof renderChart === 'function') renderChart(); if (typeof renderHomeCalendar === 'function') renderHomeCalendar(); if (typeof updateRaceCountdown === 'function') updateRaceCountdown();
-      closeEditSession(); alert('Activité modifiée. Les statistiques et les XP ont été recalculés sur cette version.');
+      ensureXpBaseline(); recalculateStatsFromHistory(); recalculateXpFromHistory(); checkTrophiesUnlock();
+      renderHistory(); if(typeof renderChart==='function')renderChart(); if(typeof renderHomeCalendar==='function')renderHomeCalendar(); if(typeof updateRaceCountdown==='function')updateRaceCountdown();
+      closeEditSession(); alert('Activité modifiée. Les statistiques, les XP et les trophées vérifiables ont été recalculés sur cet appareil.');
     }
 
     document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.activity-date-input').forEach(input => { if (!input.value) input.value = localDateISO(new Date()); }); calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); renderHomeCalendar(); showDayDetails(calendarSelectedDate); });
@@ -3357,6 +3428,12 @@ function switchFriendTab(tabName) {
   if(tabName==='pending') loadPendingSentRequests();
 }
 
+async function refreshFriendHub(){
+  if(!supabaseClient) return;
+  try { await updateFriendRequestBadge(); await Promise.all([loadFriendRequests(),loadPendingSentRequests(),loadFriendsList()]); }
+  catch(e){ console.warn('Actualisation espace amis :',e.message); }
+}
+
     function showFeedComingSoon() {
       alert('Le Fil Dopamine est en préparation. Le partage entre amis, les photos, les likes et les commentaires seront activés après la mise en place des comptes et du stockage en ligne.');
     }
@@ -3578,6 +3655,7 @@ function switchFriendTab(tabName) {
       ensureXpBaseline();
       renderHomeCalendar();
       recalculateStatsFromHistory();
+      if (typeof checkTrophiesUnlock === 'function') checkTrophiesUnlock();
       renderHistory();
       updateRaceCountdown();
       updateAICoachAdvice();
@@ -3999,22 +4077,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     });
-  </script>
-<div id="edit-session-modal" style="display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.78);padding:18px;overflow:auto;">
- <div style="max-width:620px;margin:4vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;color:var(--text-main);"><i class="fa-solid fa-pen-to-square" style="color:var(--xp-gold);"></i> Modifier l’activité</h3><button type="button" onclick="closeEditSession()" aria-label="Fermer" style="background:transparent;border:0;color:var(--text-main);font-size:1.5rem;">&times;</button></div>
+  
+    // Recharge l’espace amis dès qu’une session Supabase est disponible.
+    window.addEventListener('load', () => {
+      setTimeout(() => { if (window.supabaseClient && typeof refreshFriendHub === 'function') refreshFriendHub(); }, 900);
+    });
+</script>
+<div id="edit-session-modal" style="display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.82);padding:12px;overflow:auto;">
+ <div class="edit-session-dialog" style="max-width:760px;margin:3vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;"><h3 style="margin:0;color:var(--text-main);"><i class="fa-solid fa-pen-to-square" style="color:var(--xp-gold);"></i> Modifier l’activité</h3><button type="button" onclick="closeEditSession()" aria-label="Fermer" style="background:transparent;border:0;color:var(--text-main);font-size:1.5rem;">&times;</button></div>
   <input type="hidden" id="edit-session-id">
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;">
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-title">Nom de l’activité</label><input id="edit-session-title" type="text" maxlength="120" style="width:100%;"></div>
+   <div class="form-group"><label for="edit-session-sport">Discipline</label><select id="edit-session-sport" style="width:100%;"><option value="natation">Natation</option><option value="velo">Vélo</option><option value="course">Course à pied</option><option value="marche">Marche / randonnée</option><option value="hiit">HIIT</option><option value="autres">Autres sports</option><option value="competition">Compétition</option></select></div>
    <div class="form-group"><label for="edit-session-date">Date</label><input id="edit-session-date" type="date" style="width:100%;"></div>
-   <div class="form-group"><label for="edit-session-duration">Durée (minutes)</label><input id="edit-session-duration" type="number" min="0.1" max="1440" step="0.01" style="width:100%;"></div>
+   <div class="form-group"><label>Durée — heures</label><input id="edit-session-hours" type="number" min="0" max="999" step="1" style="width:100%;"></div>
+   <div class="form-group"><label>Durée — minutes</label><input id="edit-session-minutes" type="number" min="0" max="59" step="1" style="width:100%;"></div>
+   <div class="form-group"><label>Durée — secondes</label><input id="edit-session-seconds" type="number" min="0" max="59" step="1" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-distance">Distance (km)</label><input id="edit-session-distance" type="number" min="0" max="1000" step="0.001" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-elevation">Dénivelé (m)</label><input id="edit-session-elevation" type="number" min="0" max="20000" step="1" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-bpm">BPM moyen</label><input id="edit-session-bpm" type="number" min="0" max="250" step="1" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-rpe">Effort perçu (RPE /10)</label><input id="edit-session-rpe" type="number" min="1" max="10" step="1" style="width:100%;"></div>
+   <div class="form-group"><label for="edit-session-calories">Calories (kcal)</label><input id="edit-session-calories" type="number" min="0" max="50000" step="1" style="width:100%;"></div>
+   <div class="form-group"><label for="edit-session-feeling">Ressenti</label><select id="edit-session-feeling" style="width:100%;"><option value="">Non renseigné</option><option value="🚀 Facile / en forme">Facile / en forme</option><option value="🙂 Bien / maîtrisé">Bien / maîtrisé</option><option value="🥵 Dur">Dur</option><option value="🌧️ Difficile / galère">Difficile / galère</option></select></div>
+   <div class="form-group"><label for="edit-session-source">Source</label><select id="edit-session-source" style="width:100%;"><option value="manual">Saisie manuelle</option><option value="strava">Strava</option><option value="garmin">Garmin</option><option value="gpx">GPX</option><option value="polar">Polar</option><option value="zwift">Zwift</option></select></div>
+   <div class="form-group"><label for="edit-session-watts">Puissance moyenne (W)</label><input id="edit-session-watts" type="number" min="0" max="3000" step="1" style="width:100%;"></div>
+   <div class="form-group"><label for="edit-session-cadence">Cadence moyenne (tr/min)</label><input id="edit-session-cadence" type="number" min="0" max="300" step="1" style="width:100%;"></div>
+   <div class="form-group"><label for="edit-session-terrain">Terrain</label><input id="edit-session-terrain" type="text" maxlength="100" style="width:100%;"></div>
+   <div class="form-group"><label for="edit-session-weather">Météo / conditions</label><input id="edit-session-weather" type="text" maxlength="100" style="width:100%;"></div>
+   <div class="form-group"><label for="edit-session-format">Format compétition</label><input id="edit-session-format" type="text" maxlength="80" style="width:100%;"></div>
+   <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-partners">Partenaires (pseudos séparés par des virgules)</label><input id="edit-session-partners" type="text" maxlength="500" style="width:100%;"></div>
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-comment">Commentaire</label><textarea id="edit-session-comment" rows="3" maxlength="1500" style="width:100%;"></textarea></div>
   </div>
-  <p style="font-size:.72rem;color:var(--text-sub);">Les XP et statistiques seront recalculés. La discipline d’origine est conservée.</p>
+  <p style="font-size:.72rem;color:var(--text-sub);margin-top:8px;">Les statistiques, la vitesse moyenne et les trophées vérifiables seront recalculés après l’enregistrement. La VAP nécessite un tracé GPX détaillé.</p>
   <div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px;"><button type="button" class="medal-tab" onclick="closeEditSession()">Annuler</button><button type="button" class="btn-save-green" onclick="saveEditedSession()">Enregistrer les modifications</button></div>
  </div></div>
 </div>
