@@ -1210,10 +1210,12 @@
 
           <div class="quests-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-size:0.8rem; font-weight:bold; color:var(--bike-orange);"><i class="fa-solid fa-flag-checkered"></i> Quête Flash du Weekend ⚡</span>
-              <span style="font-size:0.65rem; background:rgba(255,107,0,0.2); padding:2px 6px; border-radius:6px; color:#fff;">+150 XP Bonus</span>
-            </div>
-            <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Cumuler 30 km de Vélo ou 10 km de Course à pied avant dimanche soir.</p>
+              <span id="quest-title-text" style="font-size:0.8rem; font-weight:bold; color:var(--bike-orange);">
+  <i class="fa-solid fa-flag-checkered"></i> Quête Flash
+</span>
+<p id="quest-desc-text" style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">
+  Chargement de la quête...
+</p>
             <div class="quest-item"><span>Progression Actuelle</span><span id="quest-progress-text" style="font-weight:bold; color:var(--text-main);">0 / 40 km</span></div>
             <div class="progress-bar-bg" style="margin-top:4px;"><div class="progress-bar-fill" id="quest-bar" style="width:0%; background:var(--run-green);"></div></div>
           </div>
@@ -1994,30 +1996,42 @@ function updatePhoneVerificationBadge() {
 }
 
 async function sendProfilePhoneOtp() {
-  if (!supabaseClient || !activeUserId) { alert('Connecte-toi à ton compte pour vérifier ton numéro.'); return; }
+  if (!supabaseClient || !activeUserId) { alert('Connecte-toi à ton compte pour enregistrer ton numéro.'); return; }
   const input = document.getElementById('user-profile-phone');
   const phone = normalizeFrenchPhoneNumber(input?.value);
   if (!phone) { alert('Saisis un numéro valide avec indicatif. Exemple : 06 12 34 56 78 ou +33612345678.'); return; }
+  
   const btn = document.getElementById('phone-send-code-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement...'; }
+  
   try {
-    // Le téléphone est rattaché au compte connecté : ne pas utiliser signInWithOtp ici.
-    // Supabase doit avoir Phone Auth activé et un fournisseur SMS correctement configuré.
-    const { error } = await supabaseClient.auth.updateUser({ phone });
-    if (error) throw error;
+    // Enregistrement direct (Option 2 - Gratuit sans SMS)
     appData.user.phone = phone;
-    appData.user.phoneVerified = false;
+    appData.user.phoneVerified = true; // Validé directement puisqu'on n'utilise pas de passerelle SMS
     appData.user.phoneSynced = false;
-    appData.user.phoneVerificationPending = true;
+    appData.user.phoneVerificationPending = false;
     saveAppData();
-    const panel = document.getElementById('phone-otp-panel'); if (panel) panel.style.display = 'block';
-    updatePhoneVerificationBadge();
-    alert('Demande envoyée à Supabase. Si aucun SMS n’arrive, vérifie dans Supabase : Authentication > Providers > Phone, le fournisseur SMS, le modèle de message et les limites d’envoi. Le code ne peut pas être envoyé par le seul HTML.');
+
+    // Optionnel : si tu veux aussi le mettre à jour dans ta table 'profiles' sur Supabase
+    await supabaseClient
+      .from('profiles')
+      .update({ phone: phone })
+      .eq('id', activeUserId);
+
+    // Masquer le panneau OTP s'il était affiché, puisque le code n'est plus nécessaire
+    const panel = document.getElementById('phone-otp-panel'); 
+    if (panel) panel.style.display = 'none';
+
+    if (typeof updatePhoneVerificationBadge === 'function') {
+      updatePhoneVerificationBadge();
+    }
+
+    alert('Numéro de téléphone enregistré avec succès ! Il est maintenant enregistré pour la recherche d\'amis.');
   } catch (error) {
-    console.error('Envoi OTP téléphone :', error);
-    alert('Impossible d’envoyer le SMS : ' + (error.message || 'vérifie la configuration Phone Auth et le fournisseur SMS dans Supabase.'));
+    console.error('Erreur enregistrement téléphone :', error);
+    alert('Erreur lors de l\'enregistrement : ' + (error.message || 'Erreur technique.'));
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Renvoyer / vérifier par SMS'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Mettre à jour le numéro'; }
   }
 }
 
@@ -3644,10 +3658,75 @@ async function refreshFriendHub(){
       document.getElementById('goal-course-text').innerText = `${appData.stats.course} / ${appData.goals.course} km`;
       document.getElementById('goal-course-bar').style.width = `${Math.min(100, (appData.stats.course / appData.goals.course) * 100)}%`;
 
-      const questTotal = appData.stats.velo + appData.stats.course;
-      document.getElementById('quest-progress-text').innerText = `${questTotal} / 40 km`;
-      document.getElementById('quest-bar').style.width = `${Math.min(100, (questTotal / 40) * 100)}%`;
+// --- SYSTÈME DE QUÊTES DYNAMIQUES TOURNANTES ---
+    const questPool = [
+      {
+        title: "Quête Flash du Week-end ⚡",
+        desc: "Cumuler 30 km de Vélo ou 10 km de Course à pied.",
+        evaluate: () => {
+          const targetVelo = 30, targetCourse = 10;
+          const currentVelo = appData.stats.velo || 0;
+          const currentCourse = appData.stats.course || 0;
+          const ratioVelo = currentVelo / targetVelo;
+          const ratioCourse = currentCourse / targetCourse;
+          if (ratioCourse >= ratioVelo) {
+            return { text: `${currentCourse.toFixed(1)} / ${targetCourse} km (Course)`, percent: Math.min(100, ratioCourse * 100) };
+          } else {
+            return { text: `${currentVelo.toFixed(1)} / ${targetVelo} km (Vélo)`, percent: Math.min(100, ratioVelo * 100) };
+          }
+        }
+      },
+      {
+        title: "Quête Flash Endurance ⚡",
+        desc: "Cumuler 40 km de Vélo ou 15 km de Marche.",
+        evaluate: () => {
+          const targetVelo = 40, targetMarche = 15;
+          const currentVelo = appData.stats.velo || 0;
+          const currentMarche = appData.stats.marche || 0;
+          const ratioVelo = currentVelo / targetVelo;
+          const ratioMarche = currentMarche / targetMarche;
+          if (ratioMarche >= ratioVelo) {
+            return { text: `${currentMarche.toFixed(1)} / ${targetMarche} km (Marche)`, percent: Math.min(100, ratioMarche * 100) };
+          } else {
+            return { text: `${currentVelo.toFixed(1)} / ${targetVelo} km (Vélo)`, percent: Math.min(100, ratioVelo * 100) };
+          }
+        }
+      },
+      {
+        title: "Quête Flash Cardio ⚡",
+        desc: "Cumuler 120 min de HIIT ou 20 km de Course à pied.",
+        evaluate: () => {
+          const targetHiit = 120, targetCourse = 20;
+          const currentHiit = appData.stats.hiit || 0;
+          const currentCourse = appData.stats.course || 0;
+          const ratioHiit = currentHiit / targetHiit;
+          const ratioCourse = currentCourse / targetCourse;
+          if (ratioCourse >= ratioHiit) {
+            return { text: `${currentCourse.toFixed(1)} / ${targetCourse} km (Course)`, percent: Math.min(100, ratioCourse * 100) };
+          } else {
+            return { text: `${Math.round(currentHiit)} / ${targetHiit} min (HIIT)`, percent: Math.min(100, ratioHiit * 100) };
+          }
+        }
+      }
+    ];
 
+    // Calcul de la semaine de l'année pour sélectionner la quête active de manière unique
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const weekNumber = Math.ceil((((now - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
+    const activeQuest = questPool[weekNumber % questPool.length];
+
+    // Évaluation de la progression de la quête active
+    const questResult = activeQuest.evaluate();
+
+    // Mise à jour sécurisée du DOM
+    const titleEl = document.getElementById('quest-title-text');
+    const descEl = document.getElementById('quest-desc-text');
+    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> ${activeQuest.title}`;
+    if (descEl) descEl.innerText = activeQuest.desc;
+
+    document.getElementById('quest-progress-text').innerText = questResult.text;
+    document.getElementById('quest-bar').style.width = `${questResult.percent}%`;
       renderRanks();
       saveAppData();
     }
@@ -3699,7 +3778,66 @@ async function refreshFriendHub(){
       if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
       if (typeof updateFriendRequestBadge === 'function') updateFriendRequestBadge();
     }
+// ==========================================
+// MOTEUR UNIFIÉ : 4 ÉTAPES DE SÉCURISATION
+// ==========================================
 
+// --- ÉTAPE 1 & 2 : Normalisation et Dictionnaire Strict des Disciplines ---
+function getNormalizedWorkouts() {
+  const rawWorkouts = appData.workouts || appData.history || [];
+  return rawWorkouts.map(w => ({
+    ...w,
+    distance: Number(w.distance) || 0,
+    duration: Number(w.duration) || 0,
+    elevation: Number(w.elevation) || 0,
+    discipline: (w.discipline || w.sport || '').toLowerCase().trim()
+  }));
+}
+
+function getWorkoutsByStrictDiscipline(disciplineKey) {
+  const workouts = getNormalizedWorkouts();
+  const disciplineMap = {
+    course: ['course', 'running', 'trail', 'course à pied'],
+    velo: ['velo', 'cyclisme', 'vtt', 'home-trainer', 'cycling'],
+    natation: ['natation', 'swimming', 'nage'],
+    marche: ['marche', 'randonnee', 'hiking', 'walking'],
+    hiit: ['hiit', 'circuit training', 'crossfit', 'cardio'],
+    muscu: ['musculation', 'strength', 'renforcement'],
+    triathlon: ['triathlon'],
+    duathlon: ['duathlon']
+  };
+  const allowedKeywords = disciplineMap[disciplineKey] || [disciplineKey];
+  return workouts.filter(w => allowedKeywords.includes(w.discipline));
+}
+
+// --- ÉTAPE 3 : Calcul dissocié (Cumuls vs Records Unitaires) ---
+function evaluateMetric(disciplineKey, mode, targetValue) {
+  const filteredWorkouts = getWorkoutsByStrictDiscipline(disciplineKey);
+  if (mode === 'sum') {
+    const total = filteredWorkouts.reduce((acc, w) => acc + w.distance, 0);
+    return { current: total, achieved: total >= targetValue, percent: Math.min(100, (total / targetValue) * 100) };
+  } else if (mode === 'max') {
+    const maxSingle = filteredWorkouts.reduce((max, w) => Math.max(max, w.distance), 0);
+    return { current: maxSingle, achieved: maxSingle >= targetValue, percent: Math.min(100, (maxSingle / targetValue) * 100) };
+  }
+  return { current: 0, achieved: false, percent: 0 };
+}
+
+// --- ÉTAPE 4 : Nettoyage de l'état local et Recalcul Intégral ---
+function recalculateAllTrophiesAndStats() {
+  console.warn("🔄 Réinitialisation et recalcul complet de l'historique...");
+  appData.stats = { velo: 0, course: 0, natation: 0, marche: 0, hiit: 0, muscu: 0 };
+  const normalizedWorkouts = getNormalizedWorkouts();
+  normalizedWorkouts.forEach(w => {
+    if (appData.stats[w.discipline] !== undefined) {
+      appData.stats[w.discipline] += w.distance;
+    }
+  });
+  if (typeof saveAppData === 'function') {
+    saveAppData();
+  }
+  console.log("✅ Recalcul terminé ! Stats :", appData.stats);
+}
     function saveAppData() {
       try {
         // Chaque compte et le mode invité ont un espace local distinct.
@@ -4007,8 +4145,8 @@ async function handleUnblock(targetUserId) {
       const email = document.getElementById('auth-email').value.trim();
       if (!email) { alert('Renseigne ton adresse e-mail pour recevoir le lien de réinitialisation.'); return; }
       const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? `${window.location.origin}${window.location.pathname}?reset-password=1` : 'https://dopamine-qm0ygj0rs-marclepallud-8436.vercel.app/?reset-password=1'
-      });
+      redirectTo: 'https://dopamine-teal.vercel.app/?reset-password=1'
+    });
       if (error) alert('Impossible d’envoyer le lien : ' + error.message);
       else alert('Un e-mail de réinitialisation a été demandé. Consulte ta boîte de réception et tes courriers indésirables.');
     }
