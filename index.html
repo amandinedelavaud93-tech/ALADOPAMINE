@@ -3826,18 +3826,49 @@ function evaluateMetric(disciplineKey, mode, targetValue, metricType = 'distance
 }
 // --- ÉTAPE 4 : Nettoyage de l'état local et Recalcul Intégral ---
 function recalculateAllTrophiesAndStats() {
-  console.warn("🔄 Réinitialisation et recalcul complet de l'historique...");
+  console.warn("Réinitialisation et recalcul complet de l'historique, des stats et des trophées...");
+  
+  // 1. Initialisation propre des stats à partir des séances locales
   appData.stats = { velo: 0, course: 0, natation: 0, marche: 0, hiit: 0, muscu: 0 };
-  const normalizedWorkouts = getNormalizedWorkouts();
-  normalizedWorkouts.forEach(w => {
-    if (appData.stats[w.discipline] !== undefined) {
-      appData.stats[w.discipline] += w.distance;
+  
+  const workoutsList = appData.workouts || [];
+  workoutsList.forEach(w => {
+    const disc = w.discipline || w.sport;
+    if (appData.stats[disc] !== undefined) {
+      appData.stats[disc] += (Number(w.distance) || 0);
     }
   });
+
+  // 2. Validation automatique et stricte de TOUS les trophées via le Moteur Unifié
+  if (typeof trophiesArray !== 'undefined' && Array.isArray(trophiesArray)) {
+    trophiesArray.forEach(trophy => {
+      if (trophy.discipline && trophy.mode && trophy.target !== undefined) {
+        const metricType = trophy.metricType || (trophy.isDuration || trophy.discipline === 'hiit' ? 'duration' : 'distance');
+        
+        // Interrogation directe du Moteur Unifié
+        const result = evaluateMetric(trophy.discipline, trophy.mode, trophy.target, metricType);
+        
+        trophy.unlocked = result.achieved;
+        trophy.currentProgress = result.current;
+        trophy.percent = result.percent;
+      }
+    });
+  }
+
+  // 3. Sauvegarde locale et rafraîchissement complet de l'interface
   if (typeof saveAppData === 'function') {
     saveAppData();
   }
-  console.log("✅ Recalcul terminé ! Stats :", appData.stats);
+
+  if (typeof renderTrophies === 'function') {
+    renderTrophies();
+  }
+
+  if (typeof updateUI === 'function') {
+    updateUI();
+  }
+
+  console.log("Recalcul global terminé avec succès ! Stats calculées :", appData.stats);
 }
     function saveAppData() {
       try {
