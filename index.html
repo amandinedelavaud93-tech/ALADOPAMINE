@@ -3951,10 +3951,16 @@ window.onload = async function() {
       }
       buildTrophyCatalogue();
       updateCompetitionDuration?.();
-      refreshAppAfterAccountLoad();
-      const weatherBox = document.getElementById('dopamine-weather-widget'); if (weatherBox && activeUserId) weatherBox.style.display = 'block';
-    };
- </script>
+refreshAppAfterAccountLoad();
+    const weatherBox = document.getElementById('dopamine-weather-widget'); 
+    if (weatherBox && activeUserId) weatherBox.style.display = 'block';
+    
+    // --- L'appel automatique du recalcul global ---
+    if (typeof recalculateAllTrophiesAndStats === 'function') {
+      recalculateAllTrophiesAndStats();
+    }
+  };
+</script>
  
 <!-- MODALE DE CONNEXION / INSCRIPTION SUPABASE -->
   <div class="modal-overlay" id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
