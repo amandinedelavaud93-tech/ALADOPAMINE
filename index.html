@@ -247,9 +247,89 @@
     .btn-course { background: var(--run-green); }
     .btn-marche { background: var(--walk-teal); }
     .btn-hiit { background: var(--hiit-pink); }
+/* Nouveaux sélecteurs de distance à boutons (+ / -) */
+.distance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 5px;
+}
 
+/* Nouveaux sélecteurs de distance à boutons */
+.distance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.stepper-field-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background: var(--bg-input, #2a2a3d);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+    border-radius: 8px;
+    height: 42px;
+    overflow: hidden;
+}
+
+.stepper-btn-pro {
+    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    color: var(--text-main, #ffffff);
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0 16px;
+    height: 100%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.stepper-btn-pro:first-of-type {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stepper-btn-pro:last-of-type {
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stepper-btn-pro:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--accent-orange, #ff9f43);
+}
+.stepper-input-pro {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main, #ffffff);
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: bold;
+    outline: none;
+    width: 100%;
+    height: 100%;
+    -moz-appearance: textfield;
+    appearance: none;
+}
+
+.stepper-input-pro::-webkit-outer-spin-button,
+.stepper-input-pro::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
     .calculator-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; margin-bottom: 25px; }
-    .calc-grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .calc-grid-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+    #view-competition .calc-grid-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    #view-competition #competition-segments { min-width: 0; padding: 18px; background: var(--card-bg); }
+    #view-competition #competition-segments .calc-inputs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    #view-competition #competition-segments .form-group { min-width: 0; }
+    #view-competition #competition-segments input { min-width: 0; width: 100%; }
+    #view-competition .calc-grid-layout > .calc-inputs-grid { align-content: start; }
+    @media (max-width: 800px) { #view-competition .calc-grid-layout { grid-template-columns: 1fr; } }
     @media (max-width: 800px) { .calc-grid-layout { grid-template-columns: 1fr; } }
 
     .calc-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -370,6 +450,9 @@
   }
 
   .activity-date-input { width:100%; }
+
+    .activity-date-bpm { min-width:0; }
+    .activity-date-bpm input { width:100%; }
 </style>
 </head>
 <body>
@@ -747,18 +830,79 @@
         </div>
         <div class="calc-grid-layout">
           <div class="calc-inputs-grid">
-            <div class="form-group"><label for="natation-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="natation-date" class="activity-date-input"></div>
-            <div class="form-group"><label>Distance (mètres)</label><input type="number" id="natation-dist" placeholder="ex: 1500"></div>
-            <div class="form-group duration-group"><label>Durée (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="natation-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><select id="natation-hours" onchange="syncActivityDuration('natation')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option><option value="60">60</option><option value="61">61</option><option value="62">62</option><option value="63">63</option><option value="64">64</option><option value="65">65</option><option value="66">66</option><option value="67">67</option><option value="68">68</option><option value="69">69</option><option value="70">70</option><option value="71">71</option><option value="72">72</option><option value="73">73</option><option value="74">74</option><option value="75">75</option><option value="76">76</option><option value="77">77</option><option value="78">78</option><option value="79">79</option><option value="80">80</option><option value="81">81</option><option value="82">82</option><option value="83">83</option><option value="84">84</option><option value="85">85</option><option value="86">86</option><option value="87">87</option><option value="88">88</option><option value="89">89</option><option value="90">90</option><option value="91">91</option><option value="92">92</option><option value="93">93</option><option value="94">94</option><option value="95">95</option><option value="96">96</option><option value="97">97</option><option value="98">98</option><option value="99">99</option></select></div><div><label for="natation-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><select id="natation-minutes" onchange="syncActivityDuration('natation')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div><div><label for="natation-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><select id="natation-seconds" onchange="syncActivityDuration('natation')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div></div><input id="natation-time" type="hidden" value="0"><small id="natation-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
-            <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="natation-bpm" placeholder="ex: 140"></div>
-            <div class="form-group"><label><i class="fa-solid fa-water" style="color:var(--swim-blue)"></i> Plan d'eau</label>
-              <select id="natation-water"><option value="calme">Calme / Lisse</option><option value="agite">Agité / Clapot</option><option value="vagues">Vagues / Houle</option></select>
+<!-- Ligne 1 : Date & BPM Moyen -->
+            <div class="form-group">
+              <label for="natation-date"><i class="fa-regular fa-calendar"></i> Date de l'activité</label>
+              <input type="date" id="natation-date" class="form-control activity-date-input">
             </div>
-            <div class="form-group"><label><i class="fa-solid fa-water" style="color:var(--swim-blue)"></i> Lieu</label>
-              <select id="natation-location"><option value="piscine">Piscine (25m/50m)</option><option value="eaulibre">Eau libre / Mer</option><option value="lac">Lac / Étang</option></select>
+
+            <div class="form-group">
+              <label for="natation-bpm"><i class="fa-solid fa-heart" style="color:var(--heart-red);"></i> BPM Moyen</label>
+              <input type="number" id="natation-bpm" min="30" max="220" step="1" placeholder="ex: 140" class="form-control">
             </div>
-            <div class="form-group"><label><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold)"></i> Météo</label>
-              <select id="natation-weather"><option value="soleil">☀️ Soleil / Idéal</option><option value="pluie">🌧️ Pluie / Humide</option><option value="vent">💨 Vent Fort</option></select>
+
+            <!-- Ligne 2 : Distance & Durée -->
+            <div class="form-group distance-picker-group">
+              <label>Distance</label>
+              <div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label for="natation-dist-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label>
+                  <input type="number" id="natation-dist-km" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserNatation()" class="form-control">
+                </div>
+                <div>
+                  <label for="natation-dist-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label>
+                  <input type="number" id="natation-dist-m" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserNatation()" class="form-control">
+                </div>
+              </div>
+              <input type="hidden" id="natation-dist" value="0">
+              <small id="natation-dist-preview" style="display:block;color:var(--text-sub);margin-top:4px;font-weight:600;">0 km</small>
+            </div>
+
+            <div class="form-group duration-group">
+              <label>Durée (heures / minutes / secondes)</label>
+              <div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                <div>
+                  <label for="natation-h" style="font-size:.68rem;color:var(--text-sub);">Heures</label>
+                  <input type="number" id="natation-h" min="0" max="99" step="1" inputmode="numeric" placeholder="0" oninput="actualiserNatation()" class="form-control">
+                </div>
+                <div>
+                  <label for="natation-m" style="font-size:.68rem;color:var(--text-sub);">Minutes</label>
+                  <input type="number" id="natation-m" min="0" max="59" step="1" inputmode="numeric" placeholder="0" oninput="actualiserNatation()" class="form-control">
+                </div>
+                <div>
+                  <label for="natation-s" style="font-size:.68rem;color:var(--text-sub);">Secondes</label>
+                  <input type="number" id="natation-s" min="0" max="59" step="1" inputmode="numeric" placeholder="0" oninput="actualiserNatation()" class="form-control">
+                </div>
+              </div>
+              <small id="natation-duration-preview" style="display:block;color:var(--text-sub);margin-top:4px;font-weight:600;">00 h 00 min 00 s</small>
+            </div>
+            <!-- Plan d'eau & Lieu -->
+            <div class="form-group">
+              <label for="natation-water"><i class="fa-solid fa-water" style="color:var(--swim-blue);"></i> Plan d'eau</label>
+              <select id="natation-water" class="form-control">
+                <option value="calme">Calme / Lisse</option>
+                <option value="agite">Agité / Clapot</option>
+                <option value="vagues">Vagues / Houle</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="natation-location"><i class="fa-solid fa-water" style="color:var(--swim-blue);"></i> Lieu</label>
+              <select id="natation-location" class="form-control">
+                <option value="piscine">Piscine (25m/50m)</option>
+                <option value="eau-libre">Eau libre / Mer</option>
+                <option value="lac">Lac / Étang</option>
+              </select>
+            </div>
+
+            <!-- Météo -->
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="natation-weather"><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold);"></i> Météo</label>
+              <select id="natation-weather" class="form-control">
+                <option value="soleil">☀️ Soleil / Idéal</option>
+                <option value="pluie">🌧️ Pluie / Humide</option>
+                <option value="vent">💨 Vent Fort</option>
+              </select>
             </div>
           </div>
           <div class="form-group session-feedback-fields">
@@ -805,9 +949,17 @@
         </div>
         <div class="calc-grid-layout">
           <div class="calc-inputs-grid">
-            <div class="form-group"><label for="velo-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="velo-date" class="activity-date-input"></div>
-            <div class="form-group"><label>Distance (km)</label><input type="number" id="velo-dist" placeholder="ex: 45"></div>
-            <div class="form-group duration-group"><label>Durée (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="velo-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><select id="velo-hours" onchange="syncActivityDuration('velo')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option><option value="60">60</option><option value="61">61</option><option value="62">62</option><option value="63">63</option><option value="64">64</option><option value="65">65</option><option value="66">66</option><option value="67">67</option><option value="68">68</option><option value="69">69</option><option value="70">70</option><option value="71">71</option><option value="72">72</option><option value="73">73</option><option value="74">74</option><option value="75">75</option><option value="76">76</option><option value="77">77</option><option value="78">78</option><option value="79">79</option><option value="80">80</option><option value="81">81</option><option value="82">82</option><option value="83">83</option><option value="84">84</option><option value="85">85</option><option value="86">86</option><option value="87">87</option><option value="88">88</option><option value="89">89</option><option value="90">90</option><option value="91">91</option><option value="92">92</option><option value="93">93</option><option value="94">94</option><option value="95">95</option><option value="96">96</option><option value="97">97</option><option value="98">98</option><option value="99">99</option></select></div><div><label for="velo-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><select id="velo-minutes" onchange="syncActivityDuration('velo')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div><div><label for="velo-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><select id="velo-seconds" onchange="syncActivityDuration('velo')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div></div><input id="velo-time" type="hidden" value="0"><small id="velo-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
+            <div class="form-group activity-date-bpm"><label for="velo-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="velo-date" class="activity-date-input"></div>
+            <div class="form-group distance-picker-group">
+      <label>Distance</label>
+      <div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label for="velo-dist-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input type="number" id="velo-dist-km" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('velo')" class="form-control"></div>
+        <div><label for="velo-dist-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input type="number" id="velo-dist-m" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('velo')" class="form-control"></div>
+      </div>
+      <input type="hidden" id="velo-dist" value="0">
+      <small id="velo-dist-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small>
+    </div>
+            <div class="form-group duration-group"><label>Durée (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="velo-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><input type="number" id="velo-hours" min="0" max="99" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('velo')" class="form-control" style="width:100%;"></div><div><label for="velo-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><input type="number" id="velo-minutes" min="0" max="59" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('velo')" class="form-control" style="width:100%;"></div><div><label for="velo-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><input type="number" id="velo-seconds" min="0" max="59" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('velo')" class="form-control" style="width:100%;"></div></div><input id="velo-time" type="hidden" value="0"><small id="velo-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
             <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="velo-bpm" placeholder="ex: 150"></div>
             <div class="form-group"><label><i class="fa-solid fa-bolt" style="color:var(--watts-purple)"></i> Puissance (Watts)</label><input type="number" id="velo-watts" placeholder="ex: 210"></div>
             <div class="form-group"><label><i class="fa-solid fa-mountain" style="color:var(--text-sub)"></i> Dénivelé (D+ en m)</label><input type="number" id="velo-elev" placeholder="ex: 600"></div>
@@ -862,9 +1014,17 @@
         </div>
         <div class="calc-grid-layout">
           <div class="calc-inputs-grid">
-            <div class="form-group"><label for="course-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="course-date" class="activity-date-input"></div>
-            <div class="form-group"><label>Distance (km)</label><input type="number" id="course-dist" placeholder="ex: 10"></div>
-            <div class="form-group duration-group"><label>Durée (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="course-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><select id="course-hours" onchange="syncActivityDuration('course')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option><option value="60">60</option><option value="61">61</option><option value="62">62</option><option value="63">63</option><option value="64">64</option><option value="65">65</option><option value="66">66</option><option value="67">67</option><option value="68">68</option><option value="69">69</option><option value="70">70</option><option value="71">71</option><option value="72">72</option><option value="73">73</option><option value="74">74</option><option value="75">75</option><option value="76">76</option><option value="77">77</option><option value="78">78</option><option value="79">79</option><option value="80">80</option><option value="81">81</option><option value="82">82</option><option value="83">83</option><option value="84">84</option><option value="85">85</option><option value="86">86</option><option value="87">87</option><option value="88">88</option><option value="89">89</option><option value="90">90</option><option value="91">91</option><option value="92">92</option><option value="93">93</option><option value="94">94</option><option value="95">95</option><option value="96">96</option><option value="97">97</option><option value="98">98</option><option value="99">99</option></select></div><div><label for="course-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><select id="course-minutes" onchange="syncActivityDuration('course')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div><div><label for="course-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><select id="course-seconds" onchange="syncActivityDuration('course')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div></div><input id="course-time" type="hidden" value="0"><small id="course-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
+            <div class="form-group activity-date-bpm"><label for="course-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="course-date" class="activity-date-input"></div>
+            <div class="form-group distance-picker-group">
+      <label>Distance</label>
+      <div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label for="course-dist-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input type="number" id="course-dist-km" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('course')" class="form-control"></div>
+        <div><label for="course-dist-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input type="number" id="course-dist-m" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('course')" class="form-control"></div>
+      </div>
+      <input type="hidden" id="course-dist" value="0">
+      <small id="course-dist-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small>
+    </div>
+            <div class="form-group duration-group"><label>Durée (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="course-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><input type="number" id="course-hours" min="0" max="99" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('course')" class="form-control" style="width:100%;"></div><div><label for="course-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><input type="number" id="course-minutes" min="0" max="59" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('course')" class="form-control" style="width:100%;"></div><div><label for="course-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><input type="number" id="course-seconds" min="0" max="59" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('course')" class="form-control" style="width:100%;"></div></div><input id="course-time" type="hidden" value="0"><small id="course-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
             <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="course-bpm" placeholder="ex: 155"></div>
             <div class="form-group"><label><i class="fa-solid fa-shoe-prints" style="color:var(--run-green)"></i> Cadence (Pas/min)</label><input type="number" id="course-cadence" placeholder="ex: 172"></div>
             <div class="form-group"><label><i class="fa-solid fa-mountain" style="color:var(--text-sub)"></i> Dénivelé (D+ en m)</label><input type="number" id="course-elev" placeholder="ex: 120"></div>
@@ -919,9 +1079,17 @@
         </div>
         <div class="calc-grid-layout">
           <div class="calc-inputs-grid">
-            <div class="form-group"><label for="marche-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="marche-date" class="activity-date-input"></div>
-            <div class="form-group"><label>Distance (km)</label><input type="number" id="marche-dist" placeholder="ex: 8"></div>
-            <div class="form-group duration-group"><label>Durée (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="marche-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><select id="marche-hours" onchange="syncActivityDuration('marche')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option><option value="60">60</option><option value="61">61</option><option value="62">62</option><option value="63">63</option><option value="64">64</option><option value="65">65</option><option value="66">66</option><option value="67">67</option><option value="68">68</option><option value="69">69</option><option value="70">70</option><option value="71">71</option><option value="72">72</option><option value="73">73</option><option value="74">74</option><option value="75">75</option><option value="76">76</option><option value="77">77</option><option value="78">78</option><option value="79">79</option><option value="80">80</option><option value="81">81</option><option value="82">82</option><option value="83">83</option><option value="84">84</option><option value="85">85</option><option value="86">86</option><option value="87">87</option><option value="88">88</option><option value="89">89</option><option value="90">90</option><option value="91">91</option><option value="92">92</option><option value="93">93</option><option value="94">94</option><option value="95">95</option><option value="96">96</option><option value="97">97</option><option value="98">98</option><option value="99">99</option></select></div><div><label for="marche-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><select id="marche-minutes" onchange="syncActivityDuration('marche')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div><div><label for="marche-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><select id="marche-seconds" onchange="syncActivityDuration('marche')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div></div><input id="marche-time" type="hidden" value="0"><small id="marche-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
+            <div class="form-group activity-date-bpm"><label for="marche-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="marche-date" class="activity-date-input"></div>
+            <div class="form-group distance-picker-group">
+      <label>Distance</label>
+      <div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label for="marche-dist-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input type="number" id="marche-dist-km" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('marche')" class="form-control"></div>
+        <div><label for="marche-dist-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input type="number" id="marche-dist-m" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('marche')" class="form-control"></div>
+      </div>
+      <input type="hidden" id="marche-dist" value="0">
+      <small id="marche-dist-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small>
+    </div>
+            <div class="form-group duration-group"><label>Durée (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="marche-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><input type="number" id="marche-hours" min="0" max="99" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('marche')" class="form-control" style="width:100%;"></div><div><label for="marche-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><input type="number" id="marche-minutes" min="0" max="59" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('marche')" class="form-control" style="width:100%;"></div><div><label for="marche-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><input type="number" id="marche-seconds" min="0" max="59" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('marche')" class="form-control" style="width:100%;"></div></div><input id="marche-time" type="hidden" value="0"><small id="marche-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
             <div class="form-group"><label><i class="fa-solid fa-mountain" style="color:var(--text-sub)"></i> Dénivelé (D+ en m)</label><input type="number" id="marche-elev" placeholder="ex: 350"></div>
             <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="marche-bpm" placeholder="ex: 115"></div>
             <div class="form-group"><label><i class="fa-solid fa-tree" style="color:var(--walk-teal)"></i> Type de Terrain / Lieu</label>
@@ -975,8 +1143,9 @@
         </div>
         <div class="calc-grid-layout">
           <div class="calc-inputs-grid">
-            <div class="form-group"><label>Durée Totale (Minutes)</label><input type="number" id="hiit-time" placeholder="ex: 35"></div>
-            <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="hiit-bpm" placeholder="ex: 165"></div>
+            <div class="form-group activity-date-bpm"><label for="hiit-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="hiit-date" class="activity-date-input"></div>
+            <div class="form-group activity-date-bpm"><label for="hiit-bpm"><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="hiit-bpm" min="30" max="220" step="1" placeholder="ex: 165" class="form-control"></div>
+            <div class="form-group" style="grid-column:1/-1"><label for="hiit-time">Durée totale (minutes)</label><input type="number" id="hiit-time" min="1" step="1" placeholder="ex: 35" class="form-control"></div>
           </div>
           <div class="form-group session-feedback-fields">
               <label for="hiit-comment" style="display:block;margin-top:8px;">Commentaire pour ton suivi (facultatif)</label>
@@ -1043,9 +1212,17 @@
                 <option value="Autre">🎯 Autre activité</option>
               </select>
             </div>
-            <div class="form-group"><label for="autres-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="autres-date" class="activity-date-input"></div>
-            <div class="form-group duration-group"><label>Durée totale (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="autres-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><select id="autres-hours" onchange="syncActivityDuration('autres')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option><option value="60">60</option><option value="61">61</option><option value="62">62</option><option value="63">63</option><option value="64">64</option><option value="65">65</option><option value="66">66</option><option value="67">67</option><option value="68">68</option><option value="69">69</option><option value="70">70</option><option value="71">71</option><option value="72">72</option><option value="73">73</option><option value="74">74</option><option value="75">75</option><option value="76">76</option><option value="77">77</option><option value="78">78</option><option value="79">79</option><option value="80">80</option><option value="81">81</option><option value="82">82</option><option value="83">83</option><option value="84">84</option><option value="85">85</option><option value="86">86</option><option value="87">87</option><option value="88">88</option><option value="89">89</option><option value="90">90</option><option value="91">91</option><option value="92">92</option><option value="93">93</option><option value="94">94</option><option value="95">95</option><option value="96">96</option><option value="97">97</option><option value="98">98</option><option value="99">99</option></select></div><div><label for="autres-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><select id="autres-minutes" onchange="syncActivityDuration('autres')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div><div><label for="autres-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><select id="autres-seconds" onchange="syncActivityDuration('autres')" style="width:100%;"><option value="0" selected>00</option><option value="1">01</option><option value="2">02</option><option value="3">03</option><option value="4">04</option><option value="5">05</option><option value="6">06</option><option value="7">07</option><option value="8">08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div></div><input id="autres-time" type="hidden" value="0"><small id="autres-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
-            <div class="form-group"><label>Distance optionnelle (km)</label><input type="number" id="autres-dist" placeholder="ex: 7.5 (facultatif)"></div>
+            <div class="form-group activity-date-bpm"><label for="autres-date"><i class="fa-regular fa-calendar"></i> Date de l’activité</label><input type="date" id="autres-date" class="activity-date-input"></div>
+            <div class="form-group duration-group"><label>Durée totale (heures / minutes / secondes)</label><div class="duration-inputs" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="autres-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><input type="number" id="autres-hours" min="0" max="99" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('autres')" class="form-control" style="width:100%;"></div><div><label for="autres-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><input type="number" id="autres-minutes" min="0" max="59" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('autres')" class="form-control" style="width:100%;"></div><div><label for="autres-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><input type="number" id="autres-seconds" min="0" max="59" step="1" value="0" inputmode="numeric" oninput="syncActivityDuration('autres')" class="form-control" style="width:100%;"></div></div><input id="autres-time" type="hidden" value="0"><small id="autres-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
+            <div class="form-group distance-picker-group">
+      <label>Distance optionnelle</label>
+      <div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label for="autres-dist-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input type="number" id="autres-dist-km" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('autres')" class="form-control"></div>
+        <div><label for="autres-dist-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input type="number" id="autres-dist-m" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('autres')" class="form-control"></div>
+      </div>
+      <input type="hidden" id="autres-dist" value="0">
+      <small id="autres-dist-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small>
+    </div>
             <div class="form-group"><label><i class="fa-solid fa-heart" style="color:var(--heart-red)"></i> BPM Moyen</label><input type="number" id="autres-bpm" placeholder="ex: 145"></div>
             <div class="form-group"><label><i class="fa-solid fa-cloud-sun" style="color:var(--xp-gold)"></i> Météo / Lieu</label>
               <select id="autres-weather"><option value="interieur">🏠 Intérieur / Salle</option><option value="exterieur_soleil">☀️ Extérieur / Beau temps</option><option value="exterieur_pluie">🌧️ Extérieur / Pluie</option></select>
@@ -1092,7 +1269,15 @@
             <div class="form-group"><label for="competition-format">Format officiel</label><select id="competition-format" onchange="document.getElementById('competition-custom-format-wrap').style.display=this.value==='personnalise'?'block':'none'"><option>XS</option><option>S</option><option selected>M</option><option>L</option><option>XL</option><option>XXL</option><option>Ironman</option><option value="personnalise">Format personnalisé</option></select></div>
             <div class="form-group" id="competition-custom-format-wrap" style="display:none;"><label for="competition-custom-format">Format personnalisé</label><input id="competition-custom-format" type="text" maxlength="60" placeholder="Ex. 15 km / 60 km / 5 km"></div>
             <div class="form-group" style="grid-column:1/-1;"><label>Durée totale de l’épreuve</label><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><div><label for="competition-duration-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><input id="competition-duration-hours" type="number" min="0" max="99" step="1" value="00" inputmode="numeric" oninput="updateCompetitionDuration()" style="width:100%;"></div><div><label for="competition-duration-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><input id="competition-duration-minutes" type="number" min="0" max="59" step="1" value="00" inputmode="numeric" oninput="updateCompetitionDuration()" style="width:100%;"></div><div><label for="competition-duration-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><input id="competition-duration-seconds" type="number" min="0" max="59" step="1" value="00" inputmode="numeric" oninput="updateCompetitionDuration()" style="width:100%;"></div></div><input id="competition-duration" type="hidden" value="0"><small id="competition-duration-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>
-            <div class="form-group"><label for="competition-distance">Distance totale (km)</label><input id="competition-distance" type="number" min="0" step="0.01" placeholder="Ex. 51.5"></div>
+            <div class="form-group distance-picker-group">
+      <label>Distance totale</label>
+      <div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label for="competition-distance-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input type="number" id="competition-distance-km" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('competition')" class="form-control"></div>
+        <div><label for="competition-distance-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input type="number" id="competition-distance-m" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('competition')" class="form-control"></div>
+      </div>
+      <input type="hidden" id="competition-distance" value="0">
+      <small id="competition-distance-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small>
+    </div>
             <div class="form-group"><label for="competition-elevation">D+ total (m)</label><input id="competition-elevation" type="number" min="0" step="1" placeholder="Ex. 450"></div>
             <div class="form-group"><label for="competition-bpm">BPM moyen (facultatif)</label><input id="competition-bpm" type="number" min="0" max="250" placeholder="Ex. 158"></div>
             <div class="form-group"><label for="competition-rpe">Effort perçu (RPE 1 à 10)</label><input id="competition-rpe" type="range" min="1" max="10" value="5" oninput="document.getElementById('competition-rpe-value').textContent=this.value+'/10'"><strong id="competition-rpe-value">5/10</strong></div>
@@ -1441,7 +1626,7 @@
         <input type="tel" id="user-profile-phone" autocomplete="tel" inputmode="tel" placeholder="ex : 06 12 34 56 78 (confidentiel)" oninput="updatePhoneVerificationBadge()">
         <div id="phone-verification-status" role="status" aria-live="polite" style="margin-top:7px;font-size:.75rem;font-weight:700;color:#f59e0b;">🟡 En attente de vérification</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-          <button type="button" class="btn-calc-orange" id="phone-send-code-btn" onclick="sendProfilePhoneOtp()">Vérifier mon numéro par SMS</button>
+          <button type="button" class="btn-calc-orange" id="phone-send-code-btn" disabled aria-disabled="true" title="Fonctionnalité à venir">Vérification du numéro par SMS prochainement</button>
         </div>
         <div id="phone-otp-panel" style="display:none;margin-top:10px;padding:10px;border:1px solid var(--card-border);border-radius:9px;">
           <label for="phone-otp-code">Code à 6 chiffres reçu par SMS</label>
@@ -1976,94 +2161,10 @@ function normalizeFrenchPhoneNumber(value) {
   return digits;
 }
 
-function updatePhoneVerificationBadge() {
-  const input = document.getElementById('user-profile-phone');
-  const badge = document.getElementById('phone-verification-status');
-  const sendBtn = document.getElementById('phone-send-code-btn');
-  if (!input || !badge) return;
-  const value = input.value.trim();
-  const verifiedPhone = appData?.user?.phoneVerified && normalizeFrenchPhoneNumber(appData.user.phone) === normalizeFrenchPhoneNumber(value);
-  if (!value) {
-    badge.textContent = '🔴 Non renseigné'; badge.style.color = '#ef4444';
-  } else if (verifiedPhone && appData?.user?.phoneSynced) {
-    badge.textContent = '🟢 Téléphone vérifié & synchronisé'; badge.style.color = '#22c55e';
-  } else if (verifiedPhone) {
-    badge.textContent = '🟡 Téléphone vérifié — synchronisation à confirmer'; badge.style.color = '#f59e0b';
-  } else {
-    badge.textContent = '🟡 En attente de vérification'; badge.style.color = '#f59e0b';
-  }
-  if (sendBtn) sendBtn.disabled = !value || !supabaseClient || !activeUserId;
-}
-
-async function sendProfilePhoneOtp() {
-  if (!supabaseClient || !activeUserId) { alert('Connecte-toi à ton compte pour enregistrer ton numéro.'); return; }
-  const input = document.getElementById('user-profile-phone');
-  const phone = normalizeFrenchPhoneNumber(input?.value);
-  if (!phone) { alert('Saisis un numéro valide avec indicatif. Exemple : 06 12 34 56 78 ou +33612345678.'); return; }
-  
-  const btn = document.getElementById('phone-send-code-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement...'; }
-  
-  try {
-    // Enregistrement direct (Option 2 - Gratuit sans SMS)
-    appData.user.phone = phone;
-    appData.user.phoneVerified = true; // Validé directement puisqu'on n'utilise pas de passerelle SMS
-    appData.user.phoneSynced = false;
-    appData.user.phoneVerificationPending = false;
-    saveAppData();
-
-    // Optionnel : si tu veux aussi le mettre à jour dans ta table 'profiles' sur Supabase
-    await supabaseClient
-      .from('profiles')
-      .update({ phone: phone })
-      .eq('id', activeUserId);
-
-    // Masquer le panneau OTP s'il était affiché, puisque le code n'est plus nécessaire
-    const panel = document.getElementById('phone-otp-panel'); 
-    if (panel) panel.style.display = 'none';
-
-    if (typeof updatePhoneVerificationBadge === 'function') {
-      updatePhoneVerificationBadge();
-    }
-
-    alert('Numéro de téléphone enregistré avec succès ! Il est maintenant enregistré pour la recherche d\'amis.');
-  } catch (error) {
-    console.error('Erreur enregistrement téléphone :', error);
-    alert('Erreur lors de l\'enregistrement : ' + (error.message || 'Erreur technique.'));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Mettre à jour le numéro'; }
-  }
-}
-
-async function confirmProfilePhoneOtp() {
-  if (!supabaseClient || !activeUserId) { alert('Connecte-toi à ton compte.'); return; }
-  const phone = normalizeFrenchPhoneNumber(document.getElementById('user-profile-phone')?.value);
-  const token = String(document.getElementById('phone-otp-code')?.value || '').replace(/\D/g, '');
-  if (!phone || token.length !== 6) { alert('Vérifie le numéro et saisis le code à 6 chiffres.'); return; }
-  try {
-    const { data, error } = await supabaseClient.auth.verifyOtp({ phone, token, type: 'phone_change' });
-    if (error) throw error;
-    const authUser = data?.user;
-    const verified = !!authUser?.phone_confirmed_at;
-    if (!verified) throw new Error('Supabase n’a pas confirmé le numéro. Réessaie après avoir vérifié le code.');
-    appData.user.phone = phone;
-    appData.user.phoneVerified = true;
-    appData.user.phoneSynced = false;
-    appData.user.phoneVerificationPending = false;
-    saveAppData();
-    const { error: dbError } = await supabaseClient.from('profiles').upsert({ id: activeUserId, phone, phone_verified: true }, { onConflict: 'id' });
-    if (dbError) console.warn('Téléphone confirmé dans Auth, mais mise à jour profiles impossible :', dbError.message);
-    else appData.user.phoneSynced = true;
-    saveAppData();
-    const panel = document.getElementById('phone-otp-panel'); if (panel) panel.style.display = 'none';
-    updatePhoneVerificationBadge();
-    alert(dbError ? 'Numéro confirmé par Supabase Auth. La table profiles nécessite la migration SQL V11 avant la synchronisation complète.' : 'Téléphone vérifié et statut synchronisé !');
-  } catch (error) {
-    console.error('Validation OTP téléphone :', error);
-    alert('Code non validé : ' + (error.message || 'vérifie le code et réessaie.'));
-  }
-}
-
+// Téléphone et OTP désactivés - Remplacés par des stubs vides
+function updatePhoneVerificationBadge() {}
+function sendProfilePhoneOtp() {}
+function confirmProfilePhoneOtp() {}
 async function loadSupabaseProfileForUser(userId) {
   if (!supabaseClient || !userId) return;
   try {
@@ -2614,63 +2715,77 @@ function resetActiveForm(sport) {
       return appData.user.fcmaxCourse;
     }
 
-    function calculatePace(sport) {
-      const res = document.getElementById(`calc-result-${sport}`);
-      res.style.display = 'block';
-      const fcmax = getFcMaxForSport(sport);
-      let bpm = parseFloat(document.getElementById(`${sport}-bpm`)?.value) || 0;
+function actualiserNatation() {
+  const kmEl = document.getElementById('natation-dist-km');
+  const mEl = document.getElementById('natation-dist-m');
+  const hEl = document.getElementById('natation-h');
+  const mTimeEl = document.getElementById('natation-m');
+  const sEl = document.getElementById('natation-s');
 
-      let fcInfo = "";
-      if (bpm > 0) {
-        const pct = Math.round((bpm / fcmax) * 100);
-        let zone = "Z1 (Récup)"; let color = "#3b82f6";
-        if (pct >= 90) { zone = "Z5 (VO2Max)"; color = "#ef4444"; }
-        else if (pct >= 80) { zone = "Z4 (Seuil)"; color = "#f97316"; }
-        else if (pct >= 70) { zone = "Z3 (Tempo)"; color = "#eab308"; }
-        else if (pct >= 60) { zone = "Z2 (Endurance)"; color = "#22c55e"; }
-        fcInfo = `<br>🫀 Intensité: <span style="color:var(--heart-red)">${pct}% FC Max</span> | Zone: <span style="color:${color}">${zone}</span>`;
-      }
+  let km = kmEl && kmEl.value !== '' ? parseInt(kmEl.value, 10) : 0;
+  let m = mEl && mEl.value !== '' ? parseInt(mEl.value, 10) : 0;
+  let h = hEl && hEl.value !== '' ? parseInt(hEl.value, 10) : 0;
+  let min = mTimeEl && mTimeEl.value !== '' ? parseInt(mTimeEl.value, 10) : 0;
+  let s = sEl && sEl.value !== '' ? parseInt(sEl.value, 10) : 0;
 
-      if (sport === 'natation') {
-        const dist = parseFloat(document.getElementById('natation-dist').value) || 0;
-        const time = parseFloat(document.getElementById('natation-time').value) || 0;
-        if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
-        const pace = (time * 60) / (dist / 100);
-        const m = Math.floor(pace / 60); const s = Math.round(pace % 60);
-        res.innerHTML = `🏊 Allure: <span style="color:var(--swim-blue)">${m} min ${s < 10 ? '0' : ''}${s} / 100m</span>${fcInfo}`;
-      } else if (sport === 'velo') {
-        const dist = parseFloat(document.getElementById('velo-dist').value) || 0;
-        const time = parseFloat(document.getElementById('velo-time').value) || 0;
-        if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
-        const speed = (dist / (time / 60)).toFixed(1);
-        res.innerHTML = `🚴 Vitesse: <span style="color:var(--bike-orange)">${speed} km/h</span>${fcInfo}`;
-      } else if (sport === 'course') {
-        const dist = parseFloat(document.getElementById('course-dist').value) || 0;
-        const time = parseFloat(document.getElementById('course-time').value) || 0;
-        if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
-        const paceMin = time / dist; const m = Math.floor(paceMin); const s = Math.round((paceMin - m) * 60);
-        res.innerHTML = `🏃 Allure: <span style="color:var(--run-green)">${m}'${s < 10 ? '0' : ''}${s}" / km</span>${fcInfo}`;
-      } else if (sport === 'marche') {
-        const dist = parseFloat(document.getElementById('marche-dist').value) || 0;
-        const time = parseFloat(document.getElementById('marche-time').value) || 0;
-        if (!dist || !time) { res.innerText = "Entrez distance et durée."; return; }
-        const speed = (dist / (time / 60)).toFixed(1);
-        res.innerHTML = `🚶 Vitesse: <span style="color:var(--walk-teal)">${speed} km/h</span>${fcInfo}`;
-      } else if (sport === 'autres') {
-        const time = parseFloat(document.getElementById('autres-time').value) || 0;
-        const rpe = parseFloat(document.getElementById('autres-rpe-slider')?.value) || 5;
-        if (!time) { res.innerText = 'Entrez la durée de l’activité.'; return; }
-        const activity = document.getElementById('autres-sport-select')?.value || 'Activité';
-        res.innerHTML = `🏅 ${activity} · ${time} min · RPE ${rpe}/10${fcInfo}`;
-      } else if (sport === 'hiit') {
-        const time = parseFloat(document.getElementById('hiit-time').value) || 0;
-        const rpe = parseFloat(document.getElementById('hiit-rpe-slider')?.value) || 5;
-        if (!time) { res.innerText = "Entrez la durée."; return; }
-        res.innerHTML = `⚡ Session HIIT (RPE ${rpe}): <span style="color:var(--hiit-pink)">Intensité Validée (${time} min)</span>${fcInfo}`;
-      }
-      playDopamineSound('click');
+  if (isNaN(km)) km = 0;
+  if (isNaN(m)) m = 0;
+  if (isNaN(h)) h = 0;
+  if (isNaN(min)) min = 0;
+  if (isNaN(s)) s = 0;
+
+  // Bridelage immédiat et réinjection dans l'input pour éviter les chiffres aberrants
+  if (km > 999) { km = 999; if (kmEl) kmEl.value = 999; }
+  if (m > 999) { m = 999; if (mEl) mEl.value = 999; }
+  if (h > 99) { h = 99; if (hEl) hEl.value = 99; }
+  if (min > 59) { min = 59; if (mTimeEl) mTimeEl.value = 59; }
+  if (s > 59) { s = 59; if (sEl) sEl.value = 59; }
+
+  // 1. Calcul du total distance (en km) pour le champ caché
+  const totalKm = km + (m / 1000);
+  const hiddenDist = document.getElementById('natation-dist');
+  if (hiddenDist) hiddenDist.value = totalKm;
+
+  // 2. Calcul du temps total en minutes
+  const totalMinutes = (h * 60) + min + (s / 60);
+  const hiddenTime = document.getElementById('natation-time');
+  if (hiddenTime) hiddenTime.value = totalMinutes;
+
+  // 3. Affichage de l'aperçu distance en direct
+  const previewDist = document.getElementById('natation-dist-preview');
+  if (previewDist) {
+    if (!kmEl.value && !mEl.value) {
+      previewDist.textContent = '0 km';
+    } else {
+      previewDist.textContent = totalKm.toLocaleString('fr-FR', { maximumFractionDigits: 3 }) + ' km';
     }
+  }
 
+  // 4. Affichage de l'aperçu durée en direct
+  const previewDur = document.getElementById('natation-duration-preview');
+  if (previewDur) {
+    if (!hEl.value && !mTimeEl.value && !sEl.value) {
+      previewDur.textContent = '00 h 00 min 00 s';
+    } else {
+      const pad = (n) => n.toString().padStart(2, '0');
+      previewDur.textContent = `${pad(h)} h ${pad(min)} min ${pad(s)} s`;
+    }
+  }
+}
+function validerLimitesNatation() {
+  const kmEl = document.getElementById('natation-dist-km');
+  const mEl = document.getElementById('natation-dist-m');
+  const hEl = document.getElementById('natation-h');
+  const mTimeEl = document.getElementById('natation-m');
+  const sEl = document.getElementById('natation-s');
+
+  if (kmEl && kmEl.value !== '') { let v = parseInt(kmEl.value, 10); if (v > 999) kmEl.value = 999; if (v < 0) kmEl.value = 0; }
+  if (mEl && mEl.value !== '') { let v = parseInt(mEl.value, 10); if (v > 999) mEl.value = 999; if (v < 0) mEl.value = 0; }
+  if (hEl && hEl.value !== '') { let v = parseInt(hEl.value, 10); if (v > 99) hEl.value = 99; if (v < 0) hEl.value = 0; }
+  if (mTimeEl && mTimeEl.value !== '') { let v = parseInt(mTimeEl.value, 10); if (v > 59) mTimeEl.value = 59; if (v < 0) mTimeEl.value = 0; }
+  if (sEl && sEl.value !== '') { let v = parseInt(sEl.value, 10); if (v > 59) sEl.value = 59; if (v < 0) sEl.value = 0; }
+  actualiserNatation();
+}
     // XP multi-facteurs : formule validée pour les 6 disciplines + coefficient compétition.
     function calculateSessionXp({ sport, durationMinutes, distanceKm = 0, elevationM = 0, averageBpm = 0, isCompetition = false }) {
       const coefficients = { natation: 2.0, velo: 1.0, course: 1.5, marche: 0.8, hiit: 1.8, autres: 1.0, competition: 3.0 };
@@ -2684,19 +2799,53 @@ function resetActiveForm(sport) {
     }
 
     function syncActivityDuration(sport) {
-      const hours = Math.max(0, Math.min(99, parseInt(document.getElementById(`${sport}-hours`)?.value, 10) || 0));
-      const minutes = Math.max(0, Math.min(59, parseInt(document.getElementById(`${sport}-minutes`)?.value, 10) || 0));
-      const seconds = Math.max(0, Math.min(59, parseInt(document.getElementById(`${sport}-seconds`)?.value, 10) || 0));
+      // Natation conserve ses identifiants historiques h/m/s ; les autres sports utilisent hours/minutes/seconds.
+      const parts = sport === 'natation'
+        ? { hours: 'h', minutes: 'm', seconds: 's' }
+        : { hours: 'hours', minutes: 'minutes', seconds: 'seconds' };
+      const readPart = (part, max) => {
+        const el = document.getElementById(`${sport}-${parts[part]}`);
+        if (!el) return 0;
+        let value = el.value === '' ? 0 : Math.floor(Number(el.value));
+        if (!Number.isFinite(value)) value = 0;
+        value = Math.max(0, Math.min(max, value));
+        if (el.value !== '' && Number(el.value) !== value) el.value = String(value);
+        return value;
+      };
+      const hours = readPart('hours', 99);
+      const minutes = readPart('minutes', 59);
+      const seconds = readPart('seconds', 59);
       const totalSeconds = hours * 3600 + minutes * 60 + seconds;
       const hidden = document.getElementById(`${sport}-time`);
-      if (hidden) hidden.value = totalSeconds / 60;
+      if (hidden) hidden.value = String(totalSeconds / 60);
       const preview = document.getElementById(`${sport}-duration-preview`);
       if (preview) preview.textContent = `${String(hours).padStart(2,'0')} h ${String(minutes).padStart(2,'0')} min ${String(seconds).padStart(2,'0')} s`;
       return totalSeconds;
     }
 
+    function actualiserDistanceActivite(prefix) {
+      const base = prefix === 'competition' ? 'competition-distance' : (prefix === 'edit-session' ? 'edit-session-distance' : `${prefix}-dist`);
+      const kmEl = document.getElementById(`${base}-km`);
+      const mEl = document.getElementById(`${base}-m`);
+      const hidden = document.getElementById(base);
+      const preview = document.getElementById(`${base}-preview`);
+      if (!kmEl || !mEl || !hidden) return 0;
+      const clamp = (el, max) => {
+        let n = el.value === '' ? 0 : Math.floor(Number(el.value));
+        if (!Number.isFinite(n)) n = 0;
+        n = Math.max(0, Math.min(max, n));
+        if (el.value !== '' && Number(el.value) !== n) el.value = String(n);
+        return n;
+      };
+      const km = clamp(kmEl, 999), meters = clamp(mEl, 999);
+      const total = Number((km + meters / 1000).toFixed(3));
+      hidden.value = String(total);
+      if (preview) preview.textContent = total.toLocaleString('fr-FR', {minimumFractionDigits: 0, maximumFractionDigits: 3}) + ' km';
+      return total;
+    }
     function resetActivityDuration(sport) {
-      ['hours','minutes','seconds'].forEach(part => { const el=document.getElementById(`${sport}-${part}`); if(el) el.value='00'; });
+      const parts = sport === 'natation' ? ['h','m','s'] : ['hours','minutes','seconds'];
+      parts.forEach(part => { const el=document.getElementById(`${sport}-${part}`); if(el) el.value='0'; });
       syncActivityDuration(sport);
     }
 
@@ -2710,14 +2859,16 @@ function resetActiveForm(sport) {
       const selectedActivity = formSport === 'autres' ? (document.getElementById('autres-sport-select')?.value || 'Autre') : '';
       const actualSport = formSport === 'autres' ? (selectedActivity === 'HIIT' ? 'hiit' : 'autres') : formSport;
       let dist = 0, time = 0, elev = 0;
-      if (formSport === 'natation') { dist = (parseFloat(document.getElementById('natation-dist').value) || 0) / 1000; time = parseFloat(document.getElementById('natation-time').value); }
+      if (formSport === 'natation') { dist = parseLocalizedNumber(document.getElementById('natation-dist').value); time = parseFloat(document.getElementById('natation-time').value); }
       else if (formSport === 'velo' || formSport === 'course' || formSport === 'marche') {
-        dist = parseFloat(document.getElementById(`${formSport}-dist`).value);
+        dist = parseLocalizedNumber(document.getElementById(`${formSport}-dist`).value);
         time = parseFloat(document.getElementById(`${formSport}-time`).value);
         elev = parseFloat(document.getElementById(`${formSport}-elev`)?.value) || 0;
       } else {
-        time = parseFloat(document.getElementById('autres-time').value);
-        dist = actualSport === 'hiit' ? 0 : (parseFloat(document.getElementById('autres-dist').value) || 0);
+        time = actualSport === 'hiit'
+          ? (parseFloat(document.getElementById('hiit-time')?.value) || 0)
+          : parseFloat(document.getElementById('autres-time').value);
+        dist = actualSport === 'hiit' ? 0 : (parseLocalizedNumber(document.getElementById('autres-dist').value) || 0);
       }
       if (!Number.isFinite(time) || time <= 0) { alert("La durée doit être un nombre supérieur à zéro."); return; }
       if (!['hiit', 'autres'].includes(actualSport) && (!Number.isFinite(dist) || dist <= 0)) { alert("La distance doit être un nombre supérieur à zéro."); return; }
@@ -2726,7 +2877,7 @@ function resetActiveForm(sport) {
       if (dist > 1000) { alert("La distance semble trop élevée. Vérifie la valeur saisie."); return; }
       if (elev > 20000) { alert("Le dénivelé semble trop élevé. Vérifie la valeur saisie."); return; }
 
-      const bpmInput = document.getElementById(`${formSport}-bpm`);
+      const bpmInput = document.getElementById(actualSport === 'hiit' ? 'hiit-bpm' : `${formSport}-bpm`);
       const averageBpm = bpmInput ? (parseFloat(bpmInput.value) || 0) : 0;
       if (averageBpm < 0 || averageBpm > 250) { alert('Le BPM moyen doit être compris entre 0 et 250.'); return; }
       const rpeValue = parseFloat(document.getElementById(`${formSport}-rpe-slider`)?.value) || 5;
@@ -2737,9 +2888,11 @@ function resetActiveForm(sport) {
       const session = {
         id: Date.now(), sport: actualSport, feeling: getRPEFeeling(rpeValue), rpe: rpeValue,
         comment: commentEl ? commentEl.value.trim().slice(0, 1000) : '',
-        title: `Séance ${activityName}`, distance: ['hiit','autres'].includes(actualSport) ? `${time} min` : `${Number(dist.toFixed(2))} km`,
-        rawVal: ['hiit','autres'].includes(actualSport) ? time : dist, duration: `${time} min`,
-        date: (document.getElementById(`${formSport}-date`)?.value || localDateISO(new Date())), xp: baseXp, averageBpm, elevationM: elev,
+        title: `Séance ${activityName}`, distance: ['hiit','autres'].includes(actualSport) ? `${time} min` : `${Number(dist.toFixed(3))} km`,
+        rawVal: ['hiit','autres'].includes(actualSport) ? time : dist,
+        durationSeconds: Math.round(time * 60),
+        duration: `${String(Math.floor(Math.round(time*60)/3600)).padStart(2,'0')} h ${String(Math.floor((Math.round(time*60)%3600)/60)).padStart(2,'0')} min ${String(Math.round(time*60)%60).padStart(2,'0')} s`,
+        date: (document.getElementById(actualSport === 'hiit' ? 'hiit-date' : `${formSport}-date`)?.value || localDateISO(new Date())), xp: baseXp, averageBpm, elevationM: elev,
         watts: parseFloat(document.getElementById(`${formSport}-watts`)?.value) || null,
         cadence: parseFloat(document.getElementById(`${formSport}-cadence`)?.value) || null,
         terrain: document.getElementById(`${formSport}-terrain`)?.value || null,
@@ -2750,6 +2903,11 @@ function resetActiveForm(sport) {
       appData.sessionsHistory.unshift(session);
       if (commentEl) commentEl.value = '';
       resetActivityDuration(formSport);
+      if (actualSport === 'hiit') {
+        const hiitTime = document.getElementById('hiit-time'); if (hiitTime) hiitTime.value = '';
+        const hiitBpm = document.getElementById('hiit-bpm'); if (hiitBpm) hiitBpm.value = '';
+        const hiitDate = document.getElementById('hiit-date'); if (hiitDate) hiitDate.value = localDateISO(new Date());
+      }
       const savedDateInput = document.getElementById(`${formSport}-date`); if (savedDateInput) savedDateInput.value = localDateISO(new Date());
       if (bpmInput) bpmInput.value = '';
       recalculateStatsFromHistory(); checkTrophiesUnlock(); renderHistory();
@@ -2757,8 +2915,63 @@ function resetActiveForm(sport) {
       showPage('stats');
     }
 
+    function competitionTimeField(id, label, defaults = {}) {
+      const h = defaults.h || 0, m = defaults.m || 0, sec = defaults.s || 0;
+      return `<div class="form-group"><label>${label} — Durée</label><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+        <div><label for="competition-${id}-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><input id="competition-${id}-hours" type="number" min="0" max="99" step="1" value="${h}" inputmode="numeric" oninput="syncCompetitionSplit('${id}')" class="form-control"></div>
+        <div><label for="competition-${id}-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><input id="competition-${id}-minutes" type="number" min="0" max="59" step="1" value="${m}" inputmode="numeric" oninput="syncCompetitionSplit('${id}')" class="form-control"></div>
+        <div><label for="competition-${id}-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><input id="competition-${id}-seconds" type="number" min="0" max="59" step="1" value="${sec}" inputmode="numeric" oninput="syncCompetitionSplit('${id}')" class="form-control"></div>
+      </div><input id="competition-${id}" type="hidden" value="0"><small id="competition-${id}-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>`;
+    }
+    function competitionDistanceField(id, label, km = '') {
+      return `<div class="form-group distance-picker-group"><label>${label} — Distance</label><div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label for="competition-${id}-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input id="competition-${id}-km" type="number" min="0" max="999" step="1" value="${km}" inputmode="numeric" oninput="syncCompetitionDistance('${id}')" class="form-control"></div>
+        <div><label for="competition-${id}-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input id="competition-${id}-m" type="number" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="syncCompetitionDistance('${id}')" class="form-control"></div>
+      </div><input id="competition-${id}" type="hidden" value="0"><small id="competition-${id}-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small></div>`;
+    }
+    function syncCompetitionSplit(id) {
+      const get = suffix => document.getElementById(`competition-${id}-${suffix}`);
+      const h=get('hours'), m=get('minutes'), sec=get('seconds');
+      if(!h||!m||!sec)return;
+      const hours=Math.min(99,Math.max(0,parseInt(h.value,10)||0));
+      const minutes=Math.min(59,Math.max(0,parseInt(m.value,10)||0));
+      const seconds=Math.min(59,Math.max(0,parseInt(sec.value,10)||0));
+      h.value=hours; m.value=minutes; sec.value=seconds;
+      const total=hours*3600+minutes*60+seconds;
+      const hidden=document.getElementById(`competition-${id}`); if(hidden)hidden.value=String(total/60);
+      const preview=document.getElementById(`competition-${id}-preview`);
+      if(preview)preview.textContent=`${String(hours).padStart(2,'0')} h ${String(minutes).padStart(2,'0')} min ${String(seconds).padStart(2,'0')} s`;
+    }
+    function syncCompetitionDistance(id) {
+      const kmEl=document.getElementById(`competition-${id}-km`), mEl=document.getElementById(`competition-${id}-m`);
+      if(!kmEl||!mEl)return;
+      const km=Math.min(999,Math.max(0,parseInt(kmEl.value,10)||0));
+      const m=Math.min(999,Math.max(0,parseInt(mEl.value,10)||0));
+      kmEl.value=km; mEl.value=m;
+      const total=Number((km+m/1000).toFixed(3));
+      const hidden=document.getElementById(`competition-${id}`); if(hidden)hidden.value=String(total);
+      const preview=document.getElementById(`competition-${id}-preview`); if(preview)preview.textContent=total.toLocaleString('fr-FR',{maximumFractionDigits:3})+' km';
+    }
+    // Harmonisation visuelle : date et BPM sur la première ligne, comme en natation.
+    function alignActivityDateAndBpm() {
+      ['velo','course','marche','autres'].forEach(sport => {
+        const date = document.getElementById(`${sport}-date`);
+        const bpm = document.getElementById(`${sport}-bpm`);
+        if (!date || !bpm) return;
+        const dateGroup = date.closest('.form-group');
+        const bpmGroup = bpm.closest('.form-group');
+        const grid = dateGroup?.parentElement;
+        if (grid && bpmGroup && dateGroup.nextElementSibling !== bpmGroup) grid.insertBefore(bpmGroup, dateGroup.nextElementSibling);
+        if (dateGroup) dateGroup.classList.add('activity-date-bpm');
+        if (bpmGroup) bpmGroup.classList.add('activity-date-bpm');
+      });
+    }
+
     function updateCompetitionFields() {
       const kind = document.getElementById('competition-kind')?.value || 'triathlon';
+      const nameInput=document.getElementById('competition-name');
+      const examples={triathlon:'Ex. Triathlon M de Deauville',duathlon:'Ex. Duathlon de Rennes',trail:'Ex. Trail de Brocéliande',course:'Ex. 10 km de Rennes',velo:'Ex. Cyclosportive La Route Bretonne',natation:'Ex. Traversée de la baie',autre:'Ex. Nom de votre compétition'};
+      if(nameInput) nameInput.placeholder=examples[kind]||examples.autre;
       const wrap = document.getElementById('competition-sport-fields');
       const panel = document.getElementById('competition-segments');
       const title = document.getElementById('competition-segments-title');
@@ -2767,17 +2980,22 @@ function resetActiveForm(sport) {
       const showSplits = kind === 'triathlon' || kind === 'duathlon';
       panel.style.display = showSplits ? 'block' : 'none';
       lastCard.style.display = showSplits ? 'none' : 'block';
-      if (!showSplits) {
-        renderLastCompetitionCard();
-        return;
-      }
+      if (!showSplits) { renderLastCompetitionCard(); return; }
       if (title) title.textContent = kind === 'triathlon' ? 'Détail du triathlon : natation, vélo, course et transitions' : 'Détail du duathlon : course, vélo, course et transitions';
-      const field = (id, label, unit, ph = '') => `<div class="form-group"><label for="competition-${id}">${label} (${unit})</label><input id="competition-${id}" type="number" min="0" step="0.1" placeholder="${ph}"></div>`;
       let html = '';
       if (kind === 'triathlon') {
-        html = field('swim','Natation','min','32') + field('swim-distance','Distance natation','km','1.5') + field('t1','Transition T1','min','3') + field('bike','Vélo','min','85') + field('bike-distance','Distance vélo','km','40') + field('bike-elevation','D+ vélo','m','400') + field('t2','Transition T2','min','2') + field('run','Course à pied','min','48') + field('run-distance','Distance CAP','km','10') + field('run-elevation','D+ CAP','m','50');
+        html = competitionTimeField('swim','Natation',{m:32}) + competitionDistanceField('swim-distance','Natation',1) +
+          competitionTimeField('t1','Transition T1',{m:3}) + competitionTimeField('bike','Vélo',{h:1,m:25}) + competitionDistanceField('bike-distance','Vélo',40) +
+          `<div class="form-group"><label for="competition-bike-elevation">D+ vélo (m)</label><input id="competition-bike-elevation" type="number" min="0" step="1" inputmode="numeric" class="form-control"></div>` +
+          competitionTimeField('t2','Transition T2',{m:2}) + competitionTimeField('run','Course à pied',{m:48}) + competitionDistanceField('run-distance','Course à pied',10) +
+          `<div class="form-group"><label for="competition-run-elevation">D+ course à pied (m)</label><input id="competition-run-elevation" type="number" min="0" step="1" inputmode="numeric" class="form-control"></div>`;
       } else {
-        html = field('run1','Course à pied 1','min','20') + field('run1-distance','Distance CAP 1','km','5') + field('run1-elevation','D+ CAP 1','m','') + field('t1','Transition T1','min','2') + field('bike','Vélo','min','45') + field('bike-distance','Distance vélo','km','20') + field('bike-elevation','D+ vélo','m','') + field('t2','Transition T2','min','2') + field('run','Course à pied 2','min','10') + field('run-distance','Distance CAP 2','km','2.5') + field('run-elevation','D+ CAP 2','m','');
+        html = competitionTimeField('run1','Course à pied 1',{m:20}) + competitionDistanceField('run1-distance','Course à pied 1',5) +
+          `<div class="form-group"><label for="competition-run1-elevation">D+ course 1 (m)</label><input id="competition-run1-elevation" type="number" min="0" step="1" inputmode="numeric" class="form-control"></div>` +
+          competitionTimeField('t1','Transition T1',{m:2}) + competitionTimeField('bike','Vélo',{m:45}) + competitionDistanceField('bike-distance','Vélo',20) +
+          `<div class="form-group"><label for="competition-bike-elevation">D+ vélo (m)</label><input id="competition-bike-elevation" type="number" min="0" step="1" inputmode="numeric" class="form-control"></div>` +
+          competitionTimeField('t2','Transition T2',{m:2}) + competitionTimeField('run','Course à pied 2',{m:10}) + competitionDistanceField('run-distance','Course à pied 2',2) +
+          `<div class="form-group"><label for="competition-run-elevation">D+ course 2 (m)</label><input id="competition-run-elevation" type="number" min="0" step="1" inputmode="numeric" class="form-control"></div>`;
       }
       wrap.innerHTML = html;
     }
@@ -2817,14 +3035,28 @@ function resetActiveForm(sport) {
 
     function saveCompetitionEntry() {
       const val=id=>document.getElementById('competition-'+id)?.value;
-      const num=id=>Math.max(0,Number(val(id))||0);
+      const num=id=>Math.max(0,parseLocalizedNumber(val(id)));
       const name=(val('name')||'').trim(), date=val('date'), kind=val('kind')||'triathlon';
       const f=val('format')||'M', format=f==='personnalise'?(val('custom-format')||'').trim():f;
       const timeParts=updateCompetitionDuration(), duration=timeParts.totalMinutes, durationSeconds=timeParts.hours*3600+timeParts.minutes*60+timeParts.seconds, distance=num('distance'), elevation=num('elevation'), bpm=num('bpm'), rpe=num('rpe')||5;
       if(!name||!date||!format){alert("Renseigne le type, le nom, la date et le format de l'épreuve.");return;}
       if(bpm>250){alert('Le BPM moyen doit être inférieur ou égal à 250.');return;}
       const detailIds=['swim','swim-distance','t1','bike','bike-distance','bike-elevation','t2','run1','run1-distance','run1-elevation','run','run-distance','run-elevation','other-duration','other-distance'];
-      const details={}; detailIds.forEach(k=>{if(document.getElementById('competition-'+k)) details[k]=num(k);});
+      const details={};
+      detailIds.forEach(k=>{
+        const base=document.getElementById('competition-'+k);
+        if(!base)return;
+        if(['swim','t1','bike','t2','run1','run','other-duration'].includes(k)){
+          const h=Number(document.getElementById(`competition-${k}-hours`)?.value)||0;
+          const m=Number(document.getElementById(`competition-${k}-minutes`)?.value)||0;
+          const sec=Number(document.getElementById(`competition-${k}-seconds`)?.value)||0;
+          details[k]=h*60+m+sec/60;
+        } else if(['swim-distance','bike-distance','run1-distance','run-distance','other-distance'].includes(k)){
+          const km=Number(document.getElementById(`competition-${k}-km`)?.value)||0;
+          const meters=Number(document.getElementById(`competition-${k}-m`)?.value)||0;
+          details[k]=Number((km+meters/1000).toFixed(3));
+        } else details[k]=num(k);
+      });
       const notes=(val('notes')||'').trim().slice(0,1500);
       const splitMinutes=Object.entries(details).filter(([k])=>!k.includes('distance')&&!k.includes('elevation')).reduce((a,[,v])=>a+v,0);
       const effectiveDuration=duration||splitMinutes;
@@ -2839,68 +3071,102 @@ function resetActiveForm(sport) {
       ['name','custom-format','duration','distance','elevation','bpm','notes'].forEach(k=>{const el=document.getElementById('competition-'+k);if(el)el.value='';});['hours','minutes','seconds'].forEach(k=>{const el=document.getElementById('competition-duration-'+k);if(el)el.value='00';});const durationHidden=document.getElementById('competition-duration');if(durationHidden)durationHidden.value='0';const rpeInput=document.getElementById('competition-rpe');if(rpeInput)rpeInput.value=5;updateCompetitionDuration();document.getElementById('competition-date').value=today;document.getElementById('competition-format').value='M';document.getElementById('competition-kind').value='triathlon';document.getElementById('competition-rpe-value').textContent='5/10';updateCompetitionFields();
     }
 
-    function getTrophySportKey(category) {
-      return category === 'competition' ? 'competition' : category;
+    // V20 — moteur de trophées basé sur l'unique historique réellement utilisé par l'application.
+    function parseLocalizedNumber(value) {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+      const cleaned = String(value ?? '').trim().replace(/[\u00A0\u202F\s]/g, '').replace(',', '.').replace(/[^0-9.+-]/g, '');
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function trophyText(v) { return String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+    function trophyNumberPattern() { return '(\\d+(?:[\\s\\u00A0\\u202F]*\\d{3})*(?:[.,]\\d+)?)'; }
+    function parseTrophyNumber(raw) { return parseLocalizedNumber(raw); }
+    function trophySportOf(s) {
+      const raw=trophyText(s?.sport || s?.type || s?.discipline || '');
+      if (s?.is_competition || s?.competitionDetails || raw==='competition') return 'competition';
+      if (/triathlon/.test(raw)) return 'triathlon';
+      if (/duathlon/.test(raw)) return 'duathlon';
+      if (/natation|swim|nage/.test(raw)) return 'natation';
+      if (/velo|cycl|vtt|bike|home.?trainer/.test(raw)) return 'velo';
+      if (/marche|randonnee|hiking|walking/.test(raw)) return 'marche';
+      if (/course|running|trail|tapis/.test(raw)) return 'course';
+      if (/hiit|circuit/.test(raw)) return 'hiit';
+      if (/muscu|fitness|renforcement|strength/.test(raw)) return 'muscu';
+      return 'autres';
+    }
+    function trophySessionHaystack(s) {
+      return trophyText([s?.title,s?.subSport,s?.activityType,s?.terrain,s?.format,s?.comment,s?.notes,s?.sport].filter(Boolean).join(' '));
+    }
+    function trophyRows(category) {
+      const rows=Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[];
+      return rows.filter(s=>s && trophySportOf(s)===category);
     }
     function getTrophyProgress(category) {
-      const rows = (appData.sessionsHistory || []).filter(s => s && (category === 'competition'
-        ? (s.type === 'competition' || s.is_competition || s.competitionDetails)
-        : (category === 'autres' ? ['autres','hiit'].includes(s.sport) : s.sport === category)));
-      if (category === 'autres') {
-        return rows.reduce((sum,s) => sum + getSessionDurationMinutes(s),0) / 60;
-      }
-      if (category === 'hiit') return rows.reduce((sum,s) => sum + getSessionDurationMinutes(s),0) / 60;
-      if (category === 'natation') return rows.reduce((sum,s) => sum + getSessionDistanceKm(s),0) * 1000;
-      return rows.reduce((sum,s) => sum + getSessionDistanceKm(s),0);
+      const rows=trophyRows(category);
+      if (category==='competition') return rows.length;
+      if (['hiit','muscu','autres'].includes(category)) return rows.reduce((n,s)=>n+getSessionDurationMinutes(s),0)/60;
+      if (category==='natation') return rows.reduce((n,s)=>n+getSessionDistanceKm(s),0)*1000;
+      return rows.reduce((n,s)=>n+getSessionDistanceKm(s),0);
     }
     function getPublicTrophyThreshold(t) {
-      const d = String(t.desc || '').toLowerCase().replace(',', '.');
-      if (t.category === 'competition') {
-        const m = d.match(/format\s+(xs|s|m|l|xl|xxl)/i);
-        return m ? {kind:'competition-format',value:m[1].toUpperCase()} : null;
+      const d=trophyText(t?.desc);
+      if (t.category==='competition') {
+        const m=d.match(/format\s+(xs|s|m|l|xl|xxl)/i);
+        if(m) return {kind:'competition-format',value:m[1].toUpperCase()};
+        const count=d.match(/(?:sa|son)\s+(\d+(?:[\s\u00a0\u202f]*\d{3})*)\s*(?:eme|e|er|ere)?\s+competition/);
+        return count ? {kind:'competition-count',value:parseTrophyNumber(count[1])} : null;
       }
-      if (t.category === 'autres' || t.category === 'hiit') {
-        const h = d.match(/([0-9]+(?:\.[0-9]+)?)\s*heure/);
-        return h ? {kind:'hours',value:Number(h[1])} : null;
+      if (['autres','hiit','muscu'].includes(t.category)) {
+        const number=trophyNumberPattern();
+        const h=d.match(new RegExp(number+'\\s*heures?'));
+        const min=d.match(new RegExp(number+'\\s*minutes?'));
+        const hours=h?parseTrophyNumber(h[1]):(min?parseTrophyNumber(min[1])/60:null);
+        if(hours===null) return null;
+        const subtype=/fitness|musculation|muscu|renforcement/.test(d)?'muscu':/padel|tennis/.test(d)?'racket':/sport collectif|football|foot|basket|rugby|hand/.test(d)?'team':/escalade|ski/.test(d)?'climb-ski':t.category;
+        return {kind:'hours',value:hours,subtype};
       }
-      const km = d.match(/([0-9]+(?:\.[0-9]+)?)\s*km/);
-      const meters = d.match(/([0-9]+(?:\.[0-9]+)?)\s*m(?:\s|$)/);
-      if (km) return {kind:'distance',value:Number(km[1]) * (t.category === 'natation' ? 1000 : 1)};
-      if (meters && t.category === 'natation') return {kind:'distance',value:Number(meters[1])};
+      const number=trophyNumberPattern();
+      const km=d.match(new RegExp(number+'\\s*km\\b'));
+      const meters=d.match(new RegExp(number+'\\s*m(?:\\s|$)'));
+      if(km) return {kind:'distance',value:parseTrophyNumber(km[1])*(t.category==='natation'?1000:1)};
+      if(meters && t.category==='natation') return {kind:'distance',value:parseTrophyNumber(meters[1])};
       return null;
     }
+    function trophyMatchesSubtype(s, subtype) {
+      const h=trophySessionHaystack(s);
+      if(subtype==='muscu') return /fitness|musculation|muscu|renforcement/.test(h) || trophySportOf(s)==='muscu';
+      if(subtype==='racket') return /padel|tennis/.test(h);
+      if(subtype==='team') return /football|foot|basket|rugby|handball|hand\b/.test(h);
+      if(subtype==='climb-ski') return /escalade|ski/.test(h);
+      if(subtype==='hiit') return trophySportOf(s)==='hiit';
+      return true;
+    }
     function isPublicTrophyEligible(t) {
-      const threshold = getPublicTrophyThreshold(t);
-      if (!threshold) return false;
-      if (threshold.kind === 'distance') {
-        const desc = String(t.desc || '').toLowerCase();
-        const single = /en un seul|une seule sortie|une seule séance|sur une sortie|sur un run|finir un|terminer un|réaliser un/.test(desc);
-        if (single) return (appData.sessionsHistory || []).some(s => {
-          const correctSport = t.category === 'natation' ? s.sport === 'natation' : s.sport === t.category;
-          return correctSport && getSessionDistanceKm(s) >= threshold.value;
-        });
-        return getTrophyProgress(t.category) >= threshold.value;
+      const threshold=getPublicTrophyThreshold(t);
+      if(!threshold) return false;
+      const rows=trophyRows(t.category);
+      if(threshold.kind==='distance') {
+        const d=trophyText(t.desc);
+        const unitary=/en un seul|une seule sortie|une seule seance|sur une sortie|sur un run|premier semi|premier marathon|finir son premier|terminer un/.test(d);
+        let candidates=rows;
+        // Les trophées de surface/terrain exigent une séance explicitement renseignée ainsi.
+        if(/route\s*\/\s*piste|route ou piste/.test(d)) candidates=rows.filter(s=>/\broute\b|\bpiste\b/.test(trophySessionHaystack(s)));
+        if(/foret\s*\/\s*sentier|foret ou sentier/.test(d)) candidates=rows.filter(s=>/\bforet\b|\bsentier\b/.test(trophySessionHaystack(s)));
+        if(/montagne\s*\/\s*trail|montagne ou trail/.test(d)) candidates=rows.filter(s=>/\bmontagne\b|\btrail\b/.test(trophySessionHaystack(s)));
+        if(/tapis de course|sur tapis|tapis roulant/.test(d)) candidates=rows.filter(s=>/tapis/.test(trophySessionHaystack(s)));
+        // Un trophée explicitement lié à un terrain n'accepte jamais les séances sans terrain renseigné.
+        if(/\btrail\b/.test(d) && !/montagne\s*\/\s*trail/.test(d)) candidates=rows.filter(s=>/trail|sentier|montagne/.test(trophySessionHaystack(s)));
+        return unitary ? candidates.some(s=>getSessionDistanceKm(s)>=threshold.value) : candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>=threshold.value;
       }
-      if (threshold.kind === 'hours') {
-        const desc = String(t.desc || '').toLowerCase();
-        const sportMatch = desc.match(/(fitness|musculation|muscu|padel|tennis|sport collectif|football|foot|basket|rugby|escalade|ski)/i);
-        const subtype = sportMatch ? sportMatch[1].toLowerCase() : '';
-        const matching = (appData.sessionsHistory || []).filter(s => {
-          if (!['autres','hiit'].includes(s.sport)) return false;
-          if (!subtype) return true;
-          const hay = `${s.title || ''} ${s.subSport || ''} ${s.activityType || ''}`.toLowerCase();
-          if (['fitness','musculation','muscu'].includes(subtype)) return /fitness|musculation|muscu/.test(hay);
-          if (['padel','tennis'].includes(subtype)) return new RegExp(subtype).test(hay);
-          if (['sport collectif','football','foot','basket','rugby'].includes(subtype)) return /football|foot|basket|rugby/.test(hay);
-          if (['escalade','ski'].includes(subtype)) return new RegExp(subtype).test(hay);
-          return true;
-        });
-        return matching.reduce((sum,s)=>sum+getSessionDurationMinutes(s),0)/60 >= threshold.value;
+      if(threshold.kind==='hours') {
+        let candidates=rows;
+        if(threshold.subtype!=='autres' && threshold.subtype!=='hiit') candidates=candidates.filter(s=>trophyMatchesSubtype(s,threshold.subtype));
+        else if(t.category==='hiit') candidates=candidates.filter(s=>trophySportOf(s)==='hiit');
+        else if(t.category==='autres') candidates=candidates.filter(s=>!['hiit','muscu'].includes(trophySportOf(s)));
+        return candidates.reduce((n,s)=>n+getSessionDurationMinutes(s),0)/60>=threshold.value;
       }
-      if (threshold.kind === 'competition-format') return (appData.sessionsHistory || []).some(s => {
-        const fmt = String(s.format || s.competitionDetails?.format || '').toUpperCase();
-        return (s.type === 'competition' || s.is_competition || s.competitionDetails) && fmt.includes(threshold.value);
-      });
+      if(threshold.kind==='competition-count') return rows.length>=threshold.value;
+      if(threshold.kind==='competition-format') return rows.some(s=>String(s.format||s.competitionDetails?.format||'').toUpperCase()===threshold.value);
       return false;
     }
     function unlockTrophy(t, reason='') {
@@ -2925,7 +3191,7 @@ function resetActiveForm(sport) {
         'NTR-S08': s => s.sport==='natation' && getSessionDistanceKm(s)*1000>3500,
         'CAP-S01': s => s.sport==='course' && getSessionDistanceKm(s)>=42.195,
         'CAP-S04': s => s.sport==='course' && Number(s.elevationM||0)>=1000,
-        'CAP-S10': s => s.sport==='course' && Number(s.elevationM||0)>=2000,
+        'CAP-S10': s => s.sport==='course' && /trail|montagne|sentier/.test(trophySessionHaystack(s)) && Number(s.elevationM||0)>=2000,
         'CAP-S14': s => s.sport==='course' && getSessionDistanceKm(s)>=21.09 && getSessionDistanceKm(s)<=21.20,
         'VEL-S04': s => s.sport==='velo' && getSessionDistanceKm(s)>=30 && Number(s.avg_speed||0)>=38,
         'VEL-S05': s => s.sport==='velo' && Number(s.elevationM||0)>=2000,
@@ -2934,13 +3200,26 @@ function resetActiveForm(sport) {
         'SPO-S01': s => s.sport==='autres' && /tennis|padel/i.test(s.title||'') && getSessionDurationMinutes(s)>=120 && Number(s.rpe)>=9,
         'SPO-S04': s => s.sport==='autres' && /muscu|fitness/i.test(s.title||'') && getSessionDurationMinutes(s)>=180,
         'SPO-S05': s => s.sport==='autres' && /escalade/i.test(s.title||'') && getSessionDurationMinutes(s)>=150 && Number(s.rpe)>=8,
-        'COM-S03': s => (s.type==='competition'||s.is_competition||s.competitionDetails) && /xxl|ironman/i.test(String(s.format||s.competitionDetails?.format||''))
+        'COM-S03': s => (s.type==='competition'||s.is_competition||s.competitionDetails) && (s.eventKind==='triathlon'||s.competitionDetails?.kind==='triathlon') && /xxl|ironman/i.test(String(s.format||s.competitionDetails?.format||''))
       };
       Object.entries(secretRules).forEach(([id,rule]) => { const t=appData.trophies.find(x=>x.id===id); if(t&&!t.unlocked&&rows.some(rule)) changed=unlockTrophy(t)||changed; });
-      // Trophée transversal : triathlon multi-discipline, sans condition cachée inventée.
-      const hasSwim=rows.some(s=>s.sport==='natation'), hasBike=rows.some(s=>s.sport==='velo'), hasRun=rows.some(s=>s.sport==='course');
-      const transversal=appData.trophies.find(t=>t.id==='COM-S12');
-      if(transversal&&!transversal.unlocked&&hasSwim&&hasBike&&hasRun) changed=unlockTrophy(transversal)||changed;
+      // SPO-S04 : 3 h de musculation/fitness cumulées sur une même journée.
+      const fitnessByDay = new Map();
+      rows.filter(s => s.sport==='autres' && /muscu|fitness/i.test(s.title||'')).forEach(s => {
+        const day=String(s.date||''); if(day) fitnessByDay.set(day,(fitnessByDay.get(day)||0)+getSessionDurationMinutes(s));
+      });
+      const spo04=appData.trophies.find(t=>t.id==='SPO-S04');
+      if(spo04&&!spo04.unlocked&&Array.from(fitnessByDay.values()).some(minutes=>minutes>=180)) changed=unlockTrophy(spo04)||changed;
+      // COM-S12 : plus de 4 h de sport cumulées un dimanche, toutes disciplines confondues.
+      const sundayMinutes = new Map();
+      rows.forEach(s => {
+        const day=String(s.date||'');
+        if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(day)) return;
+        const date=new Date(`${day}T12:00:00`);
+        if(date.getDay()===0) sundayMinutes.set(day,(sundayMinutes.get(day)||0)+getSessionDurationMinutes(s));
+      });
+      const sundayTrophy=appData.trophies.find(t=>t.id==='COM-S12');
+      if(sundayTrophy&&!sundayTrophy.unlocked&&Array.from(sundayMinutes.values()).some(minutes=>minutes>240)) changed=unlockTrophy(sundayTrophy)||changed;
       if (changed) { recalculateStatsFromHistory(); renderTrophiesAndRanks(); }
       else saveAppData();
       return changed;
@@ -2950,11 +3229,11 @@ function resetActiveForm(sport) {
       if (Number(session.durationSeconds) > 0) return Number(session.durationSeconds) / 60;
       const text = String(session.duration || ''), h = text.match(/(\d+)\s*h/i), m = text.match(/(\d+)\s*min/i), sec = text.match(/(\d+)\s*s(?:ec)?/i);
       if (h || m || sec) return Number(h?.[1] || 0) * 60 + Number(m?.[1] || 0) + Number(sec?.[1] || 0) / 60;
-      const n = parseFloat(text.replace(',', '.')); return Number.isFinite(n) ? n : 0;
+      const n = parseLocalizedNumber(text); return Number.isFinite(n) ? n : 0;
     }
     function getSessionDistanceKm(session) {
-      if (session.type === 'competition' || session.competitionDetails) return Number(session.competitionDetails?.totalDistanceKm || parseFloat(session.distance) || 0);
-      const n = parseFloat(String(session.distance || '').replace(',', '.')); return Number.isFinite(n) ? n : 0;
+      if (session.type === 'competition' || session.competitionDetails) return parseLocalizedNumber(session.competitionDetails?.totalDistanceKm ?? session.distance ?? 0);
+      return parseLocalizedNumber(session.distance || session.rawVal || 0);
     }
     // Métriques calculées localement à partir de la distance et de la durée.
     // La VAP fiable nécessite un profil altimétrique segment par segment (GPX), pas seulement le D+ total.
@@ -2987,7 +3266,7 @@ function resetActiveForm(sport) {
       let totalSeconds=Number(session.durationSeconds)||Math.round(getSessionDurationMinutes(session)*60);
       set('hours',Math.floor(totalSeconds/3600)); set('minutes',Math.floor((totalSeconds%3600)/60)); set('seconds',totalSeconds%60);
       set('sport',session.type==='competition'||session.competitionDetails?'competition':(session.sport||'course'));
-      set('distance',getSessionDistanceKm(session)); set('elevation',Number(session.elevationM||session.competitionDetails?.totalElevationM||0));
+      set('distance',getSessionDistanceKm(session)); if (typeof setDistancePickerValue === 'function') setDistancePickerValue('edit-session-distance', getSessionDistanceKm(session)); set('elevation',Number(session.elevationM||session.competitionDetails?.totalElevationM||0));
       set('bpm',Number(session.averageBpm||0)); set('rpe',Number(session.rpe||5)); set('calories',Number(session.calories||0));
       set('feeling',session.feeling||session.feelingLabel||getRPEFeeling(Number(session.rpe||5))); set('source',session.source||'manual');
       set('watts',session.watts??''); set('cadence',session.cadence??''); set('terrain',session.terrain||''); set('weather',session.weather||''); set('format',session.format||session.competitionDetails?.format||'');
@@ -3013,12 +3292,8 @@ function resetActiveForm(sport) {
       session.xp=calculateSessionXp({sport:isCompetition?'competition':sport,isCompetition,durationMinutes,distanceKm:distance,elevationM:elevation,averageBpm:bpm});
       updateSessionDerivedMetrics(session);
       ensureXpBaseline(); recalculateStatsFromHistory(); recalculateXpFromHistory(); checkTrophiesUnlock();
-    renderHistory(); if (typeof renderChart === 'function') renderChart(); if (typeof renderHomeCalendar === 'function') renderHomeCalendar(); if (typeof updateRaceCountdown === 'function') updateRaceCountdown();
-    
-    // ➔ AJOUT INDISPENSABLE : Sauvegarde locale persistante
-    if (typeof saveAppData === 'function') saveAppData();
-
-    closeEditSession(); alert('Activité modifiée. Les statistiques, les XP et les trophées vérifiables ont été recalculés sur cet appareil.');
+      renderHistory(); if(typeof renderChart==='function')renderChart(); if(typeof renderHomeCalendar==='function')renderHomeCalendar(); if(typeof updateRaceCountdown==='function')updateRaceCountdown();
+      closeEditSession(); alert('Activité modifiée. Les statistiques, les XP et les trophées vérifiables ont été recalculés sur cet appareil.');
     }
 
     document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.activity-date-input').forEach(input => { if (!input.value) input.value = localDateISO(new Date()); }); calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); renderHomeCalendar(); showDayDetails(calendarSelectedDate); });
@@ -3782,121 +4057,139 @@ async function refreshFriendHub(){
       if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
       if (typeof updateFriendRequestBadge === 'function') updateFriendRequestBadge();
     }
-// ==========================================
-// MOTEUR UNIFIÉ : 4 ÉTAPES DE SÉCURISATION
-// ==========================================
-
-// --- ÉTAPE 1 & 2 : Normalisation et Dictionnaire Strict des Disciplines ---
+// V20 — l'historique canonique de l'application est appData.sessionsHistory.
+// Ne pas lire appData.workouts/history : ces tableaux ne sont pas la source utilisée par les formulaires.
 function getNormalizedWorkouts() {
-  const rawWorkouts = appData.workouts || appData.history || [];
-  return rawWorkouts.map(w => ({
-    ...w,
-    distance: Number(w.distance) || 0,
-    duration: Number(w.duration) || 0,
-    elevation: Number(w.elevation) || 0,
-    discipline: (w.discipline || w.sport || '').toLowerCase().trim()
+  return (Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[]).map(s=>({
+    ...s, discipline:trophySportOf(s), distance:getSessionDistanceKm(s), duration:getSessionDurationMinutes(s)
   }));
 }
-
-function getWorkoutsByStrictDiscipline(disciplineKey) {
-  const workouts = getNormalizedWorkouts();
-  const disciplineMap = {
-    course: ['course', 'running', 'trail', 'course à pied'],
-    velo: ['velo', 'cyclisme', 'vtt', 'home-trainer', 'cycling'],
-    natation: ['natation', 'swimming', 'nage'],
-    marche: ['marche', 'randonnee', 'hiking', 'walking'],
-    hiit: ['hiit', 'circuit training', 'crossfit', 'cardio'],
-    muscu: ['musculation', 'strength', 'renforcement'],
-    triathlon: ['triathlon'],
-    duathlon: ['duathlon']
-  };
-  const allowedKeywords = disciplineMap[disciplineKey] || [disciplineKey];
-  return workouts.filter(w => allowedKeywords.includes(w.discipline));
+function getWorkoutsByStrictDiscipline(key) {
+  return getNormalizedWorkouts().filter(w=>w.discipline===key);
 }
-
-// --- ÉTAPE 3 : Calcul dissocié (Cumuls vs Records Unitaires & Durées) ---
-function evaluateMetric(disciplineKey, mode, targetValue, metricType = 'distance') {
-  const filteredWorkouts = (disciplineKey === 'all' || !disciplineKey) ? getNormalizedWorkouts() : getWorkoutsByStrictDiscipline(disciplineKey);
-  const property = metricType === 'duration' ? 'duration' : 'distance';
-
-  if (mode === 'sum') {
-    const total = filteredWorkouts.reduce((acc, w) => acc + (w[property] || 0), 0);
-    return { current: total, achieved: total >= targetValue, percent: Math.min(100, (total / targetValue) * 100) };
-  } else if (mode === 'max') {
-    const maxSingle = filteredWorkouts.reduce((max, w) => Math.max(max, w[property] || 0), 0);
-    return { current: maxSingle, achieved: maxSingle >= targetValue, percent: Math.min(100, (maxSingle / targetValue) * 100) };
-  }
-  return { current: 0, achieved: false, percent: 0 };
+function evaluateMetric(key, mode, target, metricType='distance') {
+  const rows=getWorkoutsByStrictDiscipline(key), field=metricType==='duration'?'duration':'distance';
+  const values=rows.map(w=>Number(w[field])||0);
+  const current=mode==='max'?Math.max(0,...values):values.reduce((a,b)=>a+b,0);
+  return {current,achieved:current>=Number(target),percent:Number(target)>0?Math.min(100,current/Number(target)*100):0};
 }
-// --- ÉTAPE 4 : Nettoyage de l'état local et Recalcul Intégral ---
+// Recalcul non destructif : les trophées secrets restent inchangés tant que leurs règles ne sont pas auditées.
+// Cette fonction ne vide aucune table Supabase et ne supprime aucune séance.
 function recalculateAllTrophiesAndStats() {
-  console.warn("Réinitialisation et recalcul complet de l'historique, des stats et des trophées...");
-  
-  // 1. Initialisation propre des stats à partir des séances locales
-  appData.stats = { velo: 0, course: 0, natation: 0, marche: 0, hiit: 0, muscu: 0 };
-  
-  const workoutsList = appData.workouts || [];
-  workoutsList.forEach(w => {
-    const disc = w.discipline || w.sport;
-    if (appData.stats[disc] !== undefined) {
-      appData.stats[disc] += (Number(w.distance) || 0);
+  recalculateStatsFromHistory();
+  let unlocked=0, relocked=0;
+  (appData.trophies||[]).forEach(t=>{
+    if(t.isSecret) return;
+    const eligible=isPublicTrophyEligible(t);
+    if(eligible && !t.unlocked) { unlockTrophy(t,'recalcul V20'); unlocked++; }
+    else if(!eligible && t.unlocked) {
+      t.unlocked=false; delete t.unlockedAt; const priorBonus=Math.max(0,Number(t.xp)||0); if(priorBonus){ensureXpBaseline();appData.xpBaseTotal=Math.max(0,(Number(appData.xpBaseTotal)||0)-priorBonus);recalculateXpFromHistory();} relocked++;
     }
   });
-
-  // 2. Validation automatique et stricte de TOUS les trophées via le Moteur Unifié
-  if (typeof trophiesArray !== 'undefined' && Array.isArray(trophiesArray)) {
-    trophiesArray.forEach(trophy => {
-      if (trophy.discipline && trophy.mode && trophy.target !== undefined) {
-        const metricType = trophy.metricType || (trophy.isDuration || trophy.discipline === 'hiit' ? 'duration' : 'distance');
-        
-        // Interrogation directe du Moteur Unifié
-        const result = evaluateMetric(trophy.discipline, trophy.mode, trophy.target, metricType);
-        
-        trophy.unlocked = result.achieved;
-        trophy.currentProgress = result.current;
-        trophy.percent = result.percent;
-      }
-    });
-  }
-
-  // 3. Sauvegarde locale et rafraîchissement complet de l'interface
-  if (typeof saveAppData === 'function') {
-    saveAppData();
-  }
-
-  if (typeof renderTrophies === 'function') {
-    renderTrophies();
-  }
-
-  if (typeof updateUI === 'function') {
-    updateUI();
-  }
-
-  console.log("Recalcul global terminé avec succès ! Stats calculées :", appData.stats);
+  saveAppData(); renderTrophiesAndRanks();
+  console.info(`Recalcul V20 terminé : ${unlocked} nouveau(x) déblocage(s), ${relocked} ancien(s) déblocage(s) invalidé(s).`);
+  return {unlocked,relocked};
 }
- async function saveAppData() {
-    try {
-        // 1. Sauvegarde locale (tampon immédiat)
-        const storageKey = activeUserId ? `dopamine app data ${activeUserId}` : 'dopamine app data guest';
-        localStorage.setItem(storageKey, JSON.stringify(appData));
 
-        // 2. Synchronisation Cloud Supabase (Source de vérité unique)
-        if (typeof supabaseClient !== 'undefined' && activeUserId) {
-            const { error } = await supabaseClient
-                .from('user_data')
-                .upsert({ user_id: activeUserId, data: appData, updated_at: new Date() });
-                
-            if (error) {
-                console.error('Erreur de synchronisation Supabase :', error);
-            }
-        }
-        return true;
-    } catch (error) {
-        console.error('Impossible de sauvegarder les données :', error);
-        alert('La sauvegarde a échoué (espace de stockage indisponible ou saturé).');
-        return false;
+    let cloudSaveTimer = null;
+    let cloudSaveInFlight = Promise.resolve();
+    let cloudSyncLastError = '';
+    function sessionToSupabaseRow(session, userId) {
+      const distanceKm=getSessionDistanceKm(session);
+      const durationMin=getSessionDurationMinutes(session);
+      const durationText=String(session.duration || `${durationMin} min`);
+      const distanceText=(session.sport==='natation' ? `${distanceKm} km` : `${distanceKm} km`);
+      return {
+        id: Number(session.id), user_id:userId, sport:String(session.sport||'autres'),
+        title:String(session.title||'Séance').slice(0,200), date:session.date||localDateISO(new Date()),
+        duration:durationText.slice(0,80), distance:distanceText.slice(0,80),
+        raw_val:Number.isFinite(Number(session.rawVal))?Number(session.rawVal):distanceKm,
+        xp:Math.max(0,Math.round(Number(session.xp)||0)), calories:Math.max(0,Math.round(Number(session.calories)||0)),
+        feeling:String(session.feeling||'').slice(0,80), comment:String(session.comment||'').slice(0,1500),
+        created_at:session.created_at||new Date().toISOString()
+      };
     }
-}
+    async function syncAppDataToSupabase() {
+      if (!supabaseClient || !activeUserId) return {skipped:true};
+      const userId=activeUserId;
+      const snapshot=JSON.parse(JSON.stringify(appData)); delete snapshot._cloudPendingAt;
+      const {error:dataError}=await supabaseClient.from('user_data').upsert({user_id:String(userId),data:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+      if(dataError) throw new Error(`user_data : ${dataError.message}`);
+      const sessions=Array.isArray(snapshot.sessionsHistory)?snapshot.sessionsHistory:[];
+      for(let i=0;i<sessions.length;i+=100){
+        const rows=sessions.slice(i,i+100).filter(x=>Number.isFinite(Number(x.id))).map(x=>sessionToSupabaseRow(x,userId));
+        if(rows.length){const {error}=await supabaseClient.from('sessions').upsert(rows,{onConflict:'id'});if(error)throw new Error(`sessions : ${error.message}`);}
+      }
+      const trophies=Array.isArray(snapshot.trophies)?snapshot.trophies:[];
+      for(const trophy of trophies){
+        const {data:existing,error:readError}=await supabaseClient.from('user_trophies').select('id').eq('user_id',userId).eq('trophy_id',String(trophy.id)).limit(1).maybeSingle();
+        if(readError) throw new Error(`user_trophies (lecture) : ${readError.message}`);
+        if(trophy.unlocked){
+          const payload={user_id:userId,trophy_id:String(trophy.id),unlocked_at:trophy.unlockedAt||new Date().toISOString(),progress:Number(trophy.progress)||0};
+          const result=existing?await supabaseClient.from('user_trophies').update(payload).eq('id',existing.id):await supabaseClient.from('user_trophies').insert(payload);
+          if(result.error)throw new Error(`user_trophies (écriture) : ${result.error.message}`);
+        } else if(existing){
+          const {error}=await supabaseClient.from('user_trophies').delete().eq('id',existing.id);
+          if(error)throw new Error(`user_trophies (révocation) : ${error.message}`);
+        }
+      }
+      cloudSyncLastError='';
+      if(activeUserId===userId){delete appData._cloudPendingAt;try{localStorage.setItem(`dopamine_app_data_${userId}`,JSON.stringify(appData));}catch(e){console.warn('Cache local non actualisé après synchronisation',e);}}
+      const badge=document.getElementById('cloud-sync-status'); if(badge){badge.textContent='☁ Synchronisé';badge.title='Données enregistrées dans Supabase';}
+      return {saved:true,sessions:sessions.length,trophies:trophies.length};
+    }
+    function queueCloudSave() {
+      if(!activeUserId || !supabaseClient) return;
+      const badge=document.getElementById('cloud-sync-status'); if(badge){badge.textContent='↻ Synchronisation…';badge.title='Enregistrement dans Supabase';}
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer=setTimeout(()=>{
+        cloudSaveInFlight=cloudSaveInFlight.then(()=>syncAppDataToSupabase()).catch(error=>{
+          cloudSyncLastError=error.message||String(error); console.error('Synchronisation Supabase impossible :',error);
+          const badge=document.getElementById('cloud-sync-status'); if(badge){badge.textContent='⚠ Synchronisation en attente';badge.title=cloudSyncLastError;}
+        });
+      },700);
+    }
+    async function hydrateAppDataFromSupabase(userId) {
+      if(!supabaseClient||!userId)return {loaded:false};
+      // Si une sauvegarde locale attend encore le réseau, elle est prioritaire : ne pas l'écraser par un ancien état cloud.
+      const pendingLocal=localStorage.getItem(`dopamine_app_data_${userId}`);
+      if(pendingLocal){try{const pending=JSON.parse(pendingLocal);if(pending?._cloudPendingAt){appData={...createEmptyAppData(),...pending};await syncAppDataToSupabase();return {loaded:true,source:'local_pending_synced'};}}catch(e){console.warn('Cache local en attente illisible',e);}}
+      const {data:cloud,error}=await supabaseClient.from('user_data').select('data,updated_at').eq('user_id',String(userId)).maybeSingle();
+      if(error) throw new Error(`Lecture user_data : ${error.message}`);
+      if(cloud?.data && typeof cloud.data==='object'){
+        const base=createEmptyAppData(), remote=cloud.data;
+        appData={...base,...remote,user:{...base.user,...(remote.user||{}),privacy:{...base.user.privacy,...(remote.user?.privacy||{})},notifications:{...base.user.notifications,...(remote.user?.notifications||{})}},sessionsHistory:Array.isArray(remote.sessionsHistory)?remote.sessionsHistory:[],trophies:Array.isArray(remote.trophies)?remote.trophies:[]};
+        try{localStorage.setItem(`dopamine_app_data_${userId}`,JSON.stringify(appData));}catch(e){console.warn('Cache local indisponible',e);}
+        return {loaded:true,source:'user_data'};
+      }
+      // Migration initiale : l'ancien cache local est conservé et envoyé vers le cloud, jamais effacé.
+      const local=localStorage.getItem(`dopamine_app_data_${userId}`);
+      if(local){const parsed=JSON.parse(local);appData={...createEmptyAppData(),...parsed};await syncAppDataToSupabase();return {loaded:true,source:'migration_locale'};}
+      // Dernier recours : reconstruire les champs disponibles depuis public.sessions.
+      const {data:sessionRows,error:sessionError}=await supabaseClient.from('sessions').select('id,user_id,sport,title,date,duration,distance,raw_val,xp,calories,feeling,comment,created_at').eq('user_id',userId).order('date',{ascending:false});
+      if(sessionError) throw new Error(`Lecture sessions : ${sessionError.message}`);
+      if(Array.isArray(sessionRows)&&sessionRows.length){
+        appData=createEmptyAppData();
+        appData.sessionsHistory=sessionRows.map(r=>({id:r.id,sport:r.sport||'autres',title:r.title||'Séance',date:r.date,duration:r.duration||'',distance:r.distance||'0 km',rawVal:Number(r.raw_val)||0,xp:Number(r.xp)||0,calories:Number(r.calories)||0,feeling:r.feeling||'',comment:r.comment||'',created_at:r.created_at,source:'supabase'}));
+        recalculateStatsFromHistory();
+        await syncAppDataToSupabase();
+        return {loaded:true,source:'sessions'};
+      }
+      return {loaded:false};
+    }
+    function saveAppData() {
+      try {
+        const storageKey = activeUserId ? `dopamine_app_data_${activeUserId}` : 'dopamine_app_data_guest';
+        if(activeUserId) appData._cloudPendingAt=Date.now();
+        localStorage.setItem(storageKey, JSON.stringify(appData));
+        queueCloudSave();
+        return true;
+      } catch (error) {
+        console.error('Impossible de sauvegarder les données localement :', error);
+        alert("La sauvegarde locale a échoué. Vérifie l'espace disponible et exporte tes données JSON.");
+        return false;
+      }
+    }
 
 
     function editAnnualGoals() {
@@ -3962,22 +4255,17 @@ window.onload = async function() {
       } catch (error) { console.warn('Données invitées illisibles :', error); }
       if (typeof supabaseClient !== 'undefined' && supabaseClient) {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session?.user?.id) { loadAppDataForUser(session.user.id); if (!appData.user.joinedAt) appData.user.joinedAt = session.user.created_at || ''; }
+        if (session?.user?.id) { loadAppDataForUser(session.user.id); try { await hydrateAppDataFromSupabase(session.user.id); } catch(e) { console.error('Chargement cloud impossible :',e); } if (!appData.user.joinedAt) appData.user.joinedAt = session.user.created_at || ''; }
       }
       buildTrophyCatalogue();
       updateCompetitionDuration?.();
-refreshAppAfterAccountLoad();
-    const weatherBox = document.getElementById('dopamine-weather-widget'); 
-    if (weatherBox && activeUserId) weatherBox.style.display = 'block';
-    
-    // --- L'appel automatique du recalcul global ---
-    if (typeof recalculateAllTrophiesAndStats === 'function') {
-      recalculateAllTrophiesAndStats();
-    }
-  };
-</script>
+      refreshAppAfterAccountLoad();
+      const weatherBox = document.getElementById('dopamine-weather-widget'); if (weatherBox && activeUserId) weatherBox.style.display = 'block';
+    };
+ </script>
  
-<!-- MODALE DE CONNEXION / INSCRIPTION SUPABASE -->
+<div id="cloud-sync-status" role="status" aria-live="polite" style="position:fixed;bottom:10px;right:10px;z-index:9000;padding:5px 9px;border-radius:8px;background:rgba(15,23,42,.85);color:#cbd5e1;font-size:11px;pointer-events:none;">☁ Données locales</div>
+  <!-- MODALE DE CONNEXION / INSCRIPTION SUPABASE -->
   <div class="modal-overlay" id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
     <div class="modal-content" style="background:var(--card-bg); padding:24px; border-radius:12px; width:90%; max-width:400px; border:1px solid var(--card-border);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -4194,14 +4482,20 @@ async function handleUnblock(targetUserId) {
     }
 
     async function resetPasswordByEmail() {
-      if (!supabaseClient) { alert('Service de compte indisponible.'); return; }
-      const email = document.getElementById('auth-email').value.trim();
-      if (!email) { alert('Renseigne ton adresse e-mail pour recevoir le lien de réinitialisation.'); return; }
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://dopamine-teal.vercel.app/?reset-password=1'
-    });
-      if (error) alert('Impossible d’envoyer le lien : ' + error.message);
-      else alert('Un e-mail de réinitialisation a été demandé. Consulte ta boîte de réception et tes courriers indésirables.');
+      if(!supabaseClient){alert('Service de compte indisponible.');return;}
+      const email=document.getElementById('auth-email')?.value.trim();
+      if(!email){alert('Renseigne ton adresse e-mail pour recevoir le lien de réinitialisation.');return;}
+      const buttons=[...document.querySelectorAll('[onclick*="resetPasswordByEmail"]')];
+      buttons.forEach(b=>{b.disabled=true;b.dataset.oldText=b.textContent;b.textContent='Envoi en cours…';});
+      try {
+        const redirectTo=`${window.location.origin}${window.location.pathname}?reset-password=1`;
+        const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});
+        if(error) throw error;
+        alert('La demande a été acceptée. Consulte ta boîte de réception et les indésirables. Si le message tarde, le délai dépend du service SMTP configuré dans Supabase.');
+      } catch(error) {
+        console.error('Réinitialisation mot de passe :',error);
+        alert('Impossible de demander la réinitialisation : '+(error.message||'Erreur inconnue'));
+      } finally {buttons.forEach(b=>{b.disabled=false;b.textContent=b.dataset.oldText||'Mot de passe oublié ?';delete b.dataset.oldText;});}
     }
 
     async function saveRecoveredPassword() {
@@ -4260,6 +4554,7 @@ async function handleUnblock(targetUserId) {
         document.getElementById('auth-modal').style.display = 'none';
         if (data.user?.id) {
           loadAppDataForUser(data.user.id);
+          try { await hydrateAppDataFromSupabase(data.user.id); } catch(e) { console.error('Chargement cloud impossible :',e); alert('Connexion réussie, mais le chargement cloud a échoué. Tes données locales sont conservées. '+e.message); }
           await loadSupabaseProfileForUser(data.user.id);
           if (!appData.user.joinedAt) appData.user.joinedAt = data.user.created_at || '';
           const metaName = data.user?.user_metadata?.username;
@@ -4301,6 +4596,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           if (event === 'SIGNED_IN' && session?.user?.id && activeUserId !== session.user.id) {
             loadAppDataForUser(session.user.id);
+            try { await hydrateAppDataFromSupabase(session.user.id); } catch(e) { console.error('Chargement cloud impossible :',e); }
             await loadSupabaseProfileForUser(session.user.id);
             refreshAppAfterAccountLoad();
           } else if (event === 'SIGNED_OUT') {
@@ -4326,10 +4622,18 @@ document.addEventListener('DOMContentLoaded', () => {
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-title">Nom de l’activité</label><input id="edit-session-title" type="text" maxlength="120" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-sport">Discipline</label><select id="edit-session-sport" style="width:100%;"><option value="natation">Natation</option><option value="velo">Vélo</option><option value="course">Course à pied</option><option value="marche">Marche / randonnée</option><option value="hiit">HIIT</option><option value="autres">Autres sports</option><option value="competition">Compétition</option></select></div>
    <div class="form-group"><label for="edit-session-date">Date</label><input id="edit-session-date" type="date" style="width:100%;"></div>
-   <div class="form-group"><label>Durée — heures</label><input id="edit-session-hours" type="number" min="0" max="999" step="1" style="width:100%;"></div>
-   <div class="form-group"><label>Durée — minutes</label><input id="edit-session-minutes" type="number" min="0" max="59" step="1" style="width:100%;"></div>
-   <div class="form-group"><label>Durée — secondes</label><input id="edit-session-seconds" type="number" min="0" max="59" step="1" style="width:100%;"></div>
-   <div class="form-group"><label for="edit-session-distance">Distance (km)</label><input id="edit-session-distance" type="number" min="0" max="1000" step="0.001" style="width:100%;"></div>
+   <div class="form-group"><label>Durée — heures</label><input id="edit-session-hours" type="number" min="0" max="999" step="1" style="width:100%;" inputmode="numeric"></div>
+   <div class="form-group"><label>Durée — minutes</label><input id="edit-session-minutes" type="number" min="0" max="59" step="1" style="width:100%;" inputmode="numeric"></div>
+   <div class="form-group"><label>Durée — secondes</label><input id="edit-session-seconds" type="number" min="0" max="59" step="1" style="width:100%;" inputmode="numeric"></div>
+   <div class="form-group distance-picker-group">
+      <label>Distance</label>
+      <div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label for="edit-session-distance-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input type="number" id="edit-session-distance-km" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('edit-session')" class="form-control"></div>
+        <div><label for="edit-session-distance-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input type="number" id="edit-session-distance-m" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('edit-session')" class="form-control"></div>
+      </div>
+      <input type="hidden" id="edit-session-distance" value="0">
+      <small id="edit-session-distance-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small>
+    </div>
    <div class="form-group"><label for="edit-session-elevation">Dénivelé (m)</label><input id="edit-session-elevation" type="number" min="0" max="20000" step="1" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-bpm">BPM moyen</label><input id="edit-session-bpm" type="number" min="0" max="250" step="1" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-rpe">Effort perçu (RPE /10)</label><input id="edit-session-rpe" type="number" min="1" max="10" step="1" style="width:100%;"></div>
@@ -4349,3 +4653,110 @@ document.addEventListener('DOMContentLoaded', () => {
  </div></div>
 </div>
 
+
+<script>
+
+// V23 — initialisation des sélecteurs de distance conservés en compatibilité historique.
+function distanceKmToMeters(value) {
+  const n = Number(String(value ?? '0').trim().replace(',', '.'));
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.min(999999, Math.round(n * 1000));
+}
+function distanceMetersToKmString(meters) {
+  const km = Math.max(0, Math.min(999999, Math.round(Number(meters) || 0))) / 1000;
+  return km.toFixed(3).replace(/\.?0+$/, '') || '0';
+}
+function setDistancePickerValue(inputId, kmValue) {
+  const hidden = document.getElementById(inputId);
+  const kmSelect = document.getElementById(inputId + '-km');
+  const mSelect = document.getElementById(inputId + '-m');
+  if (!hidden || !kmSelect || !mSelect) return;
+  const totalMeters = distanceKmToMeters(kmValue);
+  kmSelect.value = String(Math.floor(totalMeters / 1000));
+  mSelect.value = String(totalMeters % 1000);
+  hidden.value = distanceMetersToKmString(totalMeters);
+  const preview = document.getElementById(inputId + '-preview');
+  if (preview) preview.textContent = `${hidden.value.replace('.', ',')} km`;
+}
+function updateDistancePicker(inputId) {
+  const kmSelect = document.getElementById(inputId + '-km');
+  const mSelect = document.getElementById(inputId + '-m');
+  const hidden = document.getElementById(inputId);
+  if (!kmSelect || !mSelect || !hidden) return;
+  hidden.value = distanceMetersToKmString((Number(kmSelect.value) || 0) * 1000 + (Number(mSelect.value) || 0));
+  const preview = document.getElementById(inputId + '-preview');
+  if (preview) preview.textContent = `${hidden.value.replace('.', ',')} km`;
+}
+function initDistancePickers(root = document) {
+  root.querySelectorAll('.distance-km-select').forEach(select => {
+    const inputId = select.dataset.distanceFor;
+    const mSelect = document.getElementById(inputId + '-m');
+    if (!inputId || !mSelect || select.dataset.ready === '1') return;
+    for (let i = 0; i <= 999; i++) {
+      const option = document.createElement('option');
+      option.value = String(i); option.textContent = String(i).padStart(3, '0');
+      select.appendChild(option);
+      const meterOption = document.createElement('option');
+      meterOption.value = String(i); meterOption.textContent = String(i).padStart(3, '0');
+      mSelect.appendChild(meterOption);
+    }
+    select.dataset.ready = '1';
+    select.addEventListener('change', () => updateDistancePicker(inputId));
+    mSelect.addEventListener('change', () => updateDistancePicker(inputId));
+    setDistancePickerValue(inputId, document.getElementById(inputId)?.value || 0);
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { initDistancePickers(); alignActivityDateAndBpm(); updateCompetitionFields(); });
+else { initDistancePickers(); alignActivityDateAndBpm(); updateCompetitionFields(); }
+if (typeof MutationObserver !== 'undefined' && document.body) {
+  const distancePickerObserver = new MutationObserver(() => initDistancePickers());
+  distancePickerObserver.observe(document.body, { childList: true, subtree: true });
+}
+ function adjustStepper(prefix, unit, delta) {
+    const input = document.getElementById(`${prefix}-${unit}`);
+    if (!input) return;
+
+    let currentVal = parseInt(input.value, 10) || 0;
+    let newVal = Math.max(0, Math.min(999, currentVal + delta));
+    
+    input.value = newVal;
+    syncDistance(prefix);
+}
+
+function syncDistance(prefix) {
+    const kmId = prefix === 'competition' ? 'competition-km' : `${prefix}-km`;
+    const mId = prefix === 'competition' ? 'competition-m' : `${prefix}-m`;
+    const previewId = prefix === 'competition' ? 'competition-distance-preview' : `${prefix}-dist-preview`;
+    const hiddenId = prefix === 'competition' ? 'competition-distance' : `${prefix}-dist`;
+
+    const inputKm = document.getElementById(kmId);
+    const inputM = document.getElementById(mId);
+    const previewEl = document.getElementById(previewId);
+    const hiddenInput = document.getElementById(hiddenId);
+
+    if (!inputKm || !inputM || !hiddenInput) return;
+
+    // Nettoyage des saisies clavier
+    let km = parseInt(inputKm.value, 10);
+    if (isNaN(km) || km < 0) km = 0;
+    if (km > 999) { km = 999; inputKm.value = 999; }
+
+    let m = parseInt(inputM.value, 10);
+    if (isNaN(m) || m < 0) m = 0;
+    if (m > 999) { m = 999; inputM.value = 999; }
+
+    // Calcul normalisé en kilomètres (ex: 42 km + 195 m = 42.195)
+    const totalKm = Number((km + (m / 1000)).toFixed(3));
+
+    // Mise à jour de l'affichage utilisateur
+    if (previewEl) {
+        previewEl.textContent = totalKm.toLocaleString('fr-FR', {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3
+        }) + ' km';
+    }
+
+    // Valeur envoyée à l'historique, aux stats et aux trophées
+hiddenInput.value = totalKm;
+}
+</script>
