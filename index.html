@@ -2216,7 +2216,7 @@ async function loadSupabaseProfileForUser(userId) {
             { data: profile, error },
             { data: authData }
         ] = await Promise.all([
-            supabaseClient.from('profiles').select('username, phone, phone_c164, phone_verified, phone_verified_at, bio, city, department, photo_url, level_sportif, favorite_sports, fcmax_course, fcmax_velo, fcmax_natation, visibility, privacy_settings, notification_settings').eq('id', userId).maybeSingle(),
+            supabaseClient.from('profiles').select('username, phone, phone_verified, bio, city, department, city_code, department_code, latitude, longitude, age, weight, height, sex, photo_url, level_sportif, favorite_sports, fcmax_course, fcmax_velo, fcmax_natation, visibility, privacy_settings, notification_settings').eq('id', userId).maybeSingle(),
             supabaseClient.auth.getUser()
         ]);
 
@@ -2229,7 +2229,18 @@ async function loadSupabaseProfileForUser(userId) {
             if (profile.bio != null) u.bio = profile.bio;
             if (profile.city != null) u.city = profile.city;
             if (profile.department != null) u.department = profile.department;
+            if (profile.city_code != null) u.cityCode = profile.city_code;
+            if (profile.department_code != null) u.cityDepartmentCode = profile.department_code;
+            if (profile.latitude != null) u.cityLatitude = profile.latitude;
+            if (profile.longitude != null) u.cityLongitude = profile.longitude;
+            if (profile.age != null) u.age = profile.age;
+            if (profile.weight != null) u.weight = profile.weight;
+            if (profile.height != null) u.height = profile.height;
+            if (profile.sex != null) u.sex = profile.sex;
             if (profile.photo_url) u.photo = profile.photo_url;
+            if (profile.phone_verified != null) u.phoneVerified = !!profile.phone_verified;
+            if (profile.privacy_settings && typeof profile.privacy_settings === 'object') u.privacy = { ...u.privacy, ...profile.privacy_settings };
+            if (profile.notification_settings && typeof profile.notification_settings === 'object') u.notifications = { ...u.notifications, ...profile.notification_settings };
 
             // Récupération des paramètres sportifs
             if (profile.level_sportif) u.levelSportif = profile.level_sportif;
@@ -2244,6 +2255,18 @@ async function loadSupabaseProfileForUser(userId) {
             // Remplissage visuel des champs du profil dans le HTML
             if (document.getElementById('user-profile-name')) document.getElementById('user-profile-name').value = u.name || '';
             if (document.getElementById('user-profile-bio')) document.getElementById('user-profile-bio').value = u.bio || '';
+            if (document.getElementById('user-profile-city')) document.getElementById('user-profile-city').value = u.city || '';
+            if (document.getElementById('user-profile-department')) document.getElementById('user-profile-department').value = u.department || '';
+            if (document.getElementById('user-profile-age')) document.getElementById('user-profile-age').value = u.age || '';
+            if (document.getElementById('user-profile-weight')) document.getElementById('user-profile-weight').value = u.weight || '';
+            if (document.getElementById('user-profile-height')) document.getElementById('user-profile-height').value = u.height || '';
+            if (document.getElementById('user-profile-sex')) document.getElementById('user-profile-sex').value = u.sex || '';
+            if (document.getElementById('user-profile-phone')) document.getElementById('user-profile-phone').value = u.phone || '';
+            if (document.getElementById('privacy-show-age')) document.getElementById('privacy-show-age').checked = !!u.privacy?.age;
+            if (document.getElementById('privacy-show-weight')) document.getElementById('privacy-show-weight').checked = !!u.privacy?.weight;
+            if (document.getElementById('privacy-show-heart')) document.getElementById('privacy-show-heart').checked = !!u.privacy?.heart;
+            if (document.getElementById('privacy-show-performance')) document.getElementById('privacy-show-performance').checked = !!u.privacy?.performance;
+            if (document.getElementById('privacy-show-city')) document.getElementById('privacy-show-city').checked = !!u.privacy?.city;
             if (document.getElementById('user-profile-level')) document.getElementById('user-profile-level').value = u.levelSportif || '';
             if (document.getElementById('user-profile-fcmax-course')) document.getElementById('user-profile-fcmax-course').value = u.fcmaxCourse || '';
             if (document.getElementById('user-profile-fcmax-velo')) document.getElementById('user-profile-fcmax-velo').value = u.fcmaxVelo || '';
@@ -2346,6 +2369,7 @@ async function saveUserProfile() {
             weight: num('user-profile-weight'),
             height: num('user-profile-height'),
             sex: val('user-profile-sex'),
+            levelSportif: val('user-profile-level'),
             levelsportif: val('user-profile-level'),
             fcmaxCourse: num('user-profile-fcmax-course'),
             fcmaxVelo: num('user-profile-fcmax-velo'),
@@ -2353,7 +2377,9 @@ async function saveUserProfile() {
             visibility: val('user-profile-visibility') || 'private'
         });
 
-        u.favoriteSports = Array.from(document.querySelectorAll('input[name="favorite sport"]:checked')).map(el => el.value);
+        u.favoriteSports = Array.from(document.querySelectorAll('input[name="favorite sport"]:checked, input[name="favorite_sports"]:checked, input[name*="sport"]:checked'))
+            .map(el => el.value)
+            .filter(v => v && v !== 'on' && v !== 'true');
         u.privacy = {
             age: !!document.getElementById('privacy-show-age')?.checked,
             weight: !!document.getElementById('privacy-show-weight')?.checked,
@@ -2372,17 +2398,17 @@ async function saveUserProfile() {
 
         const saved = saveAppData();
 
-        // 3. Synchronisation Supabase avec les colonnes exactes de ta base
+        // 3. Synchronisation Supabase : le message de réussite dépend du résultat réel.
+        let cloudSynced = false;
+        let cloudError = null;
         try {
             let currentUserId = typeof activeUserId !== 'undefined' ? activeUserId : null;
             if (!currentUserId && typeof supabaseClient !== 'undefined' && supabaseClient) {
-                const { data: { user } } = await supabaseClient.auth.getUser();
+                const { data: { user } = {} } = await supabaseClient.auth.getUser();
                 if (user) currentUserId = user.id;
             }
 
             if (currentUserId && typeof supabaseClient !== 'undefined' && supabaseClient) {
-                supabaseClient.auth.updateUser({ data: { username: u.name } }).catch(() => {});
-
                 const { error: profileError } = await supabaseClient.from('profiles').upsert(
                     {
                         id: currentUserId,
@@ -2390,20 +2416,20 @@ async function saveUserProfile() {
                         bio: u.bio,
                         city: u.city,
                         department: u.department,
-                        city_code: u.cityCode,
-                        department_code: u.cityDepartmentCode,
-                        latitude: u.cityLatitude,
-                        longitude: u.cityLongitude,
-                        age: u.age,
-                        weight: u.weight,
-                        height: u.height,
-                        sex: u.sex,
-                        phone: u.phone,
-                        phone_verified: u.phoneVerified,
-                        photo_url: u.photo,
-                        avatar_url: u.photo,
-                        level_sportif: u.levelsportif,
-                        favorite_sports: u.favoriteSports,
+                        city_code: u.cityCode || null,
+                        department_code: u.cityDepartmentCode || null,
+                        latitude: u.cityLatitude ?? null,
+                        longitude: u.cityLongitude ?? null,
+                        age: u.age || null,
+                        weight: u.weight || null,
+                        height: u.height || null,
+                        sex: u.sex || null,
+                        phone: u.phone || null,
+                        phone_verified: !!u.phoneVerified,
+                        photo_url: u.photo || null,
+                        avatar_url: u.photo || null,
+                        level_sportif: u.levelSportif || u.levelsportif || null,
+                        favorite_sports: u.favoriteSports || [],
                         fcmax_course: u.fcmaxCourse || null,
                         fcmax_velo: u.fcmaxVelo || null,
                         fcmax_natation: u.fcmaxNatation || null,
@@ -2413,17 +2439,14 @@ async function saveUserProfile() {
                     },
                     { onConflict: 'id' }
                 );
-
-                if (profileError) {
-                    console.error("Erreur synchro Supabase :", profileError);
-                    alert("Erreur Supabase : " + profileError.message);
-                } else {
-                    u.phoneSynced = !!u.phoneVerified;
-                    saveAppData();
-                }
+                if (profileError) throw profileError;
+                cloudSynced = true;
+                u.phoneSynced = !!u.phoneVerified;
+                saveAppData();
             }
         } catch (syncError) {
-            console.warn("Synchronisation Supabase indisponible :", syncError);
+            cloudError = syncError;
+            console.error('Erreur de synchronisation du profil Supabase :', syncError);
         }
 
         toggleProfileModal(false);
@@ -2433,7 +2456,13 @@ async function saveUserProfile() {
         playDopamineSound('success');
 
         updatePhoneVerificationBadge();
-        alert('Profil enregistré et synchronisé avec succès ! 🚀');
+        if (cloudSynced) {
+            alert('Profil enregistré et synchronisé avec Supabase ! 🚀');
+        } else if (cloudError) {
+            alert('Profil enregistré sur cet appareil, mais la synchronisation Supabase a échoué : ' + (cloudError.message || 'erreur inconnue') + '\n\nTes modifications locales sont conservées. Réessaie après vérification de ta connexion ou des droits Supabase.');
+        } else {
+            alert('Profil enregistré sur cet appareil. Connecte-toi à ton compte pour le synchroniser avec Supabase.');
+        }
     } catch (err) {
         console.error("Erreur saveUserProfile :", err);
         alert("Erreur lors de l'enregistrement : " + err.message);
