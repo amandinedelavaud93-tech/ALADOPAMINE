@@ -216,6 +216,8 @@
     .cal-dots-container { display: flex; gap: 2px; margin-top: 2px; flex-wrap: wrap; justify-content: center; max-width: 36px; }
     .dot-sport { width: 6px; height: 6px; border-radius: 50%; }
     .cal-day-cell-mini.selected { outline:2px solid var(--bike-orange); outline-offset:-2px; background:rgba(255,107,0,.10); }
+    @media (max-width: 600px) { .form-grid, .distance-input-grid, .duration-input-grid { row-gap:12px !important; } .form-group label { display:block; margin-bottom:6px; line-height:1.35; } }
+    .calendar-weekday-heading { text-align:center; color:var(--text-sub); font-size:.65rem; font-weight:800; padding:5px 2px; }
     .calendar-detail-panel { margin-top:12px; padding:12px 14px; border:1px solid var(--card-border); border-radius:10px; background:rgba(255,255,255,.025); }
     .calendar-detail-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--card-border); }
     .calendar-detail-row:last-child { border-bottom:0; }
@@ -228,7 +230,8 @@
 
     .sports-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
     @media (max-width: 1200px) { .sports-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 768px) { .sports-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .sports-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px 10px; } .sport-card { min-width:0; } .sport-card-header { padding:12px 10px; } .sport-card-body { padding:12px 10px; } .sport-card .btn-action { min-height:42px; white-space:normal; line-height:1.25; } }
+    @media (max-width: 380px) { .sports-grid { grid-template-columns: 1fr; } }
 
     .sport-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease; }
     .sport-card:hover { transform: translateY(-3px); }
@@ -614,6 +617,7 @@
           <div style="display:flex; flex-wrap:wrap; gap:6px;">
             <button class="btn-add-plan" onclick="openPlanModal()"><i class="fa-solid fa-plus"></i> Ajouter une séance</button>
             <button class="btn-add-plan" style="background:var(--run-green);" onclick="openTrainingPlanModal()"><i class="fa-solid fa-wand-magic-sparkles"></i> Générer un plan</button>
+            <button class="btn-add-plan" style="background:rgba(0,162,255,.12);border-color:var(--swim-blue);color:var(--swim-blue);" onclick="openMyPlans()"><i class="fa-solid fa-list-check"></i> Mes plans</button>
           </div>
         </div>
         <div class="calendar-controls">
@@ -1568,6 +1572,15 @@
     </div>
   </div>
 
+  <!-- MODALE MES PLANS -->
+  <div class="modal-overlay" id="my-plans-modal">
+    <div class="modal-content" style="max-height:90vh;overflow:auto;max-width:760px;">
+      <div class="card-title-flex"><h3 style="font-size:.95rem;color:var(--text-main);"><i class="fa-solid fa-list-check" style="color:var(--swim-blue);"></i> Mes plans d’entraînement</h3><button onclick="closeMyPlans()" style="background:none;border:0;color:var(--text-main);font-size:1.3rem;cursor:pointer;">&times;</button></div>
+      <p style="font-size:.75rem;color:var(--text-sub);">Retrouve ici les plans générés et leurs séances. Tu peux modifier une séance, consulter son détail ou supprimer un plan entier.</p>
+      <div id="my-plans-list" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
   <!-- MODALE PROFIL ATHLETE - V4 -->
   <div class="modal-overlay" id="user-profile-modal">
     <div class="modal-content" style="max-height:90vh;overflow:auto;max-width:620px;">
@@ -1996,7 +2009,7 @@ let appData = {
             title: `S${week} · ${workout.title}${weekLabel}`,
             date, time: slot === 0 ? '18:00' : slot === sessionsPerWeek - 1 ? '09:00' : '18:30',
             sport: workout.sport, type: 'entrainement', planGenerated: true,
-            planGoal: labels[goal], planWeek: week, planLevel: level,
+            planGoal: labels[goal], planWeek: week, planLevel: level, planStartDate: firstDate, planWeeks: weeks,
             description: workout.detail, durationMinutes: Number((workout.detail.match(/(\d+) min/) || [])[1]) || null
           });
         }
@@ -2015,6 +2028,26 @@ let appData = {
 Progression prévue avec semaines allégées et affûtage lorsque la durée le permet. Vérifie que la charge correspond à ton niveau actuel avant de commencer.`);
       showPage('home');
     }
+
+
+    function getGeneratedPlanGroups() {
+      const rows = (appData.plannedSessions || []).filter(s => s && s.planGenerated);
+      const groups = new Map();
+      rows.forEach(s => { const key = `${s.planGoal || 'Plan sans objectif'}|${s.planStartDate || ''}|${s.planWeeks || ''}`; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(s); });
+      return Array.from(groups.entries()).map(([key, sessions]) => ({key, sessions: sessions.sort((a,b)=>String(a.date).localeCompare(String(b.date)))}));
+    }
+    function openMyPlans() { const modal=document.getElementById('my-plans-modal'); if(modal) modal.style.display='flex'; renderMyPlans(); }
+    function closeMyPlans() { const modal=document.getElementById('my-plans-modal'); if(modal) modal.style.display='none'; }
+    function renderMyPlans() {
+      const box=document.getElementById('my-plans-list'); if(!box) return;
+      const groups=getGeneratedPlanGroups();
+      if(!groups.length){box.innerHTML='<p style="padding:14px;text-align:center;color:var(--text-sub);">Aucun plan généré enregistré pour le moment.</p>';return;}
+      box.innerHTML=groups.map((group,index)=>{const first=group.sessions[0];const last=group.sessions[group.sessions.length-1];return `<section style="border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;"><strong>${escapeHTML(String(first.planGoal||'Plan d’entraînement'))}</strong><span style="font-size:.7rem;color:var(--text-sub);">${group.sessions.length} séances · ${escapeHTML(String(first.date||''))} → ${escapeHTML(String(last.date||''))}</span></div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;"><button class="medal-tab" onclick="togglePlanDetails(${index})">Détailler</button><button class="medal-tab" onclick="applyPlanToCalendar(${index})">Voir dans le calendrier</button><button class="medal-tab" onclick="deleteGeneratedPlan(${index})" style="color:#ef4444;">Supprimer</button></div><div id="plan-details-${index}" style="display:none;margin-top:10px;">${group.sessions.map(session=>`<div class="calendar-detail-row"><div><strong>${escapeHTML(String(session.title||session.sport||'Séance'))}</strong><small>${escapeHTML(String(session.date||''))} · ${escapeHTML(String(session.description||''))}</small></div><button onclick="editGeneratedPlanSession(${Number(session.id)})">Modifier</button></div>`).join('')}</div></section>`;}).join('');
+    }
+    function togglePlanDetails(index){const el=document.getElementById(`plan-details-${index}`);if(el)el.style.display=el.style.display==='none'?'block':'none';}
+    function applyPlanToCalendar(index){const group=getGeneratedPlanGroups()[index];if(!group)return;const date=group.sessions[0]?.date;if(date){const p=date.split('-').map(Number);calendarDisplayDate=new Date(p[0],p[1]-1,p[2]);calendarSelectedDate=date;setCalendarMode('month');showDayDetails(date);}closeMyPlans();document.getElementById('home-calendar')?.scrollIntoView({behavior:'smooth'});}
+    function deleteGeneratedPlan(index){const group=getGeneratedPlanGroups()[index];if(!group)return;if(!confirm(`Supprimer les ${group.sessions.length} séances de ce plan ? Les autres activités seront conservées.`))return;const ids=new Set(group.sessions.map(s=>String(s.id)));appData.plannedSessions=(appData.plannedSessions||[]).filter(s=>!ids.has(String(s.id)));saveAppData();renderHomeCalendar();renderMyPlans();}
+    function editGeneratedPlanSession(id){const item=(appData.plannedSessions||[]).find(s=>String(s.id)===String(id));if(!item)return;const date=prompt('Date de la séance (AAAA-MM-JJ) :',item.date||'');if(date===null)return;if(!isValidLocalDateISO(date)){alert('Date invalide.');return;}const title=prompt('Titre de la séance :',item.title||'');if(title===null)return;item.date=date;item.title=title;saveAppData();renderHomeCalendar();renderMyPlans();}
 
     function openPlanModal() {
       document.getElementById('plan-session-modal').style.display = 'flex';
@@ -2363,7 +2396,7 @@ async function saveUserProfile() {
   playDopamineSound('success');
 
   updatePhoneVerificationBadge();
-  alert(saved ? (activeUserId ? 'Profil enregistré localement et synchronisation du profil tentée sur Supabase. Le téléphone reste non vérifié tant que le code SMS n’est pas confirmé.' : 'Profil enregistré sur cet appareil en mode invité.') : 'La sauvegarde a échoué.');
+  alert(saved ? (activeUserId ? 'Profil enregistré sur cet appareil. La synchronisation Supabase doit être confirmée séparément ; le téléphone reste non vérifié tant que le code SMS n’est pas confirmé.' : 'Profil enregistré sur cet appareil en mode invité.') : 'La sauvegarde a échoué.');
 }
 
 // CONFIGURATION DE L'AUTOCOMPLÉTION DES VILLES
@@ -3158,6 +3191,8 @@ function validerLimitesNatation() {
       const threshold=getPublicTrophyThreshold(t);
       if(!threshold) return false;
       const rows=trophyRows(t.category);
+      // Aucun trophée ne peut être débloqué sans activité réelle et seuil strictement positif.
+      if (!rows.length || !Number.isFinite(Number(threshold.value)) || Number(threshold.value) <= 0) return false;
       if(threshold.kind==='distance') {
         const d=trophyText(t.desc);
         const unitary=/en un seul|une seule sortie|une seule seance|sur une sortie|sur un run|premier semi|premier marathon|finir son premier|terminer un/.test(d);
@@ -3169,7 +3204,7 @@ function validerLimitesNatation() {
         if(/tapis de course|sur tapis|tapis roulant/.test(d)) candidates=rows.filter(s=>/tapis/.test(trophySessionHaystack(s)));
         // Un trophée explicitement lié à un terrain n'accepte jamais les séances sans terrain renseigné.
         if(/\btrail\b/.test(d) && !/montagne\s*\/\s*trail/.test(d)) candidates=rows.filter(s=>/trail|sentier|montagne/.test(trophySessionHaystack(s)));
-        return unitary ? candidates.some(s=>getSessionDistanceKm(s)>=threshold.value) : candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>=threshold.value;
+        return unitary ? candidates.some(s=>getSessionDistanceKm(s)>0 && getSessionDistanceKm(s)>=threshold.value) : candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>0 && candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>=threshold.value;
       }
       if(threshold.kind==='hours') {
         let candidates=rows;
@@ -3349,8 +3384,9 @@ function validerLimitesNatation() {
       calendarMode = mode;
       ['today','week','month','year'].forEach(name => { const button=document.getElementById(`cal-mode-${name}`); if(button) button.classList.toggle('active', mode === name); });
       if (mode === 'today') { calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); }
+      else if (mode === 'year') { const now = new Date(); calendarDisplayDate = new Date(now.getFullYear(), now.getMonth(), 1); calendarSelectedDate = localDateISO(now); }
       renderHomeCalendar();
-      if (mode === 'today') showDayDetails(calendarSelectedDate);
+      if (mode === 'today' || mode === 'year' || mode === 'month') showDayDetails(calendarSelectedDate);
     }
 
     function getCalendarItemsForDate(dateStr) {
@@ -3384,7 +3420,7 @@ function validerLimitesNatation() {
         if (label) label.innerText = displayDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
         const daySessions = getCalendarItemsForDate(dateStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
         const dotsHtml = daySessions.map(item => `<span class="dot-sport" style="background:${calendarSportColor(item)}"></span>`).join('');
-        grid.innerHTML = `<div class="cal-day-cell-mini today selected" style="min-height:70px;max-width:100%;" onclick="showDayDetails('${dateStr}')"><span class="cal-day-name-mini">AUJOURD'HUI</span><span class="cal-day-num-mini" style="font-size:1.35rem;">${displayDate.getDate()}</span><div class="cal-dots-container">${dotsHtml}</div><small style="color:var(--text-sub);">${daySessions.length} activité(s)</small></div>`;
+        grid.innerHTML = `<div class="cal-day-cell-mini today selected calendar-day" data-date="${dateStr}" role="button" tabindex="0" style="min-height:70px;max-width:100%;"><span class="cal-day-name-mini">AUJOURD'HUI</span><span class="cal-day-num-mini" style="font-size:1.35rem;">${displayDate.getDate()}</span><div class="cal-dots-container">${dotsHtml}</div><small style="color:var(--text-sub);">${daySessions.length} activité(s)</small></div>`;
       } else if (calendarMode === 'week') {
         grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
         const currentDayOfWeek = today.getDay() === 0 ? 6 : today.getDay() - 1;
@@ -3411,7 +3447,7 @@ function validerLimitesNatation() {
           });
 
           grid.innerHTML += `
-            <div class="cal-day-cell-mini ${isToday ? 'today' : ''} ${dateStr === calendarSelectedDate ? 'selected' : ''}" onclick="showDayDetails('${dateStr}')">
+            <div class="cal-day-cell-mini calendar-day ${isToday ? 'today' : ''} ${dateStr === calendarSelectedDate ? 'selected' : ''}" data-date="${dateStr}" role="button" tabindex="0">
               <span class="cal-day-name-mini">${dayName}</span>
               <span class="cal-day-num-mini">${cellDate.getDate()}</span>
               <div class="cal-dots-container">${dotsHtml}</div>
@@ -3428,7 +3464,8 @@ function validerLimitesNatation() {
         if(label) label.innerText = firstDayOfMonth.toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
 
         // Jours de la semaine en entête
-        const daysShort = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+        const daysShort = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        daysShort.forEach(day => { grid.innerHTML += `<div class=\"calendar-weekday-heading\">${day}</div>`; });
         
         // Décalage premier jour
         let startDay = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
@@ -3450,7 +3487,7 @@ function validerLimitesNatation() {
           });
 
           grid.innerHTML += `
-            <div class="cal-day-cell-mini ${isToday ? 'today' : ''} ${dateStr === calendarSelectedDate ? 'selected' : ''}" style="min-height:45px;" onclick="showDayDetails('${dateStr}')">
+            <div class="cal-day-cell-mini calendar-day ${isToday ? 'today' : ''} ${dateStr === calendarSelectedDate ? 'selected' : ''}" data-date="${dateStr}" role="button" tabindex="0" style="min-height:45px;">
               <span class="cal-day-num-mini" style="font-size:0.65rem;">${d}</span>
               <div class="cal-dots-container">${dotsHtml}</div>
             </div>`;
@@ -3466,7 +3503,9 @@ function validerLimitesNatation() {
           const firstDay = new Date(year, month, 1);
           const offset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
           const monthBox = document.createElement('div');
-          monthBox.style.cssText = 'border:1px solid var(--card-border);border-radius:10px;padding:8px;min-width:0;background:rgba(255,255,255,.015);';
+          const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
+          monthBox.id = isCurrentMonth ? 'calendar-current-month' : `calendar-month-${month}`;
+          monthBox.style.cssText = `border:1px solid ${isCurrentMonth?'var(--bike-orange)':'var(--card-border)'};border-radius:10px;padding:8px;min-width:0;background:${isCurrentMonth?'rgba(255,107,0,.09)':'rgba(255,255,255,.015)'};`; 
           const monthTitle = document.createElement('div');
           monthTitle.textContent = firstDay.toLocaleDateString('fr-FR',{month:'long'});
           monthTitle.style.cssText = 'font-weight:800;text-transform:capitalize;font-size:.78rem;margin-bottom:6px;color:var(--text-main);';
@@ -3487,15 +3526,37 @@ function validerLimitesNatation() {
             cell.style.cssText=`min-width:0;width:100%;aspect-ratio:1;padding:0;border:1px solid ${isSelected?'var(--bike-orange)':'transparent'};border-radius:5px;background:${isToday?'rgba(255,107,0,.16)':'transparent'};color:var(--text-main);font-size:.61rem;cursor:pointer;position:relative;`;
             if(daySessions.length) { daySessions.slice(0,3).forEach((item,index)=>{ const dot=document.createElement('i'); dot.style.cssText=`position:absolute;width:4px;height:4px;border-radius:50%;background:${calendarSportColor(item)};bottom:1px;left:calc(50% - ${((daySessions.length-1)*3)/2-index*3}px);`; cell.appendChild(dot); }); }
             cell.title=`${dateStr} · ${daySessions.length} séance(s)`;
-            cell.onclick=()=>showDayDetails(dateStr);
+            cell.className='calendar-year-day'; cell.dataset.date=dateStr;
+            cell.onclick=()=>{ calendarSelectedDate=dateStr; calendarDisplayDate=new Date(year,month,d); showDayDetails(dateStr); renderHomeCalendar(); }; 
             mini.appendChild(cell);
           }
           monthBox.appendChild(mini); grid.appendChild(monthBox);
         }
         if (window.matchMedia && window.matchMedia('(max-width: 700px)').matches) grid.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';
+        requestAnimationFrame(() => document.getElementById('calendar-current-month')?.scrollIntoView({behavior:'smooth',block:'center'}));
       }
       updateRaceCountdown();
     }
+
+
+    // Délégation unique : un clic sur le chiffre, une pastille ou un enfant sélectionne toujours le jour.
+    document.addEventListener('click', event => {
+      const cell = event.target.closest('#calendar-days-grid-home [data-date]');
+      if (!cell) return;
+      const date = cell.dataset.date;
+      if (!isValidLocalDateISO(date)) return;
+      calendarSelectedDate = date;
+      const parts = date.split('-').map(Number);
+      calendarDisplayDate = new Date(parts[0], parts[1]-1, parts[2]);
+      showDayDetails(date);
+      if (calendarMode !== 'year') renderHomeCalendar();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const cell = event.target.closest('#calendar-days-grid-home [data-date]');
+      if (!cell) return;
+      event.preventDefault(); cell.click();
+    });
 
     function navigateCalendar(direction) {
       if (calendarMode === 'today') calendarDisplayDate.setDate(calendarDisplayDate.getDate() + direction);
