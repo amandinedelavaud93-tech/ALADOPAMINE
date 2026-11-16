@@ -1995,6 +1995,8 @@ let appData = {
       const firstDate = localDateISO(start);
       const labels = { '5k':'5 km', '10k':'10 km', semi:'semi-marathon', marathon:'marathon', velo:'endurance vélo', forme:'forme générale' };
       const newSessions = [];
+      const planId = `plan-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+      const planTitle = `${labels[goal]} · ${weeks} semaines`;
       const mondayBasedOffsets = sessionsPerWeek === 2 ? [1,4] : sessionsPerWeek === 3 ? [1,3,6] : sessionsPerWeek === 4 ? [1,3,5,6] : [0,1,3,5,6];
       const weekdayOffsets = mondayBasedOffsets.map(day => { const desiredJsDay = day === 6 ? 0 : day + 1; return (desiredJsDay - startDay + 7) % 7; }).sort((a, b) => a - b);
       for (let week = 1; week <= weeks; week++) {
@@ -2005,7 +2007,7 @@ let appData = {
           const date = addDaysISO(firstDate, (week - 1) * 7 + weekdayOffsets[slot]);
           const weekLabel = recoveryWeek ? ' — semaine allégée' : taperWeek ? ' — affûtage' : '';
           newSessions.push({
-            id: Date.now() + newSessions.length,
+            id: Date.now() + newSessions.length, planId, planTitle,
             title: `S${week} · ${workout.title}${weekLabel}`,
             date, time: slot === 0 ? '18:00' : slot === sessionsPerWeek - 1 ? '09:00' : '18:30',
             sport: workout.sport, type: 'entrainement', planGenerated: true,
@@ -2027,22 +2029,52 @@ let appData = {
 
 Progression prévue avec semaines allégées et affûtage lorsque la durée le permet. Vérifie que la charge correspond à ton niveau actuel avant de commencer.`);
       showPage('home');
+      openMyPlans();
     }
 
 
     function getGeneratedPlanGroups() {
-      const rows = (appData.plannedSessions || []).filter(s => s && s.planGenerated);
+      const rows = (appData.plannedSessions || []).filter(s => s && (s.planGenerated || s.planId));
       const groups = new Map();
-      rows.forEach(s => { const key = `${s.planGoal || 'Plan sans objectif'}|${s.planStartDate || ''}|${s.planWeeks || ''}`; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(s); });
-      return Array.from(groups.entries()).map(([key, sessions]) => ({key, sessions: sessions.sort((a,b)=>String(a.date).localeCompare(String(b.date)))}));
+      rows.forEach(s => {
+        const key = s.planId || `${s.planGoal || 'Plan sans objectif'}|${s.planStartDate || ''}|${s.planWeeks || ''}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(s);
+      });
+      return Array.from(groups.entries()).map(([key, sessions]) => ({
+        key,
+        sessions: sessions.sort((a,b)=>String(a.date).localeCompare(String(b.date))),
+        title: sessions[0]?.planTitle || sessions[0]?.planGoal || 'Plan d’entraînement'
+      }));
     }
     function openMyPlans() { const modal=document.getElementById('my-plans-modal'); if(modal) modal.style.display='flex'; renderMyPlans(); }
     function closeMyPlans() { const modal=document.getElementById('my-plans-modal'); if(modal) modal.style.display='none'; }
     function renderMyPlans() {
       const box=document.getElementById('my-plans-list'); if(!box) return;
       const groups=getGeneratedPlanGroups();
-      if(!groups.length){box.innerHTML='<p style="padding:14px;text-align:center;color:var(--text-sub);">Aucun plan généré enregistré pour le moment.</p>';return;}
-      box.innerHTML=groups.map((group,index)=>{const first=group.sessions[0];const last=group.sessions[group.sessions.length-1];return `<section style="border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;"><strong>${escapeHTML(String(first.planGoal||'Plan d’entraînement'))}</strong><span style="font-size:.7rem;color:var(--text-sub);">${group.sessions.length} séances · ${escapeHTML(String(first.date||''))} → ${escapeHTML(String(last.date||''))}</span></div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;"><button class="medal-tab" onclick="togglePlanDetails(${index})">Détailler</button><button class="medal-tab" onclick="applyPlanToCalendar(${index})">Voir dans le calendrier</button><button class="medal-tab" onclick="deleteGeneratedPlan(${index})" style="color:#ef4444;">Supprimer</button></div><div id="plan-details-${index}" style="display:none;margin-top:10px;">${group.sessions.map(session=>`<div class="calendar-detail-row"><div><strong>${escapeHTML(String(session.title||session.sport||'Séance'))}</strong><small>${escapeHTML(String(session.date||''))} · ${escapeHTML(String(session.description||''))}</small></div><button onclick="editGeneratedPlanSession(${Number(session.id)})">Modifier</button></div>`).join('')}</div></section>`;}).join('');
+      if(!groups.length){
+        box.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-sub);border:1px dashed var(--card-border);border-radius:12px;"><strong>Aucun plan enregistré</strong><p style="margin:8px 0 0;">Génère un plan depuis le calendrier. Il apparaîtra ici avec toutes ses séances.</p></div>';
+        return;
+      }
+      const today=localDateISO(new Date());
+      box.innerHTML=groups.map((group,index)=>{
+        const first=group.sessions[0]; const last=group.sessions[group.sessions.length-1];
+        const done=group.sessions.filter(x=>x.status==='completed' || x.calendarStatus==='completed').length;
+        const past=group.sessions.filter(x=>String(x.date)<today).length;
+        const upcoming=group.sessions.filter(x=>String(x.date)>=today).length;
+        const pct=Math.round(done/Math.max(1,group.sessions.length)*100);
+        const dateLabel=(value)=>{if(!value)return '';const d=new Date(`${value}T12:00:00`);return Number.isNaN(d.getTime())?value:d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});};
+        return `<section style="border:1px solid var(--card-border);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--card-bg,rgba(255,255,255,.02));">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;">
+            <div style="min-width:0;flex:1;"><strong style="font-size:.95rem;">${escapeHTML(String(group.title))}</strong><div style="font-size:.72rem;color:var(--text-sub);margin-top:4px;">${group.sessions.length} séances · ${dateLabel(first.date)} → ${dateLabel(last.date)}</div></div>
+            <span style="font-size:.72rem;padding:5px 8px;border-radius:20px;background:rgba(34,197,94,.12);color:var(--run-green);">${upcoming} à venir</span>
+          </div>
+          <div style="height:7px;background:var(--card-border);border-radius:10px;overflow:hidden;margin:12px 0 5px;"><div style="height:100%;width:${pct}%;background:var(--run-green);border-radius:10px;"></div></div>
+          <div style="font-size:.68rem;color:var(--text-sub);">${done} réalisée(s) · ${past} passée(s) · ${upcoming} à venir</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;"><button class="medal-tab" onclick="togglePlanDetails(${index})">Voir les séances</button><button class="medal-tab" onclick="applyPlanToCalendar(${index})">Voir dans le calendrier</button><button class="medal-tab" onclick="deleteGeneratedPlan(${index})" style="color:#ef4444;">Supprimer le plan</button></div>
+          <div id="plan-details-${index}" style="display:none;margin-top:10px;">${group.sessions.map(session=>`<div class="calendar-detail-row"><div style="min-width:0;flex:1;"><strong>${escapeHTML(String(session.title||session.sport||'Séance'))}</strong><small>${dateLabel(session.date)} · ${escapeHTML(String(session.description||''))}</small></div><button type="button" onclick="editGeneratedPlanSession('${String(session.id).replace(/'/g,'')}')">Modifier</button></div>`).join('')}</div>
+        </section>`;
+      }).join('');
     }
     function togglePlanDetails(index){const el=document.getElementById(`plan-details-${index}`);if(el)el.style.display=el.style.display==='none'?'block':'none';}
     function applyPlanToCalendar(index){const group=getGeneratedPlanGroups()[index];if(!group)return;const date=group.sessions[0]?.date;if(date){const p=date.split('-').map(Number);calendarDisplayDate=new Date(p[0],p[1]-1,p[2]);calendarSelectedDate=date;setCalendarMode('month');showDayDetails(date);}closeMyPlans();document.getElementById('home-calendar')?.scrollIntoView({behavior:'smooth'});}
@@ -3557,10 +3589,10 @@ function validerLimitesNatation() {
           });
 
           grid.innerHTML += `
-            <div class="cal-day-cell-mini calendar-day ${isToday ? 'today' : ''} ${dateStr === calendarSelectedDate ? 'selected' : ''}" data-date="${dateStr}" role="button" tabindex="0" style="min-height:45px;">
+            <button type="button" class="cal-day-cell-mini calendar-day ${isToday ? 'today' : ''} ${dateStr === calendarSelectedDate ? 'selected' : ''}" data-date="${dateStr}" aria-label="${dateStr}, ${daySessions.length} activité(s)" style="min-height:45px;width:100%;cursor:pointer;">
               <span class="cal-day-num-mini" style="font-size:0.65rem;">${d}</span>
               <div class="cal-dots-container">${dotsHtml}</div>
-            </div>`;
+            </button>`;
         }
       } else {
         // Vue annuelle compacte : 12 mois, chaque date reste cliquable.
@@ -3597,7 +3629,6 @@ function validerLimitesNatation() {
             if(daySessions.length) { daySessions.slice(0,3).forEach((item,index)=>{ const dot=document.createElement('i'); dot.style.cssText=`position:absolute;width:4px;height:4px;border-radius:50%;background:${calendarSportColor(item)};bottom:1px;left:calc(50% - ${((daySessions.length-1)*3)/2-index*3}px);`; cell.appendChild(dot); }); }
             cell.title=`${dateStr} · ${daySessions.length} séance(s)`;
             cell.className='calendar-year-day'; cell.dataset.date=dateStr;
-            cell.onclick=()=>{ calendarSelectedDate=dateStr; calendarDisplayDate=new Date(year,month,d); showDayDetails(dateStr); renderHomeCalendar(); }; 
             mini.appendChild(cell);
           }
           monthBox.appendChild(mini); grid.appendChild(monthBox);
@@ -3609,17 +3640,19 @@ function validerLimitesNatation() {
     }
 
 
-    // Délégation unique : un clic sur le chiffre, une pastille ou un enfant sélectionne toujours le jour.
+    // Un seul gestionnaire pour toutes les vues : chaque case de jour est sélectionnable,
+    // qu'elle contienne une séance passée, prévue ou aucune activité.
     document.addEventListener('click', event => {
       const cell = event.target.closest('#calendar-days-grid-home [data-date]');
       if (!cell) return;
       const date = cell.dataset.date;
       if (!isValidLocalDateISO(date)) return;
+      event.preventDefault();
       calendarSelectedDate = date;
       const parts = date.split('-').map(Number);
       calendarDisplayDate = new Date(parts[0], parts[1]-1, parts[2]);
       showDayDetails(date);
-      if (calendarMode !== 'year') renderHomeCalendar();
+      renderHomeCalendar();
     });
     document.addEventListener('keydown', event => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -3670,17 +3703,18 @@ function validerLimitesNatation() {
           const title = escapeHTML(String(item.title || 'Séance'));
           const sport = escapeHTML(String(item.sport || '').toUpperCase());
           const time = escapeHTML(String(item.time || 'Heure non renseignée'));
-          const duration = escapeHTML(String(item.duration || ''));
+          const duration = escapeHTML(String(item.duration || (item.durationMinutes ? `${item.durationMinutes} min` : '')));
+          const distance = escapeHTML(String(item.distance || '')); 
           const detail = escapeHTML(String(item.description || item.planGoal || item.comment || ''));
           const isCompleted = item.calendarStatus === 'completed';
-          const status = isCompleted ? 'Séance réalisée' : 'Séance prévue';
+          const isPastPlanned = !isCompleted && String(item.date || '') < localDateISO(new Date());
+          const status = isCompleted ? 'Séance réalisée' : isPastPlanned ? 'Séance prévue — date passée, à mettre à jour' : 'Séance à venir';
           const badge = item.type === 'competition' || item.sport === 'competition' ? ' · 🏁 Compétition' : '';
           const edit = isCompleted && item.id != null ? `<button type="button" onclick="openEditSession('${String(item.id).replace(/'/g, '')}')" title="Modifier l’activité">Modifier</button>` : '';
-          return `<div class="calendar-detail-row"><div style="min-width:0;flex:1;"><strong>${time} · ${title}</strong><small>${sport}${badge} · ${status}${duration ? `<br>Durée : ${duration}` : ''}${detail ? `<br>${detail}` : ''}</small></div><span style="width:9px;height:9px;border-radius:50%;background:${calendarSportColor(item)};flex:none;margin-top:5px;"></span>${edit}</div>`;
+          return `<div class="calendar-detail-row"><div style="min-width:0;flex:1;"><strong>${time} · ${title}</strong><small>${sport}${badge} · ${status}${duration ? `<br>Durée : ${duration}` : ''}${distance ? `<br>Distance : ${distance}` : ''}${detail ? `<br>${detail}` : ''}</small></div><span style="width:9px;height:9px;border-radius:50%;background:${calendarSportColor(item)};flex:none;margin-top:5px;"></span>${edit}</div>`;
         }).join('');
         panel.innerHTML = `<strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">${sessions.length ? `${sessions.length} activité(s) ce jour` : 'Aucune activité enregistrée pour cette journée.'}</small>${rows}${addButtons}`;
       }
-      renderHomeCalendar();
     }
 
     function openSearchFriendsModal() {
