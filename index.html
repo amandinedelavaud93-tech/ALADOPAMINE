@@ -2210,43 +2210,68 @@ function updatePhoneVerificationBadge() {}
 function sendProfilePhoneOtp() {}
 function confirmProfilePhoneOtp() {}
 async function loadSupabaseProfileForUser(userId) {
-  if (!supabaseClient || !userId) return;
-  try {
-    const [{ data: profile, error }, { data: authData }] = await Promise.all([
-      supabaseClient.from('profiles').select('username, phone, phone_e164, phone_verified, phone_verified_at, bio, city, department, photo_url').eq('id', userId).maybeSingle(),
-      supabaseClient.auth.getUser()
-    ]);
-    if (error) throw error;
-    if (profile) {
-      const u = appData.user || (appData.user = {});
-      if (profile.username) u.name = profile.username;
-      if (profile.phone_e164 || profile.phone) u.phone = profile.phone_e164 || profile.phone;
-      const authPhone = normalizeFrenchPhoneNumber(authData?.user?.phone);
-      const savedPhone = normalizeFrenchPhoneNumber(u.phone);
-      u.phoneVerified = !!authData?.user?.phone_confirmed_at && !!authPhone && authPhone === savedPhone;
-      u.phoneSynced = !!profile.phone_verified && u.phoneVerified;
-      u.phoneVerificationPending = !!u.phone && !u.phoneVerified;
-      if (profile.bio != null) u.bio = profile.bio;
-      if (profile.city != null) u.city = profile.city;
-      if (profile.department != null) u.department = profile.department;
-      if (profile.photo_url) u.photo = profile.photo_url;
-      saveAppData();
-    } else if (authData?.user?.phone) {
-      appData.user.phone = authData.user.phone;
-      appData.user.phoneVerified = !!authData.user.phone_confirmed_at;
-      saveAppData();
+    if (!supabaseClient || !userId) return;
+    try {
+        const [
+            { data: profile, error },
+            { data: authData }
+        ] = await Promise.all([
+            supabaseClient.from('profiles').select('username, phone, phone_c164, phone_verified, phone_verified_at, bio, city, department, photo_url, level_sportif, favorite_sports, fcmax_course, fcmax_velo, fcmax_natation, visibility, privacy_settings, notification_settings').eq('id', userId).maybeSingle(),
+            supabaseClient.auth.getUser()
+        ]);
+
+        if (error) throw error;
+
+        if (profile) {
+            const u = appData.user;
+            if (profile.username) u.name = profile.username;
+            if (profile.phone) u.phone = profile.phone;
+            if (profile.bio != null) u.bio = profile.bio;
+            if (profile.city != null) u.city = profile.city;
+            if (profile.department != null) u.department = profile.department;
+            if (profile.photo_url) u.photo = profile.photo_url;
+
+            // Récupération des paramètres sportifs
+            if (profile.level_sportif) u.levelSportif = profile.level_sportif;
+            if (profile.favorite_sports) u.favoriteSports = profile.favorite_sports;
+            if (profile.fcmax_course) u.fcmaxCourse = profile.fcmax_course;
+            if (profile.fcmax_velo) u.fcmaxVelo = profile.fcmax_velo;
+            if (profile.fcmax_natation) u.fcmaxNatation = profile.fcmax_natation;
+            if (profile.visibility) u.visibility = profile.visibility;
+
+            saveAppData();
+
+            // Remplissage visuel des champs du profil dans le HTML
+            if (document.getElementById('user-profile-name')) document.getElementById('user-profile-name').value = u.name || '';
+            if (document.getElementById('user-profile-bio')) document.getElementById('user-profile-bio').value = u.bio || '';
+            if (document.getElementById('user-profile-level')) document.getElementById('user-profile-level').value = u.levelSportif || '';
+            if (document.getElementById('user-profile-fcmax-course')) document.getElementById('user-profile-fcmax-course').value = u.fcmaxCourse || '';
+            if (document.getElementById('user-profile-fcmax-velo')) document.getElementById('user-profile-fcmax-velo').value = u.fcmaxVelo || '';
+            if (document.getElementById('user-profile-fcmax-natation')) document.getElementById('user-profile-fcmax-natation').value = u.fcmaxNatation || '';
+            if (document.getElementById('user-profile-visibility')) document.getElementById('user-profile-visibility').value = u.visibility || 'private';
+
+            // Cocher les sports favoris
+            if (Array.isArray(u.favoriteSports)) {
+                document.querySelectorAll('input[name="favorite-sport"]').forEach(cb => {
+                    cb.checked = u.favoriteSports.includes(cb.value);
+                });
+            }
+        }
+    } catch (err) {
+        console.warn("Lecture du profil Supabase impossible :", err.message);
     }
-  } catch (error) {
+
     // Compatibilité avant migration : si les nouvelles colonnes n'existent pas encore, retenter l'ancien schéma.
     try {
-      const { data: profile } = await supabaseClient.from('profiles').select('username, phone, bio, city, department, photo_url').eq('id', userId).maybeSingle();
-      if (profile) {
-        Object.assign(appData.user, { name: profile.username || appData.user.name, phone: profile.phone || '', bio: profile.bio || '', city: profile.city || '', department: profile.department || '', photo: profile.photo_url || '' });
-        appData.user.phoneVerified = false;
-        saveAppData();
-      }
-    } catch (fallbackError) { console.warn('Lecture du profil Supabase impossible :', fallbackError.message); }
-  }
+        const { data: profile } = await supabaseClient.from('profiles').select('username, phone, bio, city, department, photo_url').eq('id', userId).maybeSingle();
+        if (profile) {
+            Object.assign(appData.user, { name: profile.username || appData.user.name, phone: profile.phone || '', bio: profile.bio || '', city: profile.city || '', department: profile.department || '' });
+            appData.user.phoneVerified = false;
+            saveAppData();
+        }
+    } catch (fallbackError) { 
+        console.warn('Lecture du profil Supabase impossible :', fallbackError.message); 
+    }
 }
 
 async function saveUserProfile() {
@@ -2348,13 +2373,20 @@ async function saveUserProfile() {
   const saved = saveAppData();
 
   // 3. Synchronisation complète avec Supabase (table profiles incluant le téléphone et l'avatar)
-  if (typeof supabaseClient !== 'undefined' && supabaseClient && activeUserId) {
+// Récupération sécurisée de l'ID utilisateur (via la variable ou directement auprès de Supabase)
+let currentUserId = typeof activeUserId !== 'undefined' ? activeUserId : null;
+if (!currentUserId && typeof supabaseClient !== 'undefined' && supabaseClient) {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) currentUserId = user.id;
+}
+
+if (typeof supabaseClient !== 'undefined' && supabaseClient && currentUserId) {
     try {
       supabaseClient.auth.updateUser({ data: { username: u.name } }).catch(() => {});
 
       const { error: profileError } = await supabaseClient.from('profiles').upsert(
         {
-          id: activeUserId,
+         id: currentUserId,
           username: u.name,
           bio: u.bio,
           city: u.city,
