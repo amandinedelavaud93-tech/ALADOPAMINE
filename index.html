@@ -2384,36 +2384,36 @@ if (typeof supabaseClient !== 'undefined' && supabaseClient && currentUserId) {
     try {
       supabaseClient.auth.updateUser({ data: { username: u.name } }).catch(() => {});
 
-      const { error: profileError } = await supabaseClient.from('profiles').upsert(
-        {
-         id: currentUserId,
-          username: u.name,
-          bio: u.bio,
-          city: u.city,
-          department: u.department,
-          city_code: u.cityCode,
-          department_code: u.cityDepartmentCode,
-          latitude: u.cityLatitude,
-          longitude: u.cityLongitude,
-age: u.age,
-                    poids: u.weight,
-                    hauteur: u.height,
-                    sexe: u.sex,
-                    phone: u.phone,
-                    phone_verified: u.phoneVerified,
-                    photo_url: u.photo,
-                    avatar_url: u.photo,
-                    niveau_sportif: u.levelsportif,
-                    sports_préférés: u.favoriteSports,
-                    fcmax_course: u.fcmaxCourse || null,
-                    fcmax_velo: u.fcmaxVelo || null,
-                    fcmax_natation: u.fcmaxNatation || null,
-                    visibility: u.visibility,
-                    "paramètres de confidentialité": u.privacy,
-                    paramètres_de_notification: u.notifications
-        },
-        { onConflict: 'id' }
-      );
+const { error: profileError } = await supabaseClient.from('profiles').upsert(
+                    {
+                        id: currentUserId,
+                        username: u.name,
+                        bio: u.bio,
+                        city: u.city,
+                        department: u.department,
+                        city_code: u.cityCode,
+                        department_code: u.cityDepartmentCode,
+                        latitude: u.cityLatitude,
+                        longitude: u.cityLongitude,
+                        age: u.age,
+                        weight: u.weight,
+                        height: u.height,
+                        sex: u.sex,
+                        phone: u.phone,
+                        phone_verified: u.phoneVerified,
+                        photo_url: u.photo,
+                        avatar_url: u.photo,
+                        level_sportif: u.levelsportif || u.levelSportif,
+                        favorite_sports: u.favoriteSports,
+                        fcmax_course: u.fcmaxCourse || null,
+                        fcmax_velo: u.fcmaxVelo || null,
+                        fcmax_natation: u.fcmaxNatation || null,
+                        visibility: u.visibility,
+                        privacy_settings: u.privacy,
+                        notification_settings: u.notifications
+                    },
+                    { onConflict: 'id' }
+                );
 
       if (profileError) { u.phoneSynced = false; console.warn('Erreur synchro Supabase :', profileError.message); }
       else { u.phoneSynced = !!u.phoneVerified; saveAppData(); }
