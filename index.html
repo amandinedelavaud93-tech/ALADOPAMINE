@@ -321,6 +321,17 @@
     -webkit-appearance: none;
     margin: 0;
 }
+
+    /* V28 — saisie numérique directe harmonisée avec la Natation */
+    .activity-date-bpm { min-width:0; }
+    .activity-date-bpm input { width:100%; }
+    .distance-picker input, .duration-inputs input { min-width:0; width:100%; }
+    .competition-segment { border:1px solid var(--card-border); border-radius:10px; padding:10px; }
+    .competition-segment.segment-swim { background:rgba(0,162,255,.13); border-color:rgba(0,162,255,.45); }
+    .competition-segment.segment-bike { background:rgba(255,107,0,.13); border-color:rgba(255,107,0,.45); }
+    .competition-segment.segment-run { background:rgba(34,197,94,.13); border-color:rgba(34,197,94,.45); }
+    .competition-segment.segment-transition { background:rgba(255,255,255,.035); }
+    @media (max-width:600px) { .calculator-panel { padding:14px; } .calc-inputs-grid { gap:10px; } }
     .calculator-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; margin-bottom: 25px; }
     .calc-grid-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
     #view-competition .calc-grid-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -2917,14 +2928,16 @@ function validerLimitesNatation() {
 
     function competitionTimeField(id, label, defaults = {}) {
       const h = defaults.h || 0, m = defaults.m || 0, sec = defaults.s || 0;
-      return `<div class="form-group"><label>${label} — Durée</label><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+      const discipline = id === 'swim' ? 'segment-swim' : id === 'bike' ? 'segment-bike' : (id === 'run' || id === 'run1') ? 'segment-run' : 'segment-transition';
+      return `<div class="form-group competition-segment ${discipline}"><label>${label} — Durée</label><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
         <div><label for="competition-${id}-hours" style="font-size:.68rem;color:var(--text-sub);">Heures</label><input id="competition-${id}-hours" type="number" min="0" max="99" step="1" value="${h}" inputmode="numeric" oninput="syncCompetitionSplit('${id}')" class="form-control"></div>
         <div><label for="competition-${id}-minutes" style="font-size:.68rem;color:var(--text-sub);">Minutes</label><input id="competition-${id}-minutes" type="number" min="0" max="59" step="1" value="${m}" inputmode="numeric" oninput="syncCompetitionSplit('${id}')" class="form-control"></div>
         <div><label for="competition-${id}-seconds" style="font-size:.68rem;color:var(--text-sub);">Secondes</label><input id="competition-${id}-seconds" type="number" min="0" max="59" step="1" value="${sec}" inputmode="numeric" oninput="syncCompetitionSplit('${id}')" class="form-control"></div>
       </div><input id="competition-${id}" type="hidden" value="0"><small id="competition-${id}-preview" style="display:block;color:var(--text-sub);margin-top:5px;">00 h 00 min 00 s</small></div>`;
     }
     function competitionDistanceField(id, label, km = '') {
-      return `<div class="form-group distance-picker-group"><label>${label} — Distance</label><div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      const discipline = id.startsWith('swim') ? 'segment-swim' : id.startsWith('bike') ? 'segment-bike' : id.startsWith('run') ? 'segment-run' : '';
+      return `<div class="form-group distance-picker-group competition-segment ${discipline}"><label>${label} — Distance</label><div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div><label for="competition-${id}-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input id="competition-${id}-km" type="number" min="0" max="999" step="1" value="${km}" inputmode="numeric" oninput="syncCompetitionDistance('${id}')" class="form-control"></div>
         <div><label for="competition-${id}-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input id="competition-${id}-m" type="number" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="syncCompetitionDistance('${id}')" class="form-control"></div>
       </div><input id="competition-${id}" type="hidden" value="0"><small id="competition-${id}-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small></div>`;
