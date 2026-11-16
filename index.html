@@ -2275,116 +2275,115 @@ async function loadSupabaseProfileForUser(userId) {
 }
 
 async function saveUserProfile() {
-  const val = id => document.getElementById(id)?.value ?? '';
-  const num = id => { const n = Number(val(id)); return Number.isFinite(n) && n > 0 ? n : 0; };
-  const name = val('user-profile-name').trim();
-  if (name.length < 3) { alert('Le pseudo doit contenir au moins 3 caractères.'); return; }
-
-  const u = appData.user;
-  const selectedCity = window.selectedProfileCity;
-  const typedCity = val('user-profile-city').trim();
-
-  const sameSavedCity = typedCity && typedCity.toLocaleLowerCase('fr') === String(u.city || '').toLocaleLowerCase('fr');
-  if (typedCity && (!selectedCity || selectedCity.nom !== typedCity) && !sameSavedCity) {
-    alert('Pour une nouvelle ville, sélectionne une proposition dans la liste. Ta ville déjà enregistrée peut rester telle quelle.');
-    return;
-  }
-
-  if (selectedCity && selectedCity.nom === typedCity) {
-    u.cityLatitude = selectedCity.latitude;
-    u.cityLongitude = selectedCity.longitude;
-    u.cityCode = selectedCity.code;
-    u.cityDepartmentCode = selectedCity.codeDepartement;
-  }
-
-  // 1. Récupération du numéro : toute modification invalide l'ancienne vérification.
-  const previousVerifiedPhone = normalizeFrenchPhoneNumber(u.phone);
-  const enteredPhone = val('user-profile-phone').trim();
-  const normalizedEnteredPhone = normalizeFrenchPhoneNumber(enteredPhone);
-  if (previousVerifiedPhone !== normalizedEnteredPhone) {
-    u.phoneVerified = false;
-    u.phoneVerificationPending = !!enteredPhone;
-  }
-  u.phone = enteredPhone;
-
-  // 2. Gestion de l'upload de la photo de profil vers Supabase Storage (bucket 'avatars')
-  const fileInput = document.getElementById('user-profile-photo');
-  let photoUrl = u.photo || '';
-
-  if (fileInput && fileInput.files && fileInput.files[0] && activeUserId && typeof supabaseClient !== 'undefined') {
-    const file = fileInput.files[0];
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${activeUserId}/avatar.${fileExt}`;
-
-    const { error: uploadError } = await supabaseClient.storage
-      .from('avatars')
-      .upload(fileName, file, { upsert: true });
-
-    if (!uploadError) {
-      const { data: publicUrlData } = supabaseClient.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-      if (publicUrlData?.publicUrl) {
-        photoUrl = publicUrlData.publicUrl;
-        u.photo = photoUrl;
-      }
-    } else {
-      console.warn("Erreur lors de l'envoi de l'avatar :", uploadError.message);
-    }
-  }
-
-  Object.assign(u, {
-    name,
-    bio: val('user-profile-bio').trim(),
-    city: typedCity,
-    department: val('user-profile-department').trim(),
-    age: num('user-profile-age'),
-    weight: num('user-profile-weight'),
-    height: num('user-profile-height'),
-    sex: val('user-profile-sex'),
-    levelSportif: val('user-profile-level'),
-    fcmaxCourse: num('user-profile-fcmax-course'),
-    fcmaxVelo: num('user-profile-fcmax-velo'),
-    fcmaxNatation: num('user-profile-fcmax-natation'),
-    visibility: val('user-profile-visibility') || 'private'
-  });
-
-  u.favoriteSports = Array.from(document.querySelectorAll('input[name="favorite-sport"]:checked')).map(el => el.value);
-  u.privacy = { 
-    age: !!document.getElementById('privacy-show-age')?.checked, 
-    weight: !!document.getElementById('privacy-show-weight')?.checked, 
-    heart: !!document.getElementById('privacy-show-heart')?.checked, 
-    performance: !!document.getElementById('privacy-show-performance')?.checked, 
-    city: !!document.getElementById('privacy-show-city')?.checked 
-  };
-  u.notifications = { 
-    sound: !!document.getElementById('notif-sound-enabled')?.checked, 
-    visual: !!document.getElementById('notif-visual-enabled')?.checked, 
-    trophies: !!document.getElementById('notif-trophies')?.checked, 
-    friends: !!document.getElementById('notif-friends')?.checked, 
-    reminders: !!document.getElementById('notif-reminders')?.checked, 
-    volume: Number(val('notif-volume')) || 0 
-  };
-
-  if (!u.joinedAt && activeUserId) {
-    try { const { data } = await supabaseClient.auth.getUser(); u.joinedAt = data.user?.created_at || ''; } catch(e) {}
-  }
-
-  const saved = saveAppData();
-
-  // 3. Synchronisation complète avec Supabase (table profiles incluant le téléphone et l'avatar)
-// Récupération sécurisée de l'ID utilisateur (via la variable ou directement auprès de Supabase)
-let currentUserId = typeof activeUserId !== 'undefined' ? activeUserId : null;
-if (!currentUserId && typeof supabaseClient !== 'undefined' && supabaseClient) {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) currentUserId = user.id;
-}
-
-if (typeof supabaseClient !== 'undefined' && supabaseClient && currentUserId) {
     try {
-      supabaseClient.auth.updateUser({ data: { username: u.name } }).catch(() => {});
+        const val = id => document.getElementById(id)?.value ?? '';
+        const num = id => {
+            const n = Number(val(id));
+            return Number.isFinite(n) && n > 0 ? n : 0;
+        };
+        const name = val('user-profile-name').trim();
+        if (name.length < 3) { alert('Le pseudo doit contenir au moins 3 caractères.'); return; }
 
-const { error: profileError } = await supabaseClient.from('profiles').upsert(
+        const u = appData.user;
+        const selectedCity = window.selectedProfileCity;
+        const typedCity = val('user-profile-city').trim();
+
+        const sameSavedCity = typedCity && typedCity.toLocaleLowerCase('fr') === String(u.city || '').toLocaleLowerCase('fr');
+        if (typedCity && (!selectedCity || selectedCity.nom !== typedCity) && !sameSavedCity) {
+            alert('Pour une nouvelle ville, sélectionne une proposition dans la liste. Ta ville déjà enregistrée peut rester telle quelle.');
+            return;
+        }
+
+        if (selectedCity && selectedCity.nom === typedCity) {
+            u.cityLatitude = selectedCity.latitude;
+            u.cityLongitude = selectedCity.longitude;
+            u.cityCode = selectedCity.code;
+            u.cityDepartmentCode = selectedCity.codeDepartement;
+        }
+
+        // 1. Récupération du numéro de téléphone
+        const previousVerifiedPhone = normalizeFrenchPhoneNumber(u.phone);
+        const enteredPhone = val('user-profile-phone').trim();
+        const normalizedEnteredPhone = normalizeFrenchPhoneNumber(enteredPhone);
+        if (previousVerifiedPhone !== normalizedEnteredPhone) {
+            u.phoneVerified = false;
+            u.phoneVerificationPending = !!enteredPhone;
+        }
+        u.phone = enteredPhone;
+
+        // 2. Gestion de l'upload de la photo de profil vers Supabase Storage
+        const fileInput = document.getElementById('user-profile-photo');
+        let photourl = u.photo || '';
+
+        if (fileInput && fileInput.files && fileInput.files[0] && activeUserId && typeof supabaseClient !== 'undefined') {
+            const file = fileInput.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${activeUserId}/avatar.${fileExt}`;
+
+            const { error: uploadError } = await supabaseClient.storage
+                .from('avatars')
+                .upload(fileName, file, { upsert: true });
+
+            if (!uploadError) {
+                const { data: publicUrlData } = supabaseClient.storage
+                    .from('avatars')
+                    .getPublicUrl(fileName);
+                if (publicUrlData?.publicUrl) {
+                    photourl = publicUrlData.publicUrl;
+                    u.photo = photourl;
+                }
+            } else {
+                console.warn("Erreur lors de l'envoi de l'avatar :", uploadError.message);
+            }
+        }
+
+        Object.assign(u, {
+            name,
+            bio: val('user-profile-bio').trim(),
+            city: typedCity,
+            department: val('user-profile-department').trim(),
+            age: num('user-profile-age'),
+            weight: num('user-profile-weight'),
+            height: num('user-profile-height'),
+            sex: val('user-profile-sex'),
+            levelsportif: val('user-profile-level'),
+            fcmaxCourse: num('user-profile-fcmax-course'),
+            fcmaxVelo: num('user-profile-fcmax-velo'),
+            fcmaxNatation: num('user-profile-fcmax-natation'),
+            visibility: val('user-profile-visibility') || 'private'
+        });
+
+        u.favoriteSports = Array.from(document.querySelectorAll('input[name="favorite sport"]:checked')).map(el => el.value);
+        u.privacy = {
+            age: !!document.getElementById('privacy-show-age')?.checked,
+            weight: !!document.getElementById('privacy-show-weight')?.checked,
+            heart: !!document.getElementById('privacy-show-heart')?.checked,
+            performance: !!document.getElementById('privacy-show-performance')?.checked,
+            city: !!document.getElementById('privacy-show-city')?.checked
+        };
+        u.notifications = {
+            sound: !!document.getElementById('notif-sound-enabled')?.checked,
+            visual: !!document.getElementById('notif-visual-enabled')?.checked,
+            trophies: !!document.getElementById('notif-trophies')?.checked,
+            friends: !!document.getElementById('notif-friends')?.checked,
+            reminders: !!document.getElementById('notif-reminders')?.checked,
+            volume: Number(val('notif-volume')) || 0
+        };
+
+        const saved = saveAppData();
+
+        // 3. Synchronisation Supabase avec les colonnes exactes de ta base
+        try {
+            let currentUserId = typeof activeUserId !== 'undefined' ? activeUserId : null;
+            if (!currentUserId && typeof supabaseClient !== 'undefined' && supabaseClient) {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (user) currentUserId = user.id;
+            }
+
+            if (currentUserId && typeof supabaseClient !== 'undefined' && supabaseClient) {
+                supabaseClient.auth.updateUser({ data: { username: u.name } }).catch(() => {});
+
+                const { error: profileError } = await supabaseClient.from('profiles').upsert(
                     {
                         id: currentUserId,
                         username: u.name,
@@ -2403,7 +2402,7 @@ const { error: profileError } = await supabaseClient.from('profiles').upsert(
                         phone_verified: u.phoneVerified,
                         photo_url: u.photo,
                         avatar_url: u.photo,
-                        level_sportif: u.levelsportif || u.levelSportif,
+                        level_sportif: u.levelsportif,
                         favorite_sports: u.favoriteSports,
                         fcmax_course: u.fcmaxCourse || null,
                         fcmax_velo: u.fcmaxVelo || null,
@@ -2415,20 +2414,30 @@ const { error: profileError } = await supabaseClient.from('profiles').upsert(
                     { onConflict: 'id' }
                 );
 
-      if (profileError) { u.phoneSynced = false; console.warn('Erreur synchro Supabase :', profileError.message); }
-      else { u.phoneSynced = !!u.phoneVerified; saveAppData(); }
-    } catch (syncError) { console.warn('Synchronisation Supabase indisponible :', syncError); }
-  }
+                if (profileError) {
+                    console.error("Erreur synchro Supabase :", profileError);
+                    alert("Erreur Supabase : " + profileError.message);
+                } else {
+                    u.phoneSynced = !!u.phoneVerified;
+                    saveAppData();
+                }
+            }
+        } catch (syncError) {
+            console.warn("Synchronisation Supabase indisponible :", syncError);
+        }
 
-  toggleProfileModal(false);
-  updateSummaryUI();
-  updateAICoachAdvice();
-  if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
-  if (u.city) refreshProfileWeather();
-  playDopamineSound('success');
+        toggleProfileModal(false);
+        updateSummaryUI();
+        if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
+        if (u.city) refreshProfileWeather();
+        playDopamineSound('success');
 
-  updatePhoneVerificationBadge();
-  alert(saved ? (activeUserId ? 'Profil enregistré sur cet appareil. La synchronisation Supabase doit être confirmée séparément ; le téléphone reste non vérifié tant que le code SMS n’est pas confirmé.' : 'Profil enregistré sur cet appareil en mode invité.') : 'La sauvegarde a échoué.');
+        updatePhoneVerificationBadge();
+        alert('Profil enregistré et synchronisé avec succès ! 🚀');
+    } catch (err) {
+        console.error("Erreur saveUserProfile :", err);
+        alert("Erreur lors de l'enregistrement : " + err.message);
+    }
 }
 
 // CONFIGURATION DE L'AUTOCOMPLÉTION DES VILLES
