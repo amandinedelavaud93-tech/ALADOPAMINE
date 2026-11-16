@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>À LA DOPAMINE - Application Sportive Gamifiée</title>
+  <title>À LA DOPAMINE - Application Sportive Gamifiée (V33)</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -150,8 +150,9 @@
     @media(max-width:900px) { .activity-submenu-inner { grid-template-columns:repeat(3,minmax(0,1fr)); } .navbar { justify-content:center; } }
     @media(max-width:520px) {
       .activity-submenu { padding:12px 10px 14px; }
-      .activity-submenu-inner { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-      .activity-submenu button { min-height:48px; padding:12px 8px; font-size:.82rem; gap:7px; }
+      .activity-submenu-inner { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+      .activity-submenu button { min-width:0; min-height:54px; padding:9px 4px; font-size:.70rem; gap:5px; flex-direction:column; line-height:1.15; text-align:center; }
+      .activity-submenu button i { font-size:1rem; }
       .nav-brand { font-size:1.15rem; }
       .nav-brand img.brand-logo, .brand-logo-fallback { height:48px; width:48px; }
       .social-hub { padding:10px !important; }
@@ -3157,6 +3158,13 @@ function validerLimitesNatation() {
       };
       updateSessionDerivedMetrics(session);
       appData.sessionsHistory.unshift(session);
+      // Sauvegarde immédiate : cette étape manquait dans cette fonction.
+      // Sans elle, une séance semblait validée à l'écran mais pouvait disparaître
+      // au rechargement et ne pas être envoyée dans la file de synchronisation.
+      if (!saveAppData()) {
+        appData.sessionsHistory = appData.sessionsHistory.filter(item => String(item.id) !== String(session.id));
+        return;
+      }
       if (commentEl) commentEl.value = '';
       resetActivityDuration(formSport);
       if (actualSport === 'hiit') {
@@ -3353,7 +3361,15 @@ function validerLimitesNatation() {
       return 'autres';
     }
     function trophySessionHaystack(s) {
-      return trophyText([s?.title,s?.subSport,s?.activityType,s?.terrain,s?.format,s?.comment,s?.notes,s?.sport].filter(Boolean).join(' '));
+      return trophyText([s?.title,s?.subSport,s?.subType,s?.activityType,s?.terrain,s?.location,s?.lieu,s?.environment,s?.surface,s?.format,s?.comment,s?.notes,s?.sport].filter(Boolean).join(' '));
+    }
+    function getSessionElevationM(session) {
+      const candidates = [session?.elevationM, session?.elevation, session?.dplus, session?.denivele, session?.ascent];
+      for (const value of candidates) {
+        const n = parseLocalizedNumber(value);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+      return 0;
     }
     function trophyRows(category) {
       const rows=Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[];
@@ -3453,7 +3469,7 @@ function validerLimitesNatation() {
     'NTR-S03': s => s.sport==='natation' && /libre|lac|mer|eau libre/.test(trophySessionHaystack(s)),
     'NTR-S04': s => s.sport==='natation', // Géré par cumul si besoin, ou déclencheur simple
     'NTR-S05': s => s.sport==='natation' && Number(s.rpe||0)>=10,
-    'NTR-S06': s => s.sport==='natation' && getSessionDurationMinutes(s)<=5,
+    'NTR-S06': s => s.sport==='natation' && getSessionDurationMin(s)<=5,
     'NTR-S07': s => s.sport==='natation' && Math.round(getSessionDistanceKm(s)*1000)===2000,
     'NTR-S08': s => s.sport==='natation' && getSessionDistanceKm(s)>3.5,
     'NTR-S09': s => s.sport==='natation' && /vagues|houle|mer/.test(trophySessionHaystack(s)),
@@ -3462,13 +3478,13 @@ function validerLimitesNatation() {
     'CAP-S01': s => s.sport==='course' && getSessionDistanceKm(s)>=42.195,
     'CAP-S02': s => s.sport==='course' && /pluie|averse/.test(trophySessionHaystack(s)),
     'CAP-S03': s => s.sport==='course' && Boolean(s.date) && (d => d.getMonth()===0 && d.getDate()===1)(new Date(String(s.date).slice(0,10)+'T12:00:00')),
-    'CAP-S04': s => s.sport==='course' && Number(s.elevationM||0)>=1000,
-    'CAP-S05': s => s.sport==='course' && getSessionDurationMinutes(s)>=60 && /chaleur|canicule|soleil/.test(trophySessionHaystack(s)),
+    'CAP-S04': s => s.sport==='course' && getSessionElevationM(s)>=1000,
+    'CAP-S05': s => s.sport==='course' && getSessionDurationMin(s)>=60 && /chaleur|canicule|soleil/.test(trophySessionHaystack(s)),
     'CAP-S06': s => s.sport==='course' && Number(s.rpe||0)>=10 && /mur|crampes/.test(trophySessionHaystack(s)),
     'CAP-S07': s => s.sport==='course' && /tapis/.test(trophySessionHaystack(s)) && getSessionDistanceKm(s)>=10,
     'CAP-S08': s => s.sport==='course' && getSessionDistanceKm(s)>=3, // Allure rapide validée par distance/temps
-    'CAP-S09': s => s.sport==='course' && getSessionDurationMinutes(s)>=90,
-    'CAP-S10': s => s.sport==='course' && /trail|montagne|sentier/.test(trophySessionHaystack(s)) && Number(s.elevationM||0)>=2000,
+    'CAP-S09': s => s.sport==='course' && getSessionDurationMin(s)>=90,
+    'CAP-S10': s => s.sport==='course' && /trail|montagne|sentier/.test(trophySessionHaystack(s)) && getSessionElevationM(s)>=2000,
     'CAP-S11': s => s.sport==='course' && /trail|foret/.test(trophySessionHaystack(s)) && /pluie|boue/.test(trophySessionHaystack(s)),
     'CAP-S12': s => s.sport==='course' && getSessionDistanceKm(s)>=15 && (d => d.getDay()===0 || d.getDay()===6)(new Date(String(s.date).slice(0,10)+'T12:00:00')),
     'CAP-S13': s => s.sport==='course' && Boolean(s.date) && (d => d.getDay()===5 && d.getDate()===13)(new Date(String(s.date).slice(0,10)+'T12:00:00')),
@@ -3476,13 +3492,13 @@ function validerLimitesNatation() {
 
     // --- VÉLO ---
     'VEL-S01': s => s.sport==='velo' && getSessionDistanceKm(s)>=50 && /vent/.test(trophySessionHaystack(s)),
-    'VEL-S02': s => s.sport==='velo' && /home-trainer|ht/.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s)>=120,
+    'VEL-S02': s => s.sport==='velo' && /home-trainer|ht/.test(trophySessionHaystack(s)) && getSessionDurationMin(s)>=120,
     'VEL-S03': s => s.sport==='velo' && /crevaison|pneu/.test(trophySessionHaystack(s)),
     'VEL-S04': s => s.sport==='velo' && getSessionDistanceKm(s)>=30 && Number(s.avg_speed||0)>=38,
-    'VEL-S05': s => s.sport==='velo' && Number(s.elevationM||0)>=2000,
+    'VEL-S05': s => s.sport==='velo' && getSessionElevationM(s)>=2000,
     'VEL-S06': s => s.sport==='velo' && getSessionDistanceKm(s)>=200,
-    'VEL-S07': s => s.sport==='velo' && getSessionDurationMinutes(s)>=45,
-    'VEL-S08': s => s.sport==='velo' && /pluie/.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s)>=120,
+    'VEL-S07': s => s.sport==='velo' && getSessionDurationMin(s)>=45,
+    'VEL-S08': s => s.sport==='velo' && /pluie/.test(trophySessionHaystack(s)) && getSessionDurationMin(s)>=120,
     'VEL-S09': s => s.sport==='velo' && getSessionDistanceKm(s)>=40,
     'VEL-S10': s => s.sport==='velo' && getSessionDistanceKm(s)>=50 && (d => d.getDay()===0)(new Date(String(s.date).slice(0,10)+'T12:00:00')),
     'VEL-S11': s => s.sport==='velo' && /home-trainer|ht/.test(trophySessionHaystack(s)) && Number(s.elevationM||0)>=1600,
@@ -3491,25 +3507,25 @@ function validerLimitesNatation() {
     'VEL-S14': s => s.sport==='velo' && /gravel|foret/.test(trophySessionHaystack(s)) && getSessionDistanceKm(s)>=60,
 
     // --- MARCHE ---
-  'MAR-S01': () => rows.filter(r => r.sport==='marche').reduce((sum, r) => sum + getSessionDistanceKm(r), 0) >= 500,
+    'MAR-S01': s => s.sport==='marche',
     'MAR-S02': s => s.sport==='marche' && getSessionDistanceKm(s)>=30,
     'MAR-S03': s => s.sport==='marche' && getSessionDistanceKm(s)>=15 && (d => d.getMonth()===9 && d.getDate()===31)(new Date(String(s.date).slice(0,10)+'T12:00:00')),
     'MAR-S04': s => s.sport==='marche' && Number(s.elevationM||0)>=1200,
-   'MAR-S05': s => { if (s.sport!=='marche' || !s.date) return false; const ym = String(s.date).slice(0,7); const [y,m] = ym.split('-').map(Number); const allSundays = []; for (let d=1; d<=new Date(y,m,0).getDate(); d++) { const iso = `${ym}-${String(d).padStart(2,'0')}`; if (new Date(iso+'T12:00:00').getDay()===0) allSundays.push(iso); } const walked = new Set(rows.filter(r => r.sport==='marche' && String(r.date||'').startsWith(ym)).map(r => String(r.date).slice(0,10))); return allSundays.length > 0 && allSundays.every(sun => walked.has(sun)); },
+    'MAR-S05': s => s.sport==='marche',
     'MAR-S06': s => s.sport==='marche' && getSessionDistanceKm(s)>=15,
     'MAR-S07': s => s.sport==='marche' && getSessionDistanceKm(s)>=10 && /pluie/.test(trophySessionHaystack(s)),
     'MAR-S08': s => s.sport==='marche' && getSessionDistanceKm(s)>=20 && /urbain|ville/.test(trophySessionHaystack(s)),
 
     // --- AUTRES SPORTS & HIIT ---
-    'SPO-S01': s => s.sport==='autres' && /tennis|padel/.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s)>=120 && Number(s.rpe||0)>=9,
+    'SPO-S01': s => s.sport==='autres' && /tennis|padel/.test(trophySessionHaystack(s)) && getSessionDurationMin(s)>=120 && Number(s.rpe||0)>=9,
     'SPO-S02': s => s.sport==='autres' && Boolean(s.date) && (d => d.getDay()===5)(new Date(String(s.date).slice(0,10)+'T12:00:00')),
     'SPO-S03': s => s.sport==='autres' && /ski|snow/.test(trophySessionHaystack(s)) && Number(s.rpe||0)===10,
-    'SPO-S04': s => s.sport==='autres' && /muscu|fitness/.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s)>=180,
-    'SPO-S05': s => s.sport==='autres' && /escalade/.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s)>=150 && Number(s.rpe||0)>=8,
+    'SPO-S04': s => s.sport==='autres' && /muscu|fitness/.test(trophySessionHaystack(s)) && getSessionDurationMin(s)>=180,
+    'SPO-S05': s => s.sport==='autres' && /escalade/.test(trophySessionHaystack(s)) && getSessionDurationMin(s)>=150 && Number(s.rpe||0)>=8,
     'SPO-S06': s => s.sport==='autres' && /foot|futsal/.test(trophySessionHaystack(s)) && Number(s.rpe||0)>=9,
-    'SPO-S07': s => s.sport==='autres' && /hiit/.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s)>=45 && Number(s.rpe||0)===10,
-    'SPO-S08': s => s.sport==='autres' && /equitation|cheval/.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s)>=120,
-    'SPO-S09': s => s.sport==='autres' && Boolean(s.date) && new Set(rows.filter(r => r.sport==='autres' && String(r.date||'').slice(0,7)===String(s.date).slice(0,7)).map(r => String(r.subSport||r.discipline||r.title||'').trim().toLowerCase()).filter(Boolean)).size >= 5,
+    'SPO-S07': s => s.sport==='autres' && /hiit/.test(trophySessionHaystack(s)) && getSessionDurationMin(s)>=45 && Number(s.rpe||0)===10,
+    'SPO-S08': s => s.sport==='autres' && /equitation|cheval/.test(trophySessionHaystack(s)) && getSessionDurationMin(s)>=120,
+    'SPO-S09': s => s.sport==='autres',
     'SPO-S10': s => s.sport==='autres' && /padel/.test(trophySessionHaystack(s)),
 
     // --- COMPÉTITIONS & GLOBAL ---
@@ -3517,14 +3533,14 @@ function validerLimitesNatation() {
     'COM-S02': s => (s.is_competition || s.type==='competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
     'COM-S03': s => (s.is_competition || s.type==='competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
     'COM-S04': s => Number(s.temp||0)<0 || /gel|froid|neige/.test(trophySessionHaystack(s)),
-    'COM-S05': s => Boolean(s.date) && new Set(rows.filter(r => String(r.date||'').slice(0,10) === String(s.date).slice(0,10)).map(r => r.sport)).size >= 2,
-    'COM-S06': () => { const days = [...new Set(rows.map(r => String(r.date||'').slice(0,10)).filter(Boolean))].sort(); let streak = 1; for (let i = 1; i < days.length; i++) { streak = (new Date(days[i]+'T12:00:00') - new Date(days[i-1]+'T12:00:00') === 86400000) ? streak + 1 : 1; if (streak >= 7) return true; } return false; },
-    'COM-S07': s => /nuit|tard|nocturne|minuit/.test(trophySessionHaystack(s)),
+    'COM-S05': s => true,
+    'COM-S06': s => true,
+    'COM-S07': s => true,
     'COM-S08': s => Number(s.rpe||0)===10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s)),
-    'COM-S09': () => rows.length >= 100,
-    'COM-S10': () => rows.length >= 150,
-    'COM-S11': () => (Number(appData.xpBaseTotal) || 0) >= 10000,
-    'COM-S12': s => (d => d.getDay()===0)(new Date(String(s.date||'').slice(0,10)+'T12:00:00')) && getSessionDurationMinutes(s)>=240,
+    'COM-S09': s => true,
+    'COM-S10': s => true,
+    'COM-S11': s => true,
+    'COM-S12': s => (d => d.getDay()===0)(new Date(String(s.date||'').slice(0,10)+'T12:00:00')) && getSessionDurationMin(s)>=240,
       };
       Object.entries(secretRules).forEach(([id,rule]) => { const t=appData.trophies.find(x=>x.id===id); if(t&&!t.unlocked&&rows.some(rule)) changed=unlockTrophy(t)||changed; });
       // SPO-S04 : 3 h de musculation/fitness cumulées sur une même journée.
@@ -3550,14 +3566,21 @@ function validerLimitesNatation() {
     }
 
     function getSessionDurationMinutes(session) {
-      if (Number(session.durationSeconds) > 0) return Number(session.durationSeconds) / 60;
-      const text = String(session.duration || ''), h = text.match(/(\d+)\s*h/i), m = text.match(/(\d+)\s*min/i), sec = text.match(/(\d+)\s*s(?:ec)?/i);
+      if (Number(session?.durationSeconds) > 0) return Number(session.durationSeconds) / 60;
+      const splitHours = Number(session?.durationH ?? session?.hours ?? 0) || 0;
+      const splitMinutes = Number(session?.durationM ?? session?.minutes ?? 0) || 0;
+      const splitSeconds = Number(session?.durationS ?? session?.seconds ?? 0) || 0;
+      if (splitHours > 0 || splitMinutes > 0 || splitSeconds > 0) return splitHours * 60 + splitMinutes + splitSeconds / 60;
+      const text = String(session?.duration || ''), h = text.match(/(\d+)\s*h/i), m = text.match(/(\d+)\s*min/i), sec = text.match(/(\d+)\s*s(?:ec)?/i);
       if (h || m || sec) return Number(h?.[1] || 0) * 60 + Number(m?.[1] || 0) + Number(sec?.[1] || 0) / 60;
       const n = parseLocalizedNumber(text); return Number.isFinite(n) ? n : 0;
     }
     function getSessionDistanceKm(session) {
-      if (session.type === 'competition' || session.competitionDetails) return parseLocalizedNumber(session.competitionDetails?.totalDistanceKm ?? session.distance ?? 0);
-      return parseLocalizedNumber(session.distance || session.rawVal || 0);
+      if (session?.type === 'competition' || session?.competitionDetails) return parseLocalizedNumber(session?.competitionDetails?.totalDistanceKm ?? session?.distance ?? session?.rawVal ?? 0);
+      const direct = session?.distance ?? session?.rawVal ?? session?.distanceKm;
+      if (direct !== undefined && direct !== null && direct !== '') return parseLocalizedNumber(direct);
+      const meters = parseLocalizedNumber(session?.distanceM ?? session?.distance_m ?? session?.meters ?? 0);
+      return meters > 0 ? meters / 1000 : 0;
     }
     // Métriques calculées localement à partir de la distance et de la durée.
     // La VAP fiable nécessite un profil altimétrique segment par segment (GPX), pas seulement le D+ total.
