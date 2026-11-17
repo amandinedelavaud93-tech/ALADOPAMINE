@@ -3326,7 +3326,7 @@ function validerLimitesNatation() {
       const title=name, sportMap={triathlon:'triathlon',duathlon:'duathlon',trail:'trail',course:'course',velo:'velo',natation:'natation',autre:'competition'}, eventSport=sportMap[kind]||'competition';
       const record={kind,format,details,...context,totalDistanceKm:totalDistance,totalElevationM:totalElevation,durationMinutes:effectiveDuration,durationSeconds,durationHours:timeParts.hours,durationRemainderMinutes:timeParts.minutes,durationRemainderSeconds:timeParts.seconds,averageBpm:bpm,rpe,notes};
       if(date>today){if(!Array.isArray(appData.plannedSessions))appData.plannedSessions=[];appData.plannedSessions.push({id:Date.now(),title,date,time:'',sport:eventSport,type:'competition',format,details:record});saveAppData();renderHomeCalendar();updateRaceCountdown();renderLastCompetitionCard();alert('Compétition ajoutée au calendrier. Les détails sont conservés ; aucun XP avant le résultat.');}
-      else {const xp=calculateSessionXp({sport:'competition',isCompetition:true,durationMinutes:effectiveDuration,distanceKm:totalDistance,elevationM:totalElevation,averageBpm:bpm});ensureXpBaseline();appData.sessionsHistory.unshift({id:Date.now(),type:'competition',sport:'competition',title,date,format,eventKind:kind,duration:`${String(timeParts.hours).padStart(2,'0')} h ${String(timeParts.minutes).padStart(2,'0')} min ${String(timeParts.seconds).padStart(2,'0')} s`,durationSeconds,distance:`${totalDistance} km`,rawVal:0,xp,averageBpm:bpm,elevationM:totalElevation,rpe,competitionDetails:record,comment:notes,calories:Math.round(effectiveDuration*9),source:'manual',partners:[],is_competition:true});updateSessionDerivedMetrics(appData.sessionsHistory[0]);recalculateXpFromHistory();saveAppData();renderHistory();renderChart();renderLastCompetitionCard();checkCompetitionTrophies?.();checkTrophiesUnlock();triggerAchievementPopup(`Compétition enregistrée ! +${xp} XP`);}
+      else {const xp=calculateSessionXp({sport:'competition',isCompetition:true,durationMinutes:effectiveDuration,distanceKm:totalDistance,elevationM:totalElevation,averageBpm:bpm});ensureXpBaseline();appData.sessionsHistory.unshift({id:Date.now(),type:'competition',sport:'competition',title,date,format,eventKind:kind,duration:`${String(timeParts.hours).padStart(2,'0')} h ${String(timeParts.minutes).padStart(2,'0')} min ${String(timeParts.seconds).padStart(2,'0')} s`,durationSeconds,distance:`${totalDistance} km`,rawVal:0,xp,averageBpm:bpm,elevationM:totalElevation,rpe,competitionDetails:record,comment:notes,calories:Math.round(effectiveDuration*9),source:'manual',partners:[],is_competition:true});updateSessionDerivedMetrics(appData.sessionsHistory[0]);recalculateXpFromHistory();saveAppData();renderHistory();renderChart();renderLastCompetitionCard();checkCompetitionTrophies();checkTrophiesUnlock();triggerAchievementPopup(`Compétition enregistrée ! +${xp} XP`);}
       ['name','custom-format','duration','distance','elevation','bpm','notes'].forEach(k=>{const el=document.getElementById('competition-'+k);if(el)el.value='';});['hours','minutes','seconds'].forEach(k=>{const el=document.getElementById('competition-duration-'+k);if(el)el.value='00';});const durationHidden=document.getElementById('competition-duration');if(durationHidden)durationHidden.value='0';const rpeInput=document.getElementById('competition-rpe');if(rpeInput)rpeInput.value=5;updateCompetitionDuration();document.getElementById('competition-date').value=today;document.getElementById('competition-format').value='M';document.getElementById('competition-kind').value='triathlon';document.getElementById('competition-rpe-value').textContent='5/10';updateCompetitionFields();
     }
 
@@ -3438,6 +3438,42 @@ function validerLimitesNatation() {
       if(threshold.kind==='competition-format') return rows.some(s=>String(s.format||s.competitionDetails?.format||'').toUpperCase()===threshold.value);
       return false;
     }
+    // COM-021 / COM-022 — règles calendaires dédiées aux compétitions officielles.
+    // Une compétition est comptée uniquement si elle est enregistrée comme compétition terminée.
+    function checkCompetitionTrophies() {
+      const rows = (Array.isArray(appData.sessionsHistory) ? appData.sessionsHistory : [])
+        .filter(s => s && (s.is_competition === true || s.type === 'competition' || !!s.competitionDetails))
+        .map(s => ({ ...s, _date: String(s.date || s.competitionDetails?.date || '').slice(0, 10) }))
+        .filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s._date))
+        .sort((a, b) => a._date.localeCompare(b._date));
+      const byId = new Map((appData.trophies || []).map(t => [t.id, t]));
+      let changed = false;
+
+      const twoWithinSevenDays = rows.some((row, index) => {
+        const start = new Date(row._date + 'T12:00:00');
+        return rows.slice(index + 1).some(next => {
+          const end = new Date(next._date + 'T12:00:00');
+          const days = Math.round((end - start) / 86400000);
+          return days >= 0 && days <= 7;
+        });
+      });
+      if (twoWithinSevenDays) {
+        const trophy = byId.get('COM-021');
+        if (trophy && !trophy.unlocked) changed = unlockTrophy(trophy, '2 compétitions officielles en 7 jours') || changed;
+      }
+
+      const monthCounts = new Map();
+      rows.forEach(row => {
+        const month = row._date.slice(0, 7);
+        monthCounts.set(month, (monthCounts.get(month) || 0) + 1);
+      });
+      if ([...monthCounts.values()].some(count => count >= 3)) {
+        const trophy = byId.get('COM-022');
+        if (trophy && !trophy.unlocked) changed = unlockTrophy(trophy, '3 compétitions officielles dans le même mois') || changed;
+      }
+      return changed;
+    }
+
     function unlockTrophy(t, reason='') {
       if (!t || t.unlocked) return false;
       t.unlocked = true;
@@ -3453,6 +3489,7 @@ function validerLimitesNatation() {
       let changed = false;
       // Les trophées publics dont le descriptif exprime un seuil cumulatif ou un format précis sont évalués automatiquement.
       appData.trophies.filter(t => !t.isSecret && !t.unlocked).forEach(t => { if (isPublicTrophyEligible(t)) changed = unlockTrophy(t) || changed; });
+      changed = checkCompetitionTrophies() || changed;
       // Secrets dont les conditions peuvent être vérifiées sans inventer de données absentes.
       const rows = appData.sessionsHistory || [];
       const secretRules = {
