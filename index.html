@@ -3502,8 +3502,8 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       // Secrets dont les conditions peuvent être vérifiées sans inventer de données absentes.
       const rows = appData.sessionsHistory || [];
       const secretRules = {
-        // --- NATATION ---
-// --- NATATION ---
+
+   // --- NATATION ---
     'NTR-S01': s => s.sport === 'natation' && getSessionDistanceKm(s) >= 3,
     'NTR-S02': s => s.sport === 'natation' && (/eau libre|mer|lac|riviere/.test(s.terrain || '')) && (/pluie|froid|gel|glace/.test(trophySessionHaystack(s)) || Number(s.temp || 15) < 10),
     'NTR-S03': s => s.sport === 'natation' && (/eau libre|mer|lac|riviere/.test(s.terrain || '')),
@@ -3524,7 +3524,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       return pubNtr.length > 0 && pubNtr.every(t => t.unlocked);
     },
 
-// --- COURSE À PIED (CAP-S01 à CAP-S15) ---
+   // --- COURSE À PIED
     'CAP-S01': s => s.sport === 'course' && getSessionDistanceKm(s) >= 42.195,
     'CAP-S02': s => s.sport === 'course' && /pluie|averse/.test(trophySessionHaystack(s)),
     'CAP-S03': s => s.sport === 'course' && Boolean(s.date) && (d => d.getMonth() === 0 && d.getDate() === 1)(new Date(String(s.date).slice(0, 10) + 'T12:00:00')),
@@ -3557,7 +3557,6 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       return totalTrailDplus >= 10000;
     },
     // --- VÉLO ---
-// --- VÉLO (VEL-S01 à VEL-S15) ---
     'VEL-S01': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 50 && /vent|tempête|bourrasque/.test(trophySessionHaystack(s)),
     'VEL-S02': s => s.sport === 'velo' && /home-trainer|hometrainer|home trainer/.test(s.terrain || '') && getSessionDurationMinutes(s) >= 120,
     'VEL-S03': s => s.sport === 'velo' && /crevaison|crevé|pneu/.test(trophySessionHaystack(s)),
@@ -3602,10 +3601,9 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     'VEL-S15': s => {
       const totalVeloKm = (appData.sessionsHistory || []).filter(x => x.sport === 'velo').reduce((acc, x) => acc + getSessionDistanceKm(x), 0);
       return totalVeloKm >= 3500;
-    },
+    }, 
 
     // --- MARCHE ---
-// --- MARCHE (MAR-S01 à MAR-S08) ---
     'MAR-S01': s => {
       const totalMarcheKm = (appData.sessionsHistory || []).filter(x => x.sport === 'marche').reduce((acc, x) => acc + getSessionDistanceKm(x), 0);
       return totalMarcheKm >= 500;
@@ -3662,10 +3660,9 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       return streak >= 4;
     },
     'MAR-S07': s => s.sport === 'marche' && getSessionDistanceKm(s) >= 10 && /pluie|averse|battante/.test(trophySessionHaystack(s)),
-    'MAR-S08': s => s.sport === 'marché' || s.sport === 'marche' && /urbain|ville|rue/.test(s.terrain || '') && getSessionDistanceKm(s) >= 20,
+   'MAR-S08': s => (/marche|marché/.test(s.sport || '')) && /urbain|ville|rue/.test(s.terrain || '') && getSessionDistanceKm(s) >= 20,
 
     // --- AUTRES SPORTS & HIIT ---
-   // --- AUTRES SPORTS & HIIT (SPO-S01 à SPO-S10) ---
     'SPO-S01': s => (/tennis|padel/.test(s.sport || '')) && getSessionDurationMinutes(s) >= 120 && Number(s.rpe || 0) >= 9,
     'SPO-S02': s => {
       const dateStr = s.date || '';
@@ -3745,7 +3742,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     'COM-S12': s => (s.is_competition || s.type === 'competition') && getSessionDurationMinutes(s) > 240
   };
 
-  Object.entries(secretRules).forEach(([id, rule]) => { 
+Object.entries(secretRules).forEach(([id, rule]) => { 
     const t = appData.trophies.find(x => x.id === id); 
     if(t && !t.unlocked && rows.some(rule)) changed = unlockTrophy(t) || changed; 
   });
