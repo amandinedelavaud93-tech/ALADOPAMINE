@@ -3725,23 +3725,25 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     },
     // --- COMPÉTITIONS & GLOBAL ---
     // --- COMPÉTITIONS & GLOBAL (COM-S01 à COM-S12) ---
-        'COM-S01': s => s.is_competition || s.type === 'competition',
-        'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
-        'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
-        'COM-S04': s => Number(s.temp||0) < 0 || /gel|froid|neige/.test(trophySessionHaystack(s)),
-        'COM-S05': s => {
-          const day = (s.date || '').slice(0, 10);
-          if (!day) return false;
-          const sessionsOnDay = (appData.sessionsHistory || []).filter(x => (x.date || '').slice(0, 10) === day);
-          return sessionsOnDay.length >= 2;
-        },
-        'COM-S06': s => {
-          const uniqueDays = new Set((appData.sessionsHistory || []).map(x => (x.date || '').slice(0, 10))).size;
-          return uniqueDays >= 7;
-        },
-        'COM-S08': s => Number(s.rpe||8) >= 10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s)),
-        'COM-S11': s => (appData.level || 1) >= 10,
-        'COM-S12': s => (s.is_competition || s.type === 'competition') && getSessionDurationMinutes(s) > 240
+const secretRules = {
+      'COM-S01': s => s.is_competition || s.type === 'competition',
+      'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
+      'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
+      'COM-S04': s => Number(s.temp||0) < 0 || /gel|froid|neige/.test(trophySessionHaystack(s)),
+      'COM-S05': s => {
+        const day = (s.date || '').slice(0, 10);
+        if (!day) return false;
+        const sessionsOnDay = (appData.sessionsHistory || []).filter(x => (x.date || '').slice(0, 10) === day);
+        return sessionsOnDay.length >= 2;
+      },
+      'COM-S06': s => {
+        const uniqueDays = new Set((appData.sessionsHistory || []).map(x => (x.date || '').slice(0, 10))).size;
+        return uniqueDays >= 7;
+      },
+      'COM-S08': s => Number(s.rpe||8) >= 10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s)),
+      'COM-S11': s => (appData.level || 1) >= 10,
+      'COM-S12': s => (s.is_competition || s.type === 'competition') && getSessionDurationMinutes(s) > 240
+    };
       Object.entries(secretRules).forEach(([id,rule]) => { const t=appData.trophies.find(x=>x.id===id); if(t&&!t.unlocked&&rows.some(rule)) changed=unlockTrophy(t)||changed; });
       // SPO-S04 : 3 h de musculation/fitness cumulées sur une même journée.
       const fitnessByDay = new Map();
