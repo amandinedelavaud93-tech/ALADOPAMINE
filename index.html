@@ -1823,7 +1823,6 @@
     let calendarSelectedDate = localDateISO(new Date());
     let historyFilter = 'all';
     let chartInstance = null;
-   appData = { user: {}, trophies: [], sessionsHistory: [] };
 
     // Navigation centrale : toutes les pages déjà présentes dans le HTML.
     function buildTrophyCatalogue() {
@@ -1851,7 +1850,7 @@
     // --- COMPÉTITIONS & GLOBAL (COM-S01 à COM-S12) ---
     ['COM-S01', 'Finisher invincible', 'Terminer 3 compétitions officielles dans la même saison', 'Challenger', 1500, 'competition'],['COM-S02', 'Podium surprise', 'Compétition avec Podium ou Victoire en commentaire', 'Or', 1000, 'competition'],['COM-S03', 'Iron Human', 'Terminer un Triathlon XXL / Ironman', 'Challenger', 2500, 'competition'],['COM-S04', 'Le Phoenix des neiges', 'Sport extérieur par température inférieure à 0°C', 'Or', 400, 'competition'],['COM-S05', 'Double dose de dopamine', 'Valider 2 entraînements différents le même jour', 'Argent', 250, 'competition'],['COM-S06', 'Le Serial-Plaider', 'S’entraîner au moins une fois par jour 7 jours', 'Platine', 600, 'competition'],['COM-S08', 'Résilience pure', 'RPE 10/10 et commentaire fatigue ou dur', 'Argent', 250, 'competition'],['COM-S11', 'Décrocheur d’étoiles', 'Passer du niveau 1 au niveau 10', 'Or', 500, 'competition'],['COM-S12', 'Le Guerrier du Dimanche', 'Cumuler plus de 4 h de sport un dimanche', 'Argent', 200, 'competition'],
       ];
-          const secrets=secretDefs.map(([id,title,desc,tier,xp,category])=>({id,title,desc,tier,xp,category,icon:'fa-question',isSecret:true,unlocked:saved.some(t=>t.id===id&&t.unlocked),hint:'Trophée secret : découvre la condition en pratiquant.'}));
+      const secrets=secretDefs.map(([id,title,desc,tier,xp,category])=>({id,title,desc,tier,xp,category,icon:'fa-question',isSecret:true,unlocked:saved.some(t=>t.id===id&&t.unlocked),hint:'Trophée secret : découvre la condition en pratiquant.'}));
       const oldUnlocked=new Set(saved.filter(t=>t.unlocked).map(t=>t.id));
     
       appData.trophies=[...publicItems,...secrets];appData.trophies.forEach(t=>{if(oldUnlocked.has(t.id))t.unlocked=true;});
