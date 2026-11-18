@@ -3484,6 +3484,13 @@ function validerLimitesNatation() {
       triggerAchievementPopup(`🏆 Trophée débloqué : ${t.isSecret ? t.title : t.title}${bonus ? ` · +${bonus} XP` : ''}`);
       return true;
     }
+    function getSessionDurationMinutes(s) {
+
+
+return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minutes || 0) + (Number(s.seconds || 0) / 60);
+
+
+}
     function checkTrophiesUnlock() {
       if (!Array.isArray(appData.trophies) || !appData.trophies.length) buildTrophyCatalogue();
       let changed = false;
