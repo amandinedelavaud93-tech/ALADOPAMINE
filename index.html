@@ -1848,7 +1848,9 @@
     ['SPO-S01', 'Tie-break psychologique', 'Tennis/Padel ≥ 120 min avec RPE 9 ou 10', 'Or', 450, 'autres'],['SPO-S02', 'Round du Vendredi', 'Faire une séance de sport un vendredi', 'Argent', 300, 'autres'],['SPO-S03', 'Skieur intrépide', 'Ski/Snowboard avec RPE 10/10', 'Or', 400, 'autres'],['SPO-S04', 'Marathon du Fitness', '3 h de musculation/fitness le même jour', 'Or', 350, 'autres'],['SPO-S05', 'Escalade sans fin', '2h30 d’escalade avec RPE ≥ 8', 'Argent', 300, 'autres'],['SPO-S06', 'Légende du Futsal', 'Football/Futsal BPM > 165 et RPE ≥ 9', 'Argent', 250, 'autres'],['SPO-S07', 'HIIT surchauffe', '45 min de HIIT sans pause avec RPE 10', 'Argent', 200, 'autres'],['SPO-S08', 'Cavalier d’acier', '2 h d’équitation intensive', 'Bronze', 150, 'autres'],['SPO-S09', 'Polyvalent suprême', 'Pratiquer 5 disciplines Autres sports en 1 mois', 'Platine', 600, 'autres'],['SPO-S10', 'Addict au Padel', 'Jouer au Padel plus de 4 fois dans la même semaine', 'Or', 400, 'autres'],
 
     // --- COMPÉTITIONS & GLOBAL (COM-S01 à COM-S12) ---
-    ['COM-S01', 'Finisher invincible', 'Terminer 3 compétitions officielles dans la même saison', 'Challenger', 1500, 'competition'],['COM-S02', 'Podium surprise', 'Compétition avec Podium ou Victoire en commentaire', 'Or', 1000, 'competition'],['COM-S03', 'Iron Human', 'Terminer un Triathlon XXL / Ironman', 'Challenger', 2500, 'competition'],['COM-S04', 'Le Phoenix des neiges', 'Sport extérieur par température inférieure à 0°C', 'Or', 400, 'competition'],['COM-S05', 'Double dose de dopamine', 'Valider 2 entraînements différents le même jour', 'Argent', 250, 'competition'],['COM-S06', 'Le Serial-Plaider', 'S’entraîner au moins une fois par jour 7 jours', 'Platine', 600, 'competition'],['COM-S07', 'Hibou nocturne', 'Valider une séance entre 23h et 03h', 'Argent', 200, 'competition'],['COM-S08', 'Résilience pure', 'RPE 10/10 et commentaire fatigue ou dur', 'Argent', 250, 'competition'],['COM-S09', 'Le Centenaire Dopamine', 'Enregistrer la 100e séance', 'Platine', 800, 'competition'],['COM-S10', 'Année parfaite', 'Enregistrer 150 séances sur 365 jours', 'Challenger', 3000, 'competition'],['COM-S11', 'Décrocheur d’étoiles', 'Passer du niveau 1 au niveau 10', 'Or', 500, 'competition'],['COM-S12', 'Le Guerrier du Dimanche', 'Cumuler plus de 4 h de sport un dimanche', 'Argent', 200, 'competition']      ];
+    const secretDefs = [
+        ['COM-S01', 'Finisher invincible', 'Terminer 3 compétitions officielles dans la même saison', 'Challenger', 1500, 'competition'],['COM-S02', 'Podium surprise', 'Compétition avec Podium ou Victoire en commentaire', 'Or', 1000, 'competition'],['COM-S03', 'Iron Human', 'Terminer un Triathlon XXL / Ironman', 'Challenger', 2500, 'competition'],['COM-S04', 'Le Phoenix des neiges', 'Sport extérieur par température inférieure à 0°C', 'Or', 400, 'competition'],['COM-S05', 'Double dose de dopamine', 'Valider 2 entraînements différents le même jour', 'Argent', 250, 'competition'],['COM-S06', 'Le Serial-Plaider', 'S’entraîner au moins une fois par jour 7 jours', 'Platine', 600, 'competition'],['COM-S08', 'Résilience pure', 'RPE 10/10 et commentaire fatigue ou dur', 'Argent', 250, 'competition'],['COM-S11', 'Décrocheur d’étoiles', 'Passer du niveau 1 au niveau 10', 'Or', 500, 'competition'],['COM-S12', 'Le Guerrier du Dimanche', 'Cumuler plus de 4 h de sport un dimanche', 'Argent', 200, 'competition']
+      ];
       const secrets=secretDefs.map(([id,title,desc,tier,xp,category])=>({id,title,desc,tier,xp,category,icon:'fa-question',isSecret:true,unlocked:saved.some(t=>t.id===id&&t.unlocked),hint:'Trophée secret : découvre la condition en pratiquant.'}));
       const oldUnlocked=new Set(saved.filter(t=>t.unlocked).map(t=>t.id));
     
@@ -3724,31 +3726,23 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     },
     // --- COMPÉTITIONS & GLOBAL ---
     // --- COMPÉTITIONS & GLOBAL (COM-S01 à COM-S12) ---
-    'COM-S01': s => s.is_competition || s.type === 'competition',
-    'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
-    'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
-    'COM-S04': s => Number(s.temp||0) < 0 || /gel|froid|neige/.test(trophySessionHaystack(s)),
-    'COM-S05': s => {
-      const day = (s.date || '').slice(0, 10);
-      if (!day) return false;
-      const sessionsOnDay = (appData.sessionsHistory || []).filter(x => (x.date || '').slice(0, 10) === day);
-      return sessionsOnDay.length >= 2;
-    },
-    'COM-S06': s => {
-      const uniqueDays = new Set((appData.sessionsHistory || []).map(x => (x.date || '').slice(0, 10))).size;
-      return uniqueDays >= 7;
-    },
-    'COM-S07': s => {
-      const hour = getSessionHour(s);
-      return hour !== null && (hour >= 23 || hour <= 3);
-    },
-    'COM-S08': s => Number(s.rpe||8) >= 10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s)),
-    'COM-S09': s => (appData.sessionsHistory || []).length >= 100,
-    'COM-S10': s => (appData.sessionsHistory || []).length >= 150,
-    'COM-S11': s => (appData.level || 1) >= 10,
-    // ----------------------------------------
-    
-    'COM-S12': s => (s.is_competition || s.type === 'competition') && getSessionDurationMinutes(s) > 240,
+'COM-S01': s => s.is_competition || s.type === 'competition',
+        'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
+        'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
+        'COM-S04': s => Number(s.temp||0) < 0 || /gel|froid|neige/.test(trophySessionHaystack(s)),
+        'COM-S05': s => {
+          const day = (s.date || '').slice(0, 10);
+          if (!day) return false;
+          const sessionsOnDay = (appData.sessionsHistory || []).filter(x => (x.date || '').slice(0, 10) === day);
+          return sessionsOnDay.length >= 2;
+        },
+        'COM-S06': s => {
+          const uniqueDays = new Set((appData.sessionsHistory || []).map(x => (x.date || '').slice(0, 10))).size;
+          return uniqueDays >= 7;
+        },
+        'COM-S08': s => Number(s.rpe||8) >= 10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s)),
+        'COM-S11': s => (appData.level || 1) >= 10,
+        'COM-S12': s => (s.is_competition || s.type === 'competition') && getSessionDurationMinutes(s) > 240
       };
       Object.entries(secretRules).forEach(([id,rule]) => { const t=appData.trophies.find(x=>x.id===id); if(t&&!t.unlocked&&rows.some(rule)) changed=unlockTrophy(t)||changed; });
       // SPO-S04 : 3 h de musculation/fitness cumulées sur une même journée.
