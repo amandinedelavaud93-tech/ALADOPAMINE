@@ -3722,60 +3722,9 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       }).length;
       return padelCount > 4;
     },
-
-    // --- COMPÉTITIONS & GLOBAL (COM-S01 à COM-S12) ---
-    'COM-S01': s => {
-      const compCount = (appData.sessionsHistory || []).filter(x => /competition|officielle/.test(trophySessionHaystack(x))).length;
-      return compCount >= 3;
-    },
-    'COM-S02': s => /podium|victoire|1er|première place/.test(trophySessionHaystack(s)),
-    'COM-S03': s => getSessionDistanceKm(s) >= 226 || /ironman|triathlon xxl/.test(trophySessionHaystack(s)),
-    'COM-S04': s => Number(s.temp || 99) < 0 && /exterieur|dehors/.test(s.terrain || ''),
-    'COM-S05': s => {
-      const dateStr = String(s.date || '').slice(0, 10);
-      if (!dateStr) return false;
-      const daySessions = (appData.sessionsHistory || []).filter(x => String(x.date || '').slice(0, 10) === dateStr);
-      const uniqueSports = new Set(daySessions.map(x => x.sport));
-      return uniqueSports.size >= 2;
-    },
-    'COM-S06': s => {
-      // S'entraîner au moins une fois par jour pendant 7 jours
-      const history = (appData.sessionsHistory || []).filter(x => x.date).sort((a, b) => new Date(a.date) - new Date(b.date));
-      let streak = 1;
-      for (let i = 1; i < history.length; i++) {
-        const d1 = new Date(history[i-1].date);
-        const d2 = new Date(history[i].date);
-        const diffDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) {
-          streak++;
-          if (streak >= 7) return true;
-        } else if (diffDays > 1) {
-          streak = 1;
-        }
-      }
-      return streak >= 7;
-    },
-    'COM-S07': s => {
-      const hour = getSessionHour(s);
-      return hour >= 23 || hour < 3;
-    },
-    'COM-S08': s => Number(s.rpe || 0) === 10 && /fatigue|dur|épuisé/.test(trophySessionHaystack(s)),
-    'COM-S09': s => (appData.sessionsHistory || []).length >= 100,
-    'COM-S10': s => (appData.sessionsHistory || []).length >= 150,
-    'COM-S11': s => Number(appData.level || 1) >= 10,
-    'COM-S12': s => {
-      const dateStr = String(s.date || '').slice(0, 10);
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      if (d.getDay() !== 0) return false; // Dimanche
-      const totalMinutesSunday = (appData.sessionsHistory || [])
-        .filter(x => String(x.date || '').slice(0, 10) === dateStr)
-        .reduce((acc, x) => acc + getSessionDurationMinutes(x), 0);
-      return totalMinutesSunday > 240; // > 4 heures
-    }
-
     // --- COMPÉTITIONS & GLOBAL ---
-'COM-S01': s => s.is_competition || s.type === 'competition',
+    // --- COMPÉTITIONS & GLOBAL (COM-S01 à COM-S12) ---
+    'COM-S01': s => s.is_competition || s.type === 'competition',
     'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
     'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
     'COM-S04': s => Number(s.temp||0) < 0 || /gel|froid|neige/.test(trophySessionHaystack(s)),
