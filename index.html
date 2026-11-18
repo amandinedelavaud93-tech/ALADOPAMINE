@@ -3501,7 +3501,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       changed = checkCompetitionTrophies() || changed;
       // Secrets dont les conditions peuvent être vérifiées sans inventer de données absentes.
       const rows = appData.sessionsHistory || [];
-      const secretRules = {
+     const secretRules = {
 
    // --- NATATION ---
     'NTR-S01': s => s.sport === 'natation' && getSessionDistanceKm(s) >= 3,
@@ -3660,7 +3660,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       return streak >= 4;
     },
     'MAR-S07': s => s.sport === 'marche' && getSessionDistanceKm(s) >= 10 && /pluie|averse|battante/.test(trophySessionHaystack(s)),
-   'MAR-S08': s => (/marche|marché/.test(s.sport || '')) && /urbain|ville|rue/.test(s.terrain || '') && getSessionDistanceKm(s) >= 20,
+    'MAR-S08': s => (/marche|marché/.test(s.sport || '')) && /urbain|ville|rue/.test(s.terrain || '') && getSessionDistanceKm(s) >= 20,
 
     // --- AUTRES SPORTS & HIIT ---
     'SPO-S01': s => (/tennis|padel/.test(s.sport || '')) && getSessionDurationMinutes(s) >= 120 && Number(s.rpe || 0) >= 9,
@@ -5155,11 +5155,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       updateHeaderAuthUI();
 let activeUserId = null;
-  if (supabaseClient) {
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user?.id && activeUserId !== session.user.id) {
         activeUserId = session.user.id;
-        loadAppdataForUser(session.user.id);
+        loadAppDataForUser(session.user.id);
         try { await hydrateAppDataFromSupabase(session.user.id); } catch(e) { console.error('Chargement cloud impossible :', e); }
         await loadSupabaseProfileForUser(session.user.id);
         refreshAppAfterAccountLoad();
@@ -5170,8 +5169,6 @@ let activeUserId = null;
       }
       updateHeaderAuthUI();
     });
-  }
-      }
     });
   
     // Recharge l’espace amis dès qu’une session Supabase est disponible.
