@@ -5154,23 +5154,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (recoveryModal) recoveryModal.style.display = 'flex';
       }
       updateHeaderAuthUI();
-      if (supabaseClient) {
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
-          if (event === 'PASSWORD_RECOVERY') {
-            document.getElementById('auth-recovery-modal').style.display = 'flex';
-          }
-          if (event === 'SIGNED_IN' && session?.user?.id && activeUserId !== session.user.id) {
-            loadAppDataForUser(session.user.id);
-            try { await hydrateAppDataFromSupabase(session.user.id); } catch(e) { console.error('Chargement cloud impossible :',e); }
-            await loadSupabaseProfileForUser(session.user.id);
-            refreshAppAfterAccountLoad();
-          } else if (event === 'SIGNED_OUT') {
-            activeUserId = null;
-            appData = createEmptyAppData();
-            refreshAppAfterAccountLoad();
-          }
-          updateHeaderAuthUI();
-        });
+let activeUserId = null;
+  if (supabaseClient) {
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.id && activeUserId !== session.user.id) {
+        activeUserId = session.user.id;
+        loadAppdataForUser(session.user.id);
+        try { await hydrateAppDataFromSupabase(session.user.id); } catch(e) { console.error('Chargement cloud impossible :', e); }
+        await loadSupabaseProfileForUser(session.user.id);
+        refreshAppAfterAccountLoad();
+      } else if (event === 'SIGNED_OUT') {
+        activeUserId = null;
+        appData = createEmptyAppData();
+        refreshAppAfterAccountLoad();
+      }
+      updateHeaderAuthUI();
+    });
+  }
       }
     });
   
