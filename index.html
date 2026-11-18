@@ -3706,7 +3706,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       return monthSports.size >= 5;
     },
 
-    'SPO-S10': s => {
+'SPO-S10': s => {
       if (!/padel/.test(s.sport || '')) return false;
       const dateStr = s.date || '';
       if (!dateStr) return false;
@@ -3724,8 +3724,9 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       return padelCount > 4;
     }
   };
-// --- COMPÉTITIONS & GLOBAL ---
-    // --- COMPÉTITIONS & GLOBAL (COM-S01 à COM-S12) ---
+
+  // --- COMPÉTITIONS & GLOBAL ---
+  const secretRules = {
     'COM-S01': s => s.is_competition || s.type === 'competition',
     'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
     'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
