@@ -1849,10 +1849,9 @@
 
     // --- COMPÉTITIONS & GLOBAL (COM-S01 à COM-S12) ---
     ['COM-S01', 'Finisher invincible', 'Terminer 3 compétitions officielles dans la même saison', 'Challenger', 1500, 'competition'],['COM-S02', 'Podium surprise', 'Compétition avec Podium ou Victoire en commentaire', 'Or', 1000, 'competition'],['COM-S03', 'Iron Human', 'Terminer un Triathlon XXL / Ironman', 'Challenger', 2500, 'competition'],['COM-S04', 'Le Phoenix des neiges', 'Sport extérieur par température inférieure à 0°C', 'Or', 400, 'competition'],['COM-S05', 'Double dose de dopamine', 'Valider 2 entraînements différents le même jour', 'Argent', 250, 'competition'],['COM-S06', 'Le Serial-Plaider', 'S’entraîner au moins une fois par jour 7 jours', 'Platine', 600, 'competition'],['COM-S08', 'Résilience pure', 'RPE 10/10 et commentaire fatigue ou dur', 'Argent', 250, 'competition'],['COM-S11', 'Décrocheur d’étoiles', 'Passer du niveau 1 au niveau 10', 'Or', 500, 'competition'],['COM-S12', 'Le Guerrier du Dimanche', 'Cumuler plus de 4 h de sport un dimanche', 'Argent', 200, 'competition'],
-      ];
+      ];  
       const secrets=secretDefs.map(([id,title,desc,tier,xp,category])=>({id,title,desc,tier,xp,category,icon:'fa-question',isSecret:true,unlocked:saved.some(t=>t.id===id&&t.unlocked),hint:'Trophée secret : découvre la condition en pratiquant.'}));
       const oldUnlocked=new Set(saved.filter(t=>t.unlocked).map(t=>t.id));
-    
       appData.trophies=[...publicItems,...secrets];appData.trophies.forEach(t=>{if(oldUnlocked.has(t.id))t.unlocked=true;});
       if(appData.trophies.length!==600) console.error('Catalogue trophées incorrect',appData.trophies.length);
       saveAppData();
@@ -3421,12 +3420,12 @@ function validerLimitesNatation() {
         const unitary=/en un seul|une seule sortie|une seule seance|sur une sortie|sur un run|premier semi|premier marathon|finir son premier|terminer un/.test(d);
         let candidates=rows;
         // Les trophées de surface/terrain exigent une séance explicitement renseignée ainsi.
-        if(/route\s*\/\s*piste|route ou piste/.test(d)) candidates=rows.filter(s => s.terrain && /route|piste/.test(s.terrain.toLowerCase()));
-        if(/foret\s*\/\s*sentier|foret ou sentier/.test(d)) candidates=rows.filter(s => s.terrain && /foret|sentier/.test(s.terrain.toLowerCase()));
-        if(/montagne\s*\/\s*trail|montagne ou trail/.test(d)) candidates=rows.filter(s => s.terrain && /montagne|trail/.test(s.terrain.toLowerCase()));
-        if(/tapis de course|sur tapis|tapis roulant/.test(d)) candidates=rows.filter(s => s.terrain && /tapis/.test(s.terrain.toLowerCase()));
+        if(/route\s*\/\s*piste|route ou piste/.test(d)) candidates=rows.filter(s=>/\broute\b|\bpiste\b/.test(trophySessionHaystack(s)));
+        if(/foret\s*\/\s*sentier|foret ou sentier/.test(d)) candidates=rows.filter(s=>/\bforet\b|\bsentier\b/.test(trophySessionHaystack(s)));
+        if(/montagne\s*\/\s*trail|montagne ou trail/.test(d)) candidates=rows.filter(s=>/\bmontagne\b|\btrail\b/.test(trophySessionHaystack(s)));
+        if(/tapis de course|sur tapis|tapis roulant/.test(d)) candidates=rows.filter(s=>/tapis/.test(trophySessionHaystack(s)));
         // Un trophée explicitement lié à un terrain n'accepte jamais les séances sans terrain renseigné.
-        if(/\btrail\b/.test(d) && !/montagne\s*\/\s*trail/.test(d)) candidates = rows.filter(s => s.terrain && /trail|sentier|montagne/.test(s.terrain.toLowerCase()));
+        if(/\btrail\b/.test(d) && !/montagne\s*\/\s*trail/.test(d)) candidates=rows.filter(s=>/trail|sentier|montagne/.test(trophySessionHaystack(s)));
         return unitary ? candidates.some(s=>getSessionDistanceKm(s)>0 && getSessionDistanceKm(s)>=threshold.value) : candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>0 && candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>=threshold.value;
       }
       if(threshold.kind==='hours') {
@@ -3501,9 +3500,8 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       changed = checkCompetitionTrophies() || changed;
       // Secrets dont les conditions peuvent être vérifiées sans inventer de données absentes.
       const rows = appData.sessionsHistory || [];
-     const secretRules = {
-
-   // --- NATATION ---
+      const secretRules = {
+        // --- NATATION ---
     'NTR-S01': s => s.sport === 'natation' && getSessionDistanceKm(s) >= 3,
     'NTR-S02': s => s.sport === 'natation' && (/eau libre|mer|lac|riviere/.test(s.terrain || '')) && (/pluie|froid|gel|glace/.test(trophySessionHaystack(s)) || Number(s.temp || 15) < 10),
     'NTR-S03': s => s.sport === 'natation' && (/eau libre|mer|lac|riviere/.test(s.terrain || '')),
@@ -3524,7 +3522,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       return pubNtr.length > 0 && pubNtr.every(t => t.unlocked);
     },
 
-   // --- COURSE À PIED
+    // --- COURSE À PIED ---
     'CAP-S01': s => s.sport === 'course' && getSessionDistanceKm(s) >= 42.195,
     'CAP-S02': s => s.sport === 'course' && /pluie|averse/.test(trophySessionHaystack(s)),
     'CAP-S03': s => s.sport === 'course' && Boolean(s.date) && (d => d.getMonth() === 0 && d.getDate() === 1)(new Date(String(s.date).slice(0, 10) + 'T12:00:00')),
@@ -3556,6 +3554,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       const totalTrailDplus = (appData.sessionsHistory || []).filter(x => x.sport === 'course' && /trail|montagne|sentier/.test(x.terrain || '')).reduce((acc, x) => acc + getSessionElevationM(x), 0);
       return totalTrailDplus >= 10000;
     },
+
     // --- VÉLO ---
     'VEL-S01': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 50 && /vent|tempête|bourrasque/.test(trophySessionHaystack(s)),
     'VEL-S02': s => s.sport === 'velo' && /home-trainer|hometrainer|home trainer/.test(s.terrain || '') && getSessionDurationMinutes(s) >= 120,
@@ -3604,7 +3603,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     }, 
 
     // --- MARCHE ---
-    'MAR-S01': s => {
+  'MAR-S01': s => {
       const totalMarcheKm = (appData.sessionsHistory || []).filter(x => x.sport === 'marche').reduce((acc, x) => acc + getSessionDistanceKm(x), 0);
       return totalMarcheKm >= 500;
     },
@@ -3663,7 +3662,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     'MAR-S08': s => (/marche|marché/.test(s.sport || '')) && /urbain|ville|rue/.test(s.terrain || '') && getSessionDistanceKm(s) >= 20,
 
     // --- AUTRES SPORTS & HIIT ---
-    'SPO-S01': s => (/tennis|padel/.test(s.sport || '')) && getSessionDurationMinutes(s) >= 120 && Number(s.rpe || 0) >= 9,
+'SPO-S01': s => (/tennis|padel/.test(s.sport || '')) && getSessionDurationMinutes(s) >= 120 && Number(s.rpe || 0) >= 9,
     'SPO-S02': s => {
       const dateStr = s.date || '';
       if (!dateStr) return false;
@@ -3722,7 +3721,8 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     }
   };
 
-  // --- COMPÉTITIONS & GLOBAL ---
+
+    // --- COMPÉTITIONS & GLOBAL ---
     'COM-S01': s => s.is_competition || s.type === 'competition',
     'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
     'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
@@ -3741,16 +3741,28 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     'COM-S11': s => (appData.level || 1) >= 10,
     'COM-S12': s => (s.is_competition || s.type === 'competition') && getSessionDurationMinutes(s) > 240
   };
-
-Object.entries(secretRules).forEach(([id, rule]) => { 
-    const t = appData.trophies.find(x => x.id === id); 
-    if(t && !t.unlocked && rows.some(rule)) changed = unlockTrophy(t) || changed; 
-  });
-
-  if (changed) { recalculateStatsFromHistory(); renderTrophiesAndRanks(); }
-  else saveAppData();
-  return changed;
-}
+      Object.entries(secretRules).forEach(([id,rule]) => { const t=appData.trophies.find(x=>x.id===id); if(t&&!t.unlocked&&rows.some(rule)) changed=unlockTrophy(t)||changed; });
+      // SPO-S04 : 3 h de musculation/fitness cumulées sur une même journée.
+      const fitnessByDay = new Map();
+      rows.filter(s => s.sport==='autres' && /muscu|fitness/i.test(s.title||'')).forEach(s => {
+        const day=String(s.date||''); if(day) fitnessByDay.set(day,(fitnessByDay.get(day)||0)+getSessionDurationMinutesutes(s));
+      });
+      const spo04=appData.trophies.find(t=>t.id==='SPO-S04');
+      if(spo04&&!spo04.unlocked&&Array.from(fitnessByDay.values()).some(minutes=>minutes>=180)) changed=unlockTrophy(spo04)||changed;
+      // COM-S12 : plus de 4 h de sport cumulées un dimanche, toutes disciplines confondues.
+      const sundayMinutes = new Map();
+      rows.forEach(s => {
+        const day=String(s.date||'');
+        if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(day)) return;
+        const date=new Date(`${day}T12:00:00`);
+        if(date.getDay()===0) sundayMinutes.set(day,(sundayMinutes.get(day)||0)+getSessionDurationMinutesutes(s));
+      });
+      const sundayTrophy=appData.trophies.find(t=>t.id==='COM-S12');
+      if(sundayTrophy&&!sundayTrophy.unlocked&&Array.from(sundayMinutes.values()).some(minutes=>minutes>240)) changed=unlockTrophy(sundayTrophy)||changed;
+      if (changed) { recalculateStatsFromHistory(); renderTrophiesAndRanks(); }
+      else saveAppData();
+      return changed;
+    }
 
     function getSessionDurationMinutesutes(session) {
       if (Number(session?.durationSeconds) > 0) return Number(session.durationSeconds) / 60;
@@ -5146,6 +5158,7 @@ async function handleUnblock(targetUserId) {
     }
 
     // 5. Écouteur en direct au chargement et changement d'état
+    buildTrophyCatalogue();
 
 document.addEventListener('DOMContentLoaded', () => {
       setAuthMode('login');
@@ -5154,21 +5167,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (recoveryModal) recoveryModal.style.display = 'flex';
       }
       updateHeaderAuthUI();
-let activeUserId = null;
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user?.id && activeUserId !== session.user.id) {
-        activeUserId = session.user.id;
-        loadAppDataForUser(session.user.id);
-        try { await hydrateAppDataFromSupabase(session.user.id); } catch(e) { console.error('Chargement cloud impossible :', e); }
-        await loadSupabaseProfileForUser(session.user.id);
-        refreshAppAfterAccountLoad();
-      } else if (event === 'SIGNED_OUT') {
-        activeUserId = null;
-        appData = createEmptyAppData();
-        refreshAppAfterAccountLoad();
+      if (supabaseClient) {
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            document.getElementById('auth-recovery-modal').style.display = 'flex';
+          }
+          if (event === 'SIGNED_IN' && session?.user?.id && activeUserId !== session.user.id) {
+            loadAppDataForUser(session.user.id);
+            try { await hydrateAppDataFromSupabase(session.user.id); } catch(e) { console.error('Chargement cloud impossible :',e); }
+            await loadSupabaseProfileForUser(session.user.id);
+            refreshAppAfterAccountLoad();
+          } else if (event === 'SIGNED_OUT') {
+            activeUserId = null;
+            appData = createEmptyAppData();
+            refreshAppAfterAccountLoad();
+          }
+          updateHeaderAuthUI();
+        });
       }
-      updateHeaderAuthUI();
-    });
     });
   
     // Recharge l’espace amis dès qu’une session Supabase est disponible.
