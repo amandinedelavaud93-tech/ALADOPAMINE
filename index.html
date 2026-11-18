@@ -3706,7 +3706,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       return monthSports.size >= 5;
     },
 
-'SPO-S10': s => {
+    'SPO-S10': s => {
       if (!/padel/.test(s.sport || '')) return false;
       const dateStr = s.date || '';
       if (!dateStr) return false;
@@ -3721,7 +3721,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
         const xd = new Date(x.date);
         return xd >= weekStart && xd < weekEnd;
       }).length;
-      return padelCount > 4;
+   return padelCount > 4;
     }
   };
 
@@ -3749,26 +3749,6 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     const t = appData.trophies.find(x => x.id === id); 
     if(t && !t.unlocked && rows.some(rule)) changed = unlockTrophy(t) || changed; 
   });
-
-  // SPO-S04 : 3 h de musculation/fitness cumulées sur une même journée.
-  const fitnessByDay = new Map();
-  rows.filter(s => s.sport === 'autres' && /muscu|fitness/i.test(s.title || '')).forEach(s => {
-    const day = String(s.date || ''); 
-    if(day) fitnessByDay.set(day, (fitnessByDay.get(day) || 0) + getSessionDurationMinutes(s));
-  });
-  const spo04 = appData.trophies.find(t => t.id === 'SPO-S04');
-  if(spo04 && !spo04.unlocked && Array.from(fitnessByDay.values()).some(minutes => minutes >= 180)) changed = unlockTrophy(spo04) || changed;
-
-  // COM-S12 : plus de 4 h de sport cumulées un dimanche, toutes disciplines confondues.
-  const sundayMinutes = new Map();
-  rows.forEach(s => {
-    const day = String(s.date || '');
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
-    const date = new Date(`${day}T12:00:00`);
-    if(date.getDay() === 0) sundayMinutes.set(day, (sundayMinutes.get(day) || 0) + getSessionDurationMinutes(s));
-  });
-  const sundayTrophy = appData.trophies.find(t => t.id === 'COM-S12');
-  if(sundayTrophy && !sundayTrophy.unlocked && Array.from(sundayMinutes.values()).some(minutes => minutes > 240)) changed = unlockTrophy(sundayTrophy) || changed;
 
   if (changed) { recalculateStatsFromHistory(); renderTrophiesAndRanks(); }
   else saveAppData();
