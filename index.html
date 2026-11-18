@@ -3501,246 +3501,85 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       // Secrets dont les conditions peuvent être vérifiées sans inventer de données absentes.
       const rows = appData.sessionsHistory || [];
       const secretRules = {
-        // --- NATATION ---
-    'NTR-S01': s => s.sport === 'natation' && getSessionDistanceKm(s) >= 3,
-    'NTR-S02': s => s.sport === 'natation' && (/eau libre|mer|lac|riviere/.test(s.terrain || '')) && (/pluie|froid|gel|glace/.test(trophySessionHaystack(s)) || Number(s.temp || 15) < 10),
-    'NTR-S03': s => s.sport === 'natation' && (/eau libre|mer|lac|riviere/.test(s.terrain || '')),
-    'NTR-S04': s => {
-      if (s.sport !== 'natation') return false;
-      const sDate = new Date(s.date || '').getTime();
-      if (isNaN(sDate)) return false;
-      const recentNat = (appData.sessionsHistory || []).filter(x => x.sport === 'natation' && Math.abs(sDate - new Date(x.date).getTime()) <= 48 * 3600 * 1000);
-      return recentNat.length >= 3;
-    },
-    'NTR-S05': s => s.sport === 'natation' && Number(s.rpe || 0) >= 10 && Number(s.bpm || 0) > 0,
-    'NTR-S06': s => s.sport === 'natation' && getSessionDurationMinutes(s) < 5 && /cata|abandon|panne/.test(trophySessionHaystack(s)),
-    'NTR-S07': s => s.sport === 'natation' && Math.round(getSessionDistanceKm(s) * 1000) === 2000,
-    'NTR-S08': s => s.sport === 'natation' && getSessionDistanceKm(s) > 3.5,
-    'NTR-S09': s => s.sport === 'natation' && /vagues|houle|clapot/.test(trophySessionHaystack(s)),
-    'NTR-S10': s => {
-      const pubNtr = (appData.trophies || []).filter(t => t.category === 'natation' && !t.isSecret);
-      return pubNtr.length > 0 && pubNtr.every(t => t.unlocked);
-    },
+  // --- NATATION ---
+  'NTR-S01': s => s.sport === 'natation' && getSessionDistanceKm(s) >= 3,
+  'NTR-S02': s => s.sport === 'natation' && (/eau libre|mer|lac|riviere/.test(s.terrain || '')) && (/pluie|froid|gel|glace/.test(trophySessionHaystack(s)) || Number(s.temp || 15) < 10),
+  'NTR-S03': s => s.sport === 'natation' && (/eau libre|mer|lac|riviere/.test(s.terrain || '')),
+  'NTR-S04': s => s.sport === 'natation' && !isNaN(new Date(s.date || '').getTime()) && (appData.sessionsHistory || []).filter(x => x.sport === 'natation' && Math.abs(new Date(s.date || '').getTime() - new Date(x.date).getTime()) <= 172800000).length >= 3,
+  'NTR-S05': s => s.sport === 'natation' && Number(s.rpe || 0) >= 10 && Number(s.bpm || 0) > 0,
+  'NTR-S06': s => s.sport === 'natation' && getSessionDurationMinutes(s) < 5 && /cata|abandon|panne/.test(trophySessionHaystack(s)),
+  'NTR-S07': s => s.sport === 'natation' && Math.round(getSessionDistanceKm(s) * 1000) === 2000,
+  'NTR-S08': s => s.sport === 'natation' && getSessionDistanceKm(s) > 3.5,
+  'NTR-S09': s => s.sport === 'natation' && /vagues|houle|clapot/.test(trophySessionHaystack(s)),
+  'NTR-S10': s => (appData.trophies || []).filter(t => t.category === 'natation' && !t.isSecret).length > 0 && (appData.trophies || []).filter(t => t.category === 'natation' && !t.isSecret).every(t => t.unlocked),
 
-    // --- COURSE À PIED ---
-    'CAP-S01': s => s.sport === 'course' && getSessionDistanceKm(s) >= 42.195,
-    'CAP-S02': s => s.sport === 'course' && /pluie|averse/.test(trophySessionHaystack(s)),
-    'CAP-S03': s => s.sport === 'course' && Boolean(s.date) && (d => d.getMonth() === 0 && d.getDate() === 1)(new Date(String(s.date).slice(0, 10) + 'T12:00:00')),
-    'CAP-S04': s => s.sport === 'course' && getSessionElevationM(s) >= 1000,
-    'CAP-S05': s => s.sport === 'course' && getSessionDurationMinutes(s) > 60 && /chaleur|canicule|soleil/.test(trophySessionHaystack(s)),
-    'CAP-S06': s => Number(s.rpe || 0) >= 10 && /mur|crampes/.test(trophySessionHaystack(s)),
-    'CAP-S07': s => s.sport === 'course' && /tapis/.test(s.terrain || '') && getSessionDistanceKm(s) >= 10,
-    'CAP-S08': s => s.sport === 'course' && getSessionDistanceKm(s) >= 3 && (getSessionDurationMinutes(s) / getSessionDistanceKm(s)) <= 3.5,
-    'CAP-S09': s => s.sport === 'course' && getSessionDurationMinutes(s) > 90,
-    'CAP-S10': s => s.sport === 'course' && (/trail|montagne|sentier/.test(s.terrain || '')) && getSessionElevationM(s) >= 2000,
-    'CAP-S11': s => s.sport === 'course' && (/trail|foret|sentier/.test(s.terrain || '')) && /pluie|boue/.test(trophySessionHaystack(s)),
-    'CAP-S12': s => {
-      if (s.sport !== 'course' || getSessionDistanceKm(s) <= 15) return false;
-      const dateStr = s.date || '';
-      if (!dateStr) return false;
-      const day = new Date(dateStr).getDay(); // 0 = dimanche, 6 = samedi
-      return day === 0 || day === 6;
-    },
-    'CAP-S13': s => {
-      if (s.sport !== 'course') return false;
-      const dateStr = s.date || '';
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      return d.getDate() === 13 && d.getDay() === 5; // Vendredi 13
-    },
-    'CAP-S14': s => s.sport === 'course' && getSessionDistanceKm(s) >= 21.09 && getSessionDistanceKm(s) <= 21.20,
-    'CAP-S15': s => {
-      // Cumul de 10 000m D+ en trail sur l'ensemble de l'historique ou vérifié via les stats globales
-      const totalTrailDplus = (appData.sessionsHistory || []).filter(x => x.sport === 'course' && /trail|montagne|sentier/.test(x.terrain || '')).reduce((acc, x) => acc + getSessionElevationM(x), 0);
-      return totalTrailDplus >= 10000;
-    },
+  // --- COURSE À PIED ---
+  'CAP-S01': s => s.sport === 'course' && getSessionDistanceKm(s) >= 42.195,
+  'CAP-S02': s => s.sport === 'course' && /pluie|averse/.test(trophySessionHaystack(s)),
+  'CAP-S03': s => s.sport === 'course' && Boolean(s.date) && new Date(String(s.date).slice(0, 10) + 'T12:00:00').getMonth() === 0 && new Date(String(s.date).slice(0, 10) + 'T12:00:00').getDate() === 1,
+  'CAP-S04': s => s.sport === 'course' && getSessionElevationM(s) >= 1000,
+  'CAP-S05': s => s.sport === 'course' && getSessionDurationMinutes(s) > 60 && /chaleur|canicule|soleil/.test(trophySessionHaystack(s)),
+  'CAP-S06': s => Number(s.rpe || 0) >= 10 && /mur|crampes/.test(trophySessionHaystack(s)),
+  'CAP-S07': s => s.sport === 'course' && /tapis/.test(s.terrain || '') && getSessionDistanceKm(s) >= 10,
+  'CAP-S08': s => s.sport === 'course' && getSessionDistanceKm(s) >= 3 && (getSessionDurationMinutes(s) / getSessionDistanceKm(s)) <= 3.5,
+  'CAP-S09': s => s.sport === 'course' && getSessionDurationMinutes(s) > 90,
+  'CAP-S10': s => s.sport === 'course' && (/trail|montagne|sentier/.test(s.terrain || '')) && getSessionElevationM(s) >= 2000,
+  'CAP-S11': s => s.sport === 'course' && (/trail|foret|sentier/.test(s.terrain || '')) && /pluie|boue/.test(trophySessionHaystack(s)),
+  'CAP-S12': s => s.sport === 'course' && getSessionDistanceKm(s) > 15 && Boolean(s.date) && [0, 6].includes(new Date(s.date).getDay()),
+  'CAP-S13': s => s.sport === 'course' && Boolean(s.date) && new Date(s.date).getDate() === 13 && new Date(s.date).getDay() === 5,
+  'CAP-S14': s => s.sport === 'course' && getSessionDistanceKm(s) >= 21.09 && getSessionDistanceKm(s) <= 21.20,
+  'CAP-S15': s => s.sport === 'course' && (appData.sessionsHistory || []).filter(x => x.sport === 'course' && /trail|montagne|sentier/.test(x.terrain || '')).reduce((acc, x) => acc + getSessionElevationM(x), 0) >= 10000,
 
-    // --- VÉLO ---
-    'VEL-S01': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 50 && /vent|tempête|bourrasque/.test(trophySessionHaystack(s)),
-    'VEL-S02': s => s.sport === 'velo' && /home-trainer|hometrainer|home trainer/.test(s.terrain || '') && getSessionDurationMinutes(s) >= 120,
-    'VEL-S03': s => s.sport === 'velo' && /crevaison|crevé|pneu/.test(trophySessionHaystack(s)),
-    'VEL-S04': s => {
-      if (s.sport !== 'velo' || getSessionDistanceKm(s) < 30) return false;
-      const hours = getSessionDurationMinutes(s) / 60;
-      if (hours <= 0) return false;
-      const avgSpeed = getSessionDistanceKm(s) / hours;
-      return avgSpeed >= 38;
-    },
-    'VEL-S05': s => s.sport === 'velo' && getSessionElevationM(s) >= 2000,
-    'VEL-S06': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 200,
-    'VEL-S07': s => s.sport === 'velo' && Number(s.watts || 0) >= 300 && getSessionDurationMinutes(s) >= 45,
-    'VEL-S08': s => s.sport === 'velo' && getSessionDurationMinutes(s) > 120 && /pluie|averse|eau/.test(trophySessionHaystack(s)),
-    'VEL-S09': s => {
-      if (s.sport !== 'velo' || getSessionDistanceKm(s) < 40) return false;
-      const history = (appData.sessionsHistory || []).filter(x => x.sport === 'velo').sort((a, b) => new Date(a.date) - new Date(b.date));
-      let streak = 1;
-      for (let i = 1; i < history.length; i++) {
-        const d1 = new Date(history[i-1].date);
-        const d2 = new Date(history[i].date);
-        const diffDays = (d2 - d1) / (1000 * 60 * 60 * 24);
-        if (diffDays === 1 && getSessionDistanceKm(history[i]) >= 40) {
-          streak++;
-          if (streak >= 3) return true;
-        } else if (diffDays > 1) {
-          streak = 1;
-        }
-      }
-      return streak >= 3;
-    },
-    'VEL-S10': s => {
-      if (s.sport !== 'velo' || getSessionDistanceKm(s) <= 50) return false;
-      const dateStr = s.date || '';
-      if (!dateStr) return false;
-      return new Date(dateStr).getDay() === 0;
-    },
-    'VEL-S11': s => s.sport === 'velo' && /home-trainer|hometrainer|home trainer/.test(s.terrain || '') && getSessionElevationM(s) >= 1600,
-    'VEL-S12': s => s.sport === 'velo' && Math.abs(getSessionDistanceKm(s) - 100) <= 0.5,
-    'VEL-S13': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 40 && Number(s.bpm || 999) < 120,
-    'VEL-S14': s => s.sport === 'velo' && /foret|gravel|sentier/.test(s.terrain || '') && getSessionDistanceKm(s) > 60,
-    'VEL-S15': s => {
-      const totalVeloKm = (appData.sessionsHistory || []).filter(x => x.sport === 'velo').reduce((acc, x) => acc + getSessionDistanceKm(x), 0);
-      return totalVeloKm >= 3500;
-    }, 
+  // --- VÉLO ---
+  'VEL-S01': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 50 && /vent|tempête|bourrasque/.test(trophySessionHaystack(s)),
+  'VEL-S02': s => s.sport === 'velo' && /home-trainer|hometrainer|home trainer/.test(s.terrain || '') && getSessionDurationMinutes(s) >= 120,
+  'VEL-S03': s => s.sport === 'velo' && /crevaison|crevé|pneu/.test(trophySessionHaystack(s)),
+  'VEL-S04': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 30 && (getSessionDurationMinutes(s) / 60) > 0 && (getSessionDistanceKm(s) / (getSessionDurationMinutes(s) / 60)) >= 38,
+  'VEL-S05': s => s.sport === 'velo' && getSessionElevationM(s) >= 2000,
+  'VEL-S06': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 200,
+  'VEL-S07': s => s.sport === 'velo' && Number(s.watts || 0) >= 300 && getSessionDurationMinutes(s) >= 45,
+  'VEL-S08': s => s.sport === 'velo' && getSessionDurationMinutes(s) > 120 && /pluie|averse|eau/.test(trophySessionHaystack(s)),
+  'VEL-S09': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 40 && (() => { const h = (appData.sessionsHistory || []).filter(x => x.sport === 'velo').sort((a, b) => new Date(a.date) - new Date(b.date)); let streak = 1; for (let i = 1; i < h.length; i++) { const diff = (new Date(h[i].date) - new Date(h[i-1].date)) / 86400000; if (diff === 1 && getSessionDistanceKm(h[i]) >= 40) { streak++; if (streak >= 3) return true; } else if (diff > 1) { streak = 1; } } return streak >= 3; })(),
+  'VEL-S10': s => s.sport === 'velo' && getSessionDistanceKm(s) > 50 && Boolean(s.date) && new Date(s.date).getDay() === 0,
+  'VEL-S11': s => s.sport === 'velo' && /home-trainer|hometrainer|home trainer/.test(s.terrain || '') && getSessionElevationM(s) >= 1600,
+  'VEL-S12': s => s.sport === 'velo' && Math.abs(getSessionDistanceKm(s) - 100) <= 0.5,
+  'VEL-S13': s => s.sport === 'velo' && getSessionDistanceKm(s) >= 40 && Number(s.bpm || 999) < 120,
+  'VEL-S14': s => s.sport === 'velo' && /foret|gravel|sentier/.test(s.terrain || '') && getSessionDistanceKm(s) > 60,
+  'VEL-S15': s => s.sport === 'velo' && (appData.sessionsHistory || []).filter(x => x.sport === 'velo').reduce((acc, x) => acc + getSessionDistanceKm(x), 0) >= 3500,
 
-    // --- MARCHE ---
-  'MAR-S01': s => {
-      const totalMarcheKm = (appData.sessionsHistory || []).filter(x => x.sport === 'marche').reduce((acc, x) => acc + getSessionDistanceKm(x), 0);
-      return totalMarcheKm >= 500;
-    },
-    'MAR-S02': s => s.sport === 'marche' && getSessionDistanceKm(s) >= 30,
-    'MAR-S03': s => {
-      if (s.sport !== 'marche' || getSessionDistanceKm(s) < 15) return false;
-      const dateStr = s.date || '';
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      return d.getMonth() === 9 && d.getDate() === 31; // 31 octobre (mois 9 = octobre)
-    },
-    'MAR-S04': s => s.sport === 'marche' && getSessionElevationM(s) >= 1200,
-    'MAR-S05': s => {
-      // Marcher chaque dimanche d'un même mois
-      if (s.sport !== 'marche') return false;
-      const dateStr = s.date || '';
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      if (d.getDay() !== 0) return false; // Doit être un dimanche
-      
-      const year = d.getFullYear();
-      const month = d.getMonth();
-      
-      // Trouver tous les dimanches de ce mois-ci
-      const sundaysInMonth = [];
-      const dateIter = new Date(year, month, 1);
-      while (dateIter.getMonth() === month) {
-        if (dateIter.getDay() === 0) {
-          sundaysInMonth.push(dateIter.toISOString().slice(0, 10));
-        }
-        dateIter.setDate(dateIter.getDate() + 1);
-      }
-      
-      // Vérifier si l'utilisateur a une session de marche pour chaque dimanche du mois
-      const userMarches = (appData.sessionsHistory || []).filter(x => x.sport === 'marche' && x.date);
-      return sundaysInMonth.every(sun => userMarches.some(x => String(x.date).slice(0, 10) === sun));
-    },
-    'MAR-S06': s => {
-      if (s.sport !== 'marche' || getSessionDistanceKm(s) < 15) return false;
-      const history = (appData.sessionsHistory || []).filter(x => x.sport === 'marche').sort((a, b) => new Date(a.date) - new Date(b.date));
-      let streak = 1;
-      for (let i = 1; i < history.length; i++) {
-        const d1 = new Date(history[i-1].date);
-        const d2 = new Date(history[i].date);
-        const diffDays = (d2 - d1) / (1000 * 60 * 60 * 24);
-        if (diffDays === 1 && getSessionDistanceKm(history[i]) >= 15) {
-          streak++;
-          if (streak >= 4) return true;
-        } else if (diffDays > 1) {
-          streak = 1;
-        }
-      }
-      return streak >= 4;
-    },
-    'MAR-S07': s => s.sport === 'marche' && getSessionDistanceKm(s) >= 10 && /pluie|averse|battante/.test(trophySessionHaystack(s)),
-    'MAR-S08': s => (/marche|marché/.test(s.sport || '')) && /urbain|ville|rue/.test(s.terrain || '') && getSessionDistanceKm(s) >= 20,
+  // --- MARCHE ---
+  'MAR-S01': s => s.sport === 'marche' && (appData.sessionsHistory || []).filter(x => x.sport === 'marche').reduce((acc, x) => acc + getSessionDistanceKm(x), 0) >= 500,
+  'MAR-S02': s => s.sport === 'marche' && getSessionDistanceKm(s) >= 30,
+  'MAR-S03': s => s.sport === 'marche' && getSessionDistanceKm(s) >= 15 && Boolean(s.date) && new Date(s.date).getMonth() === 9 && new Date(s.date).getDate() === 31,
+  'MAR-S04': s => s.sport === 'marche' && getSessionElevationM(s) >= 1200,
+  'MAR-S05': s => s.sport === 'marche' && Boolean(s.date) && new Date(s.date).getDay() === 0 && (() => { const d = new Date(s.date); const sundays = []; const iter = new Date(d.getFullYear(), d.getMonth(), 1); while (iter.getMonth() === d.getMonth()) { if (iter.getDay() === 0) sundays.push(iter.toISOString().slice(0, 10)); iter.setDate(iter.getDate() + 1); } const marches = (appData.sessionsHistory || []).filter(x => x.sport === 'marche' && x.date); return sundays.every(sun => marches.some(x => String(x.date).slice(0, 10) === sun)); })(),
+  'MAR-S06': s => s.sport === 'marche' && getSessionDistanceKm(s) >= 15 && (() => { const h = (appData.sessionsHistory || []).filter(x => x.sport === 'marche').sort((a, b) => new Date(a.date) - new Date(b.date)); let streak = 1; for (let i = 1; i < h.length; i++) { const diff = (new Date(h[i].date) - new Date(h[i-1].date)) / 86400000; if (diff === 1 && getSessionDistanceKm(h[i]) >= 15) { streak++; if (streak >= 4) return true; } else if (diff > 1) { streak = 1; } } return streak >= 4; })(),
+  'MAR-S07': s => s.sport === 'marche' && getSessionDistanceKm(s) >= 10 && /pluie|averse|battante/.test(trophySessionHaystack(s)),
+  'MAR-S08': s => /marche|marché/.test(s.sport || '') && /urbain|ville|rue/.test(s.terrain || '') && getSessionDistanceKm(s) >= 20,
 
-    // --- AUTRES SPORTS & HIIT ---
-'SPO-S01': s => (/tennis|padel/.test(s.sport || '')) && getSessionDurationMinutes(s) >= 120 && Number(s.rpe || 0) >= 9,
-    'SPO-S02': s => {
-      const dateStr = s.date || '';
-      if (!dateStr) return false;
-      return new Date(dateStr).getDay() === 5; // Vendredi
-    },
-    'SPO-S03': s => (/ski|snowboard/.test(s.sport || '')) && Number(s.rpe || 0) === 10,
-    'SPO-S04': s => {
-      // 3h de musculation/fitness le même jour
-      if (!/fitness|musculation/.test(s.sport || '')) return false;
-      const dateStr = String(s.date || '').slice(0, 10);
-      if (!dateStr) return false;
-      const sameDayMinutes = (appData.sessionsHistory || [])
-        .filter(x => /fitness|musculation/.test(x.sport || '') && String(x.date || '').slice(0, 10) === dateStr)
-        .reduce((acc, x) => acc + getSessionDurationMinutes(x), 0);
-      return sameDayMinutes >= 180;
-    },
-    'SPO-S05': s => /escalade/.test(s.sport || '') && getSessionDurationMinutes(s) >= 150 && Number(s.rpe || 0) >= 8,
-    'SPO-S06': s => /football|futsal/.test(s.sport || '') && Number(s.bpm || 0) > 165 && Number(s.rpe || 0) >= 9,
-    'SPO-S07': s => /hiit/.test(s.sport || '') && getSessionDurationMinutes(s) >= 45 && Number(s.rpe || 0) === 10 && /sans pause/.test(trophySessionHaystack(s)),
-    'SPO-S08': s => /equitation|équitation/.test(s.sport || '') && getSessionDurationMinutes(s) >= 120,
-    'SPO-S09': s => {
-      // Pratiquer 5 disciplines Autres sports en 1 mois
-      const dateStr = s.date || '';
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      const year = d.getFullYear();
-      const month = d.getMonth();
-      const monthSports = new Set(
-        (appData.sessionsHistory || [])
-          .filter(x => {
-            if (!x.date) return false;
-            const xd = new Date(x.date);
-            return xd.getFullYear() === year && xd.getMonth() === month && x.sport && x.sport !== 'course' && x.sport !== 'velo' && x.sport !== 'natation' && x.sport !== 'marche';
-          })
-          .map(x => x.sport)
-      );
-      return monthSports.size >= 5;
-    },
+  // --- AUTRES SPORTS & HIIT ---
+  'SPO-S01': s => /tennis|padel/.test(s.sport || '') && getSessionDurationMinutes(s) >= 120 && Number(s.rpe || 0) >= 9,
+  'SPO-S02': s => Boolean(s.date) && new Date(s.date).getDay() === 5,
+  'SPO-S03': s => /ski|snowboard/.test(s.sport || '') && Number(s.rpe || 0) === 10,
+  'SPO-S04': s => /fitness|musculation/.test(s.sport || '') && Boolean(s.date) && (appData.sessionsHistory || []).filter(x => /fitness|musculation/.test(x.sport || '') && String(x.date || '').slice(0, 10) === String(s.date).slice(0, 10)).reduce((acc, x) => acc + getSessionDurationMinutes(x), 0) >= 180,
+  'SPO-S05': s => /escalade/.test(s.sport || '') && getSessionDurationMinutes(s) >= 150 && Number(s.rpe || 0) >= 8,
+  'SPO-S06': s => /football|futsal/.test(s.sport || '') && Number(s.bpm || 0) > 165 && Number(s.rpe || 0) >= 9,
+  'SPO-S07': s => /hiit/.test(s.sport || '') && getSessionDurationMinutes(s) >= 45 && Number(s.rpe || 0) === 10 && /sans pause/.test(trophySessionHaystack(s)),
+  'SPO-S08': s => /equitation|équitation/.test(s.sport || '') && getSessionDurationMinutes(s) >= 120,
+  'SPO-S09': s => Boolean(s.date) && new Set((appData.sessionsHistory || []).filter(x => { if (!x.date) return false; const xd = new Date(x.date); const sd = new Date(s.date); return xd.getFullYear() === sd.getFullYear() && xd.getMonth() === sd.getMonth() && x.sport && !['course', 'velo', 'natation', 'marche'].includes(x.sport); }).map(x => x.sport)).size >= 5,
+  'SPO-S10': s => /padel/.test(s.sport || '') && Boolean(s.date) && (() => { const d = new Date(s.date); const ws = new Date(d); ws.setDate(d.getDate() - d.getDay()); const we = new Date(ws); we.setDate(ws.getDate() + 7); return (appData.sessionsHistory || []).filter(x => /padel/.test(x.sport || '') && x.date && new Date(x.date) >= ws && new Date(x.date) < we).length > 4; })(),
 
-    'SPO-S10': s => {
-      if (!/padel/.test(s.sport || '')) return false;
-      const dateStr = s.date || '';
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      const weekStart = new Date(d);
-      weekStart.setDate(d.getDate() - d.getDay());
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
-      
-      const padelCount = (appData.sessionsHistory || []).filter(x => {
-        if (!/padel/.test(x.sport || '') || !x.date) return false;
-        const xd = new Date(x.date);
-        return xd >= weekStart && xd < weekEnd;
-      }).length;
-   return padelCount > 4;
-    }
-  };
-
-
-    // --- COMPÉTITIONS & GLOBAL ---
-    'COM-S01': s => s.is_competition || s.type === 'competition',
-    'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
-    'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
-    'COM-S04': s => Number(s.temp||0) < 0 || /gel|froid|neige/.test(trophySessionHaystack(s)),
-    'COM-S05': s => {
-      const day = (s.date || '').slice(0, 10);
-      if (!day) return false;
-      const sessionsOnDay = (appData.sessionsHistory || []).filter(x => (x.date || '').slice(0, 10) === day);
-      return sessionsOnDay.length >= 2;
-    },
-    'COM-S06': s => {
-      const uniqueDays = new Set((appData.sessionsHistory || []).map(x => (x.date || '').slice(0, 10))).size;
-      return uniqueDays >= 7;
-    },
-    'COM-S08': s => Number(s.rpe||8) >= 10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s)),
-    'COM-S11': s => (appData.level || 1) >= 10,
-    'COM-S12': s => (s.is_competition || s.type === 'competition') && getSessionDurationMinutes(s) > 240
-  };
+  // --- COMPÉTITIONS & GLOBAL ---
+  'COM-S01': s => s.is_competition || s.type === 'competition',
+  'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
+  'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
+  'COM-S04': s => Number(s.temp || 0) < 0 || /gel|froid|neige/.test(trophySessionHaystack(s)),
+  'COM-S05': s => Boolean(s.date) && (appData.sessionsHistory || []).filter(x => (x.date || '').slice(0, 10) === String(s.date).slice(0, 10)).length >= 2,
+  'COM-S06': s => new Set((appData.sessionsHistory || []).map(x => (x.date || '').slice(0, 10))).size >= 7,
+  'COM-S08': s => Number(s.rpe || 8) >= 10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s)),
+  'COM-S11': s => (appData.level || 1) >= 10,
+  'COM-S12': s => (s.is_competition || s.type === 'competition') && getSessionDurationMinutes(s) > 240
+};
       Object.entries(secretRules).forEach(([id,rule]) => { const t=appData.trophies.find(x=>x.id===id); if(t&&!t.unlocked&&rows.some(rule)) changed=unlockTrophy(t)||changed; });
       // SPO-S04 : 3 h de musculation/fitness cumulées sur une même journée.
       const fitnessByDay = new Map();
