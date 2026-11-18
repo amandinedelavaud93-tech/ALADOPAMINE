@@ -3726,7 +3726,6 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
   };
 
   // --- COMPÉTITIONS & GLOBAL ---
-  const secretRules = {
     'COM-S01': s => s.is_competition || s.type === 'competition',
     'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
     'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
