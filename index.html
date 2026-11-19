@@ -3520,8 +3520,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
   'CAP-S05': s => s.sport === 'course' && getSessionDurationMinutes(s) > 60 && /chaleur|canicule|soleil/.test(trophySessionHaystack(s)),
   'CAP-S06': s => s.sport === 'course' && Number(s.rpe || 0) >= 10 && /mur|crampes/.test(trophySessionHaystack(s)),
   'CAP-S07': s => s.sport === 'course' && /tapis/.test(s.terrain || '') && getSessionDistanceKm(s) >= 10,
-  'CAP-S08': s => s.sport === 'course' && getSessionDistanceKm(s) >= 3 && (getSessionDurationMinutes(s) / getSessionDistanceKm(s)) > 1.5 && (getSessionDurationMinutes(s) / getSessionDistanceKm(s)) < 3.5,
-  'CAP-S09': s => s.sport === 'course' && getSessionDurationMinutes(s) > 90,
+  'CAP-S08': s => { const sport = typeof trophySportOf === 'function' ? trophySportOf(s) : s?.sport; const dist = Number(getSessionDistanceKm(s)) || 0; const mins = Number(getSessionDurationMinutes(s)) || 0; return sport === 'course' && dist >= 3 && mins > 0 && (mins / dist) > 1.5 && (mins / dist) < 3.5; },  'CAP-S09': s => s.sport === 'course' && getSessionDurationMinutes(s) > 90,
   'CAP-S10': s => s.sport === 'course' && (/trail|montagne|sentier/.test(s.terrain || '')) && getSessionElevationM(s) >= 2000,
   'CAP-S11': s => s.sport === 'course' && (/trail|foret|sentier/.test(s.terrain || '')) && /pluie|boue/.test(trophySessionHaystack(s)),
   'CAP-S12': s => s.sport === 'course' && getSessionDistanceKm(s) > 15 && Boolean(s.date) && [0, 6].includes(new Date(s.date).getDay()),
@@ -3560,7 +3559,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
 
 // --- AUTRES SPORTS & HIIT ---
   'SPO-S01': s => s.sport === 'autres' && /tennis|padel/i.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s) >= 120 && Number(s.rpe || 0) >= 9,
-  'SPO-S02': s => s.sport === 'autres' && Boolean(s.date) && new Date(String(s.date).slice(0, 10) + 'T12:00:00').getDay() === 5,
+  'SPO-S02': s => { const sport = typeof trophySportOf === 'function' ? trophySportOf(s) : s?.sport; const dayStr = String(s?.date || '').slice(0, 10); return (sport === 'autres' || sport === 'hiit') && /^\d{4}-\d{2}-\d{2}$/.test(dayStr) && new Date(`${dayStr}T12:00:00`).getDay() === 5; },
   'SPO-S03': s => s.sport === 'autres' && /ski|snowboard/i.test(trophySessionHaystack(s)) && Number(s.rpe || 0) === 10,
   'SPO-S04': s => s.sport === 'autres' && /fitness|musculation/i.test(trophySessionHaystack(s)) && Boolean(s.date) && (appData.sessionsHistory || []).filter(x => x.sport === 'autres' && /fitness|musculation/i.test(trophySessionHaystack(x)) && String(x.date || '').slice(0, 10) === String(s.date).slice(0, 10)).reduce((acc, x) => acc + getSessionDurationMinutes(x), 0) >= 180,
   'SPO-S05': s => s.sport === 'autres' && /escalade/i.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s) >= 150 && Number(s.rpe || 0) >= 8,
@@ -3575,9 +3574,8 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
   'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
   'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
   'COM-S04': s => (s.is_competition || s.type === 'competition') && new Set((appData.sessionsHistory || []).filter(x => x.is_competition || x.type === 'competition').map(x => x.competitionDetails?.eventType || x.subType || x.sport)).size >= 3,
-  'COM-S05': s => (s.is_competition || s.type === 'competition') && /record|rp|pb|personal best/i.test(trophySessionHaystack(s)),
-  'COM-S06': s => (s.is_competition || s.type === 'competition') && Boolean(s.date) && (appData.sessionsHistory || []).some(x => x !== s && (x.is_competition || x.type === 'competition') && x.date && Math.abs(new Date(s.date) - new Date(x.date)) <= 8 * 86400000),
-  'COM-S07': s => (s.is_competition || s.type === 'competition') && Number(s.rpe || 10) > 0 && Number(s.rpe || 10) <= 4,
+  'COM-S05': s => { const isComp = Boolean(s?.is_competition || s?.type === 'competition' || s?.competitionDetails || (typeof trophySportOf === 'function' && trophySportOf(s) === 'competition') || s?.sport === 'competition'); return isComp && /\brecord\b|\brp\b|\bpb\b|personal best/i.test(trophySessionHaystack(s)); },
+  'COM-S06': s => { const isC = o => Boolean(o && (o.is_competition || o.type === 'competition' || o.competitionDetails || (typeof trophySportOf === 'function' && trophySportOf(o) === 'competition') || o.sport === 'competition')); const d1 = String(s?.date || '').slice(0, 10); if (!isC(s) || !/^\d{4}-\d{2}-\d{2}$/.test(d1)) return false; const t1 = new Date(`${d1}T12:00:00`).getTime(); return (appData.sessionsHistory || []).some(x => { if (!x || x === s || !isC(x)) return false; const d2 = String(x?.date || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d2)) return false; return Math.abs(t1 - new Date(`${d2}T12:00:00`).getTime()) < 8 * 86400000; }); },  'COM-S07': s => (s.is_competition || s.type === 'competition') && Number(s.rpe || 10) > 0 && Number(s.rpe || 10) <= 4,
   'COM-S08': s => (s.is_competition || s.type === 'competition') && Number(s.rpe || 8) >= 10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s)),
   'COM-S09': s => (s.is_competition || s.type === 'competition') && /triathlon|duathlon/i.test(trophySessionHaystack(s)) && ((Number(s.competitionDetails?.t1Seconds || 0) + Number(s.competitionDetails?.t2Seconds || 0)) > 0 && (Number(s.competitionDetails?.t1Seconds || 0) + Number(s.competitionDetails?.t2Seconds || 0)) <= 180),
   'COM-S10': s => (s.is_competition || s.type === 'competition') && (appData.sessionsHistory || []).filter(x => x.is_competition || x.type === 'competition').length >= 10
