@@ -530,6 +530,9 @@
       <li><a id="nav-trophies" onclick="showPage('trophies')"><i class="fa-solid fa-trophy"></i> Trophées</a></li>
       <li><a id="nav-calendar" onclick="showPage('home'); document.getElementById('home-calendar').scrollIntoView({behavior:'smooth'});"><i class="fa-solid fa-calendar-days"></i> Mon calendrier</a></li>
       <li><a id="nav-feed" onclick="showFeedComingSoon()"><i class="fa-solid fa-users"></i> Fil Dopamine</a></li>
+      <li><a id="nav-profiles" onclick="showPage('profiles')"><i class="fa-solid fa-user-group"></i> Profils</a></li>
+<li><a id="nav-faceoff" onclick="showPage('faceoff')"><i class="fa-solid fa-scale-balanced"></i> Face-à-Face</a></li>
+<li><a id="nav-gps" onclick="showPage('gps')"><i class="fa-solid fa-map-location-dot"></i> Cartes & Segments</a></li>
       <li><a id="nav-search-friends" onclick="openSearchFriendsModal()"><i class="fa-solid fa-magnifying-glass" style="color:var(--bike-orange);"></i><span id="requests-badge" style="display:none;background:var(--heart-red);color:white;border-radius:50%;padding:1px 5px;font-size:.6rem;margin-left:3px;">0</span></a></li>
     </ul>
 
@@ -1391,6 +1394,14 @@
             <canvas id="evolutionChart" style="max-height: 220px;"></canvas>
           </div>
 
+          <!-- CONDITION PHYSIQUE : CTL / ATL / TSB -->
+<section class="main-dashboard-box" style="margin:18px 0;padding:16px;">
+  <div class="card-title-flex"><h3><i class="fa-solid fa-heart-pulse" style="color:var(--run-green)"></i> Condition physique</h3><button class="medal-tab" onclick="renderDopamineFitness()">Actualiser</button></div>
+  <p style="color:var(--text-sub);font-size:.78rem;margin:5px 0 12px;">Estimation basée sur la durée et le RPE des séances enregistrées. Ce n’est pas une mesure médicale.</p>
+  <div id="dopamine-fitness-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;"></div>
+  <div style="height:230px;margin-top:14px;"><canvas id="dopamine-fitness-chart"></canvas></div>
+  <div id="dopamine-fitness-explanation" style="font-size:.76rem;color:var(--text-sub);margin-top:8px;"></div>
+</section>
           <div class="history-box">
             <div class="card-title-flex">
               <span style="font-size:0.82rem; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-clock-rotate-left"></i> Historique Sécurisé & Synchronisé</span>
@@ -1416,6 +1427,49 @@
         </div>
       </section>
     </main>
+<!-- PAGE : PROFILS SPORTIFS -->
+<main id="view-profiles" class="app-page hidden">
+  <section class="dashboard-layout"><div class="main-dashboard-box">
+    <div class="card-title-flex"><h2><i class="fa-solid fa-users" style="color:var(--bike-orange)"></i> Profils sportifs</h2><button class="medal-tab" onclick="loadDopamineProfiles()">Actualiser</button></div>
+    <p style="color:var(--text-sub);font-size:.82rem;">Consulte ton profil sportif et découvre les athlètes qui ont choisi de rendre leur profil public.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;"><button class="medal-tab active" onclick="loadMyDopamineProfile()">Mon profil sportif</button><input id="dopamine-profile-search" placeholder="Rechercher un pseudo…" oninput="searchDopamineProfiles()" style="flex:1;min-width:180px;padding:10px;border-radius:8px;background:var(--card-bg);color:var(--text-main);border:1px solid var(--card-border);"></div>
+    <div id="dopamine-profile-message" style="color:var(--text-sub);font-size:.82rem;margin:8px 0;" aria-live="polite"></div>
+    <div id="dopamine-profile-detail"></div>
+    <div id="dopamine-profile-results" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px;"></div>
+  </div></section>
+</main>
+
+<!-- PAGE : FACE-À-FACE ET RECORDS -->
+<main id="view-faceoff" class="app-page hidden">
+  <section class="dashboard-layout"><div class="main-dashboard-box">
+    <div class="card-title-flex"><h2><i class="fa-solid fa-scale-balanced" style="color:var(--bike-orange)"></i> Face-à-Face</h2><button class="medal-tab" onclick="loadDopamineProfiles()">Actualiser les athlètes</button></div>
+    <p style="color:var(--text-sub);font-size:.82rem;">Compare les statistiques des profils publics ou de tes coéquipiers acceptés, selon les autorisations Supabase.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0;">
+      <label>Premier athlète<select id="faceoff-athlete-a" style="display:block;width:100%;padding:10px;margin-top:5px;background:var(--card-bg);color:var(--text-main);border:1px solid var(--card-border);border-radius:8px;"></select></label>
+      <label>Deuxième athlète<select id="faceoff-athlete-b" style="display:block;width:100%;padding:10px;margin-top:5px;background:var(--card-bg);color:var(--text-main);border:1px solid var(--card-border);border-radius:8px;"></select></label>
+    </div>
+    <button class="btn-pro" onclick="runDopamineFaceoff()">Comparer les sportifs</button>
+    <div id="dopamine-faceoff-results" style="margin-top:15px;"></div>
+    <hr style="border-color:var(--card-border);margin:22px 0;">
+    <h3>Mes records personnels</h3><div id="dopamine-personal-records" style="margin-top:10px;"></div>
+  </div></section>
+</main>
+
+<!-- PAGE : CARTES GPS ET SEGMENTS -->
+<main id="view-gps" class="app-page hidden">
+  <section class="dashboard-layout"><div class="main-dashboard-box">
+    <div class="card-title-flex"><h2><i class="fa-solid fa-map-location-dot" style="color:var(--bike-orange)"></i> Cartes & Segments</h2><button class="medal-tab" onclick="loadDopamineGpsSessions()">Actualiser</button></div>
+    <p style="color:var(--text-sub);font-size:.82rem;">Sélectionne une séance contenant un tracé GPS ou un fichier GPX.</p>
+    <select id="dopamine-gps-session" onchange="displayDopamineGpsRoute()" style="width:100%;padding:10px;margin:10px 0;background:var(--card-bg);color:var(--text-main);border:1px solid var(--card-border);border-radius:8px;"><option value="">Chargement des séances…</option></select>
+    <div id="dopamine-gps-map" style="height:380px;min-height:280px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.05);"></div>
+    <div id="dopamine-gps-info" style="font-size:.82rem;color:var(--text-sub);margin-top:10px;"></div>
+    <section style="margin-top:22px;padding:14px;border:1px solid var(--card-border);border-radius:12px;">
+      <h3><i class="fa-solid fa-route"></i> Segments</h3>
+      <p style="font-size:.8rem;color:var(--text-sub);">L’affichage des parcours GPS est préparé. Pour enregistrer des segments, comparer automatiquement les temps et partager un classement entre comptes, il faudra ajouter une table Supabase dédiée (segments et résultats de segments), avec ses règles RLS. Aucune donnée fictive n’est affichée ici.</p>
+      <div id="dopamine-segments-status" style="font-size:.82rem;color:var(--text-sub);">En attente du schéma Supabase des segments.</div>
+    </section>
+  </div></section>
+</main>
 
     <!-- ONGLETS : TROPHÉES & RANGS -->
     <main id="view-trophies" class="app-page hidden">
@@ -1857,20 +1911,23 @@
       saveAppData();
     }
     function showPage(page) {
-      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'competition', 'stats', 'trophies'];
+      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'competition', 'stats', 'trophies', 'profiles', 'faceoff', 'gps'];
       if (!allowedPages.includes(page)) return;
       document.querySelectorAll('.app-page').forEach(el => el.classList.add('hidden'));
       const target = document.getElementById(`view-${page}`);
       if (!target) { console.warn(`Page introuvable : view-${page}`); return; }
       target.classList.remove('hidden');
       document.querySelectorAll('nav a, #nav-home, #nav-stats, #nav-trophies').forEach(el => el.classList.remove('active'));
-      const activeNav = document.getElementById(page === 'home' ? 'nav-home' : page === 'stats' ? 'nav-stats' : page === 'trophies' ? 'nav-trophies' : null);
+      const activeNav = document.getElementById(({home:'nav-home',stats:'nav-stats',trophies:'nav-trophies',profiles:'nav-profiles',faceoff:'nav-faceoff',gps:'nav-gps'})[page] || null);
       if (activeNav) activeNav.classList.add('active');
       document.querySelectorAll('.nav-discipline-btn').forEach(btn => btn.classList.toggle('active', (btn.getAttribute('onclick') || '').includes(`openCalc('${page}')`)));
       const submenu = document.getElementById('activity-submenu');
       if (submenu && ['home', 'stats', 'trophies', 'competition'].includes(page)) submenu.classList.remove('open');
       if (page === 'stats') { renderChart(); renderHistory(); }
-      if (page === 'trophies') renderTrophiesAndRanks();
+      if (page === 'profiles') loadDopamineProfiles();
+      if (page === 'faceoff') { loadDopamineProfiles(); renderDopaminePersonalRecords(); }
+      if (page === 'gps') loadDopamineGpsSessions();
+      if (page === 'stats') renderDopamineFitness();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -5356,4 +5413,561 @@ function syncDistance(prefix) {
     // Valeur envoyée à l'historique, aux stats et aux trophées
 hiddenInput.value = totalKm;
 }
+
+</script>
+<script>
+/* À LA DOPAMINE — modules Profils / Face-à-Face / Charge / GPS */
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+const esc = (value) =>
+    String(value ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&',
+      '<': '<',
+      '>': '>',
+      '"': '"',
+      "'": "'"
+    }[c]));
+
+  const num = (value) => {
+    const cleaned = String(value ?? '').replace(',', '.').replace(/[^0-9.-]/g, '');
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  let profileCache = [];
+  let gpsMap = null;
+  let gpsLayer = null;
+  let fitnessChart = null;
+
+  async function currentUser() {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+      throw new Error('Connexion Supabase indisponible.');
+    }
+    return await getCurrentSupabaseUser();
+  }
+
+  async function getVisibleAthletes() {
+    const user = await currentUser();
+    const rel = await supabaseClient
+      .from('friendships')
+      .select('sender_id,receiver_id,status')
+      .eq('status', 'accepted')
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+
+    if (rel.error) throw rel.error;
+
+    const friendIds = (rel.data || []).map((r) =>
+      r.sender_id === user.id ? r.receiver_id : r.sender_id
+    );
+
+    const fields =
+      'id,username,bio,city,department,photo_url,avatar_url,visibility,age,weight,height,level_sportif,favorite_sports,created_at';
+
+    const [own, publicProfiles, friendProfiles] = await Promise.all([
+      supabaseClient.from('profiles').select(fields).eq('id', user.id).maybeSingle(),
+      supabaseClient.from('profiles').select(fields).eq('visibility', 'public').limit(100),
+      friendIds.length
+        ? supabaseClient
+            .from('profiles')
+            .select(fields)
+            .in('id', friendIds)
+            .in('visibility', ['friends', 'public'])
+            .limit(200)
+        : Promise.resolve({ data: [], error: null })
+    ]);
+
+    for (const result of [own, publicProfiles, friendProfiles]) {
+      if (result.error) throw result.error;
+    }
+
+    const rows = [
+      ...(own.data ? [own.data] : []),
+      ...(publicProfiles.data || []),
+      ...(friendProfiles.data || [])
+    ];
+
+    return [...new Map(rows.map((p) => [p.id, p])).values()];
+  }
+
+  function athleteLabel(p) {
+    return p.username || 'Athlète';
+  }
+
+  function athleteAvatar(p) {
+    const url = p.avatar_url || p.photo_url || '';
+    if (url) {
+      return `<img src="${esc(url)}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:50%;">`;
+    }
+    return `<i class="fa-solid fa-circle-user" style="font-size:3.8rem;color:var(--text-sub)"></i>`;
+  }
+
+  function profileMarkup(p, sessions) {
+    const total = sessions.length;
+    const distance = sessions.reduce((s, x) => s + num(x.distance), 0);
+    const duration = sessions.reduce((s, x) => s + num(x.duration), 0);
+    const sports = [...new Set(sessions.map((x) => x.sport).filter(Boolean))].join(', ');
+
+    return `
+      <article style="padding:15px;border:1px solid var(--card-border);border-radius:13px;background:rgba(255,255,255,.025);">
+        <div style="display:flex;align-items:center;gap:12px;">
+          ${athleteAvatar(p)}
+          <div>
+            <strong>${esc(athleteLabel(p))}</strong>
+            <div style="font-size:.78rem;color:var(--text-sub)">
+              ${esc(p.city || 'Ville non renseignée')} ${p.department ? '· ' + esc(p.department) : ''}
+            </div>
+            <div style="font-size:.75rem;color:var(--bike-orange)">
+              ${esc(p.level_sportif || 'Niveau non renseigné')}
+            </div>
+          </div>
+        </div>
+        ${p.bio ? `<p style="font-size:.84rem;white-space:pre-wrap">${esc(p.bio)}</p>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <span class="df-stat">${total} séances accessibles</span>
+          <span class="df-stat">${distance.toFixed(1)} km</span>
+          <span class="df-stat">${Math.round(duration)} min</span>
+        </div>
+        <div style="font-size:.75rem;color:var(--text-sub);margin-top:8px">
+          Sports : ${esc(sports || 'Non renseignés')}
+        </div>
+      </article>
+    `;
+  }
+
+  async function sessionsFor(userId) {
+    const r = await supabaseClient
+      .from('sessions')
+      .select('id,user_id,sport,title,distance,duration,elevation_m,date,created_at,average_hr,rpe,gpx_url,route_polyline')
+      .eq('user_id', userId)
+      .order('date', { ascending: false })
+      .limit(500);
+
+    if (r.error) throw r.error;
+    return r.data || [];
+  }
+
+  window.loadDopamineProfiles = async function () {
+    const msg = $('dopamine-profile-message');
+    const out = $('dopamine-profile-results');
+    if (msg) msg.textContent = 'Chargement des profils autorisés…';
+
+    try {
+      profileCache = await getVisibleAthletes();
+      if (out) {
+        out.innerHTML = profileCache
+          .map(
+            (p) =>
+              `<button type="button" data-athlete-id="${esc(p.id)}" class="df-btn" style="text-align:left" onclick="openDopamineAthleteProfile('${esc(p.id)}')">${esc(athleteLabel(p))} · ${esc(p.city || 'Ville inconnue')}</button>`
+          )
+          .join('');
+      }
+
+      const a = $('faceoff-athlete-a');
+      const b = $('faceoff-athlete-b');
+      [a, b].forEach((sel) => {
+        if (sel) {
+          sel.innerHTML = profileCache
+            .map((p) => `<option value="${esc(p.id)}">${esc(athleteLabel(p))}</option>`)
+            .join('');
+        }
+      });
+
+      if (msg) {
+        msg.textContent = profileCache.length
+          ? `${profileCache.length} profil(s) accessibles.`
+          : 'Aucun profil accessible. Vérifie les profils publics, les amitiés acceptées et les règles RLS.';
+      }
+    } catch (e) {
+      if (msg) msg.textContent = 'Erreur : ' + e.message;
+      console.error(e);
+    }
+  };
+
+  window.searchDopamineProfiles = function () {
+    const q = ($('dopamine-profile-search')?.value || '').toLocaleLowerCase('fr');
+    const out = $('dopamine-profile-results');
+    if (!out) return;
+
+    const matches = profileCache.filter((p) =>
+      athleteLabel(p).toLocaleLowerCase('fr').includes(q)
+    );
+
+    out.innerHTML = matches.length
+      ? matches
+          .map(
+            (p) =>
+              `<button type="button" class="df-btn" onclick="openDopamineAthleteProfile('${esc(p.id)}')">${esc(athleteLabel(p))} · ${esc(p.city || '')}</button>`
+          )
+          .join('')
+      : '<p>Aucun profil correspondant.</p>';
+  };
+
+  window.openDopamineAthleteProfile = async function (id) {
+    const target = $('dopamine-profile-detail');
+    if (!target) return;
+    target.textContent = 'Chargement du profil…';
+
+    try {
+      const p = profileCache.find((x) => x.id === id);
+      if (!p) throw new Error('Profil non autorisé ou introuvable. Actualise la liste.');
+      const sessions = await sessionsFor(id);
+      target.innerHTML = profileMarkup(p, sessions);
+    } catch (e) {
+      target.textContent = 'Impossible d’ouvrir ce profil : ' + e.message;
+    }
+  };
+
+  window.loadMyDopamineProfile = async function () {
+    try {
+      const u = await currentUser();
+      await loadDopamineProfiles();
+      await openDopamineAthleteProfile(u.id);
+    } catch (e) {
+      const m = $('dopamine-profile-message');
+      if (m) m.textContent = e.message;
+    }
+  };
+
+  function parseDurationMinutes(v) {
+    if (typeof v === 'number') return v;
+    const s = String(v || '');
+    const h = s.match(/(\d+)\s*h/i);
+    const m = s.match(/(\d+)\s*(?:min|m)/i);
+    const sec = s.match(/(\d+)\s*s/i);
+    if (h || m || sec) {
+      return num(h?.[1]) * 60 + num(m?.[1]) + num(sec?.[1]) / 60;
+    }
+    return num(s);
+  }
+
+  function loadValue(s) {
+    const mins = parseDurationMinutes(s.duration);
+    const rpe = Math.max(1, Math.min(10, num(s.rpe) || 5));
+    return Math.max(0, mins * rpe);
+  }
+
+  function fitnessSeries(sessions) {
+    const byDay = {};
+    sessions.forEach((s) => {
+      const d = String(s.date || s.created_at || '').slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        byDay[d] = (byDay[d] || 0) + loadValue(s);
+      }
+    });
+
+    const days = [];
+    const end = new Date();
+    end.setHours(0, 0, 0, 0);
+    for (let i = 83; i >= 0; i--) {
+      const d = new Date(end);
+      d.setDate(end.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ date: key, load: byDay[key] || 0 });
+    }
+
+    let ctl = 0;
+    let atl = 0;
+    return days.map((d) => {
+      ctl = ctl + (d.load - ctl) * (1 - Math.exp(-1 / 42));
+      atl = atl + (d.load - atl) * (1 - Math.exp(-1 / 7));
+      return { ...d, ctl, atl, tsb: ctl - atl };
+    });
+  }
+
+  window.renderDopamineFitness = async function () {
+    const box = $('dopamine-fitness-cards');
+    const ex = $('dopamine-fitness-explanation');
+    if (!box) return;
+
+    try {
+      let sessions =
+        typeof appData !== 'undefined' && Array.isArray(appData.sessionsHistory)
+          ? appData.sessionsHistory
+          : [];
+
+      if (!sessions.length && typeof supabaseClient !== 'undefined' && supabaseClient) {
+        const u = await currentUser();
+        sessions = await sessionsFor(u.id);
+      }
+
+      const series = fitnessSeries(sessions);
+      const last = series[series.length - 1] || { ctl: 0, atl: 0, tsb: 0 };
+
+      const cards = [
+        ['CTL', last.ctl.toFixed(1), 'Charge chronique'],
+        ['ATL', last.atl.toFixed(1), 'Charge récente'],
+        [
+          'TSB',
+          last.tsb.toFixed(1),
+          last.tsb >= 5 ? 'Fraîcheur positive' : last.tsb < -10 ? 'Fatigue élevée' : 'Équilibre'
+        ]
+      ];
+
+      box.innerHTML = cards
+        .map(
+          (x) =>
+            `<div style="padding:13px;border:1px solid var(--card-border);border-radius:10px"><strong style="font-size:1.4rem">${x[1]}</strong><div style="font-weight:800">${x[0]}</div><small style="color:var(--text-sub)">${x[2]}</small></div>`
+        )
+        .join('');
+
+      const canvas = $('dopamine-fitness-chart');
+      if (canvas && window.Chart) {
+        if (fitnessChart) fitnessChart.destroy();
+        fitnessChart = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: series.map((x) => x.date.slice(5)),
+            datasets: [
+              { label: 'CTL', data: series.map((x) => x.ctl), borderColor: '#22c55e', tension: 0.25 },
+              { label: 'ATL', data: series.map((x) => x.atl), borderColor: '#ff6b00', tension: 0.25 },
+              { label: 'TSB', data: series.map((x) => x.tsb), borderColor: '#00a2ff', tension: 0.25 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false }
+          }
+        });
+      }
+
+      if (ex) {
+        ex.textContent =
+          'Méthode : charge quotidienne = durée en minutes × RPE (1 à 10), puis moyennes exponentielles CTL sur 42 jours et ATL sur 7 jours. Les séances sans RPE utilisent provisoirement 5/10. Pour une analyse plus fiable, renseigne le RPE et la durée de chaque séance.';
+      }
+    } catch (e) {
+      box.textContent = 'Erreur de calcul : ' + e.message;
+    }
+  };
+
+  window.renderDopaminePersonalRecords = async function () {
+    const out = $('dopamine-personal-records');
+    if (!out) return;
+
+    try {
+      const u = await currentUser();
+      const sessions = await sessionsFor(u.id);
+      const runs = sessions.filter((s) => /course|running|run/i.test(s.sport || ''));
+      const best = {};
+
+      runs.forEach((s) => {
+        const d = num(s.distance);
+        const t = parseDurationMinutes(s.duration);
+        if (d > 0 && t > 0) {
+          const key = d.toFixed(2) + ' km';
+          if (!best[key] || t < best[key].minutes) {
+            best[key] = { minutes: t, title: s.title || 'Course', date: s.date || '' };
+          }
+        }
+      });
+
+      const entries = Object.entries(best).sort(
+        (a, b) => Number(a[0].split(' ')[0]) - Number(b[0].split(' ')[0])
+      );
+
+      out.innerHTML = entries.length
+        ? entries
+            .map(
+              ([d, r]) =>
+                `<div style="display:flex;justify-content:space-between;gap:10px;padding:9px;border-bottom:1px solid var(--card-border)"><strong>${esc(d)}</strong><span>${r.minutes.toFixed(1)} min</span><small>${esc(r.date)}</small></div>`
+            )
+            .join('')
+        : 'Aucun record calculable dans les séances accessibles.';
+    } catch (e) {
+      out.textContent = 'Records indisponibles : ' + e.message;
+    }
+  };
+
+  window.runDopamineFaceoff = async function () {
+    const out = $('dopamine-faceoff-results');
+    if (!out) return;
+
+    try {
+      const a = profileCache.find((p) => p.id === $('faceoff-athlete-a')?.value);
+      const b = profileCache.find((p) => p.id === $('faceoff-athlete-b')?.value);
+      if (!a || !b) throw new Error('Choisis deux athlètes accessibles.');
+      if (a.id === b.id) throw new Error('Choisis deux athlètes différents.');
+
+      const [sa, sb] = await Promise.all([sessionsFor(a.id), sessionsFor(b.id)]);
+      const summary = (s) => ({
+        count: s.length,
+        km: s.reduce((v, x) => v + num(x.distance), 0),
+        minutes: s.reduce((v, x) => v + parseDurationMinutes(x.duration), 0),
+        dplus: s.reduce((v, x) => v + num(x.elevation_m), 0)
+      });
+
+      const x = summary(sa);
+      const y = summary(sb);
+
+      out.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+          <article class="main-dashboard-box">
+            <h3>${esc(athleteLabel(a))}</h3>
+            <p>${x.count} séances</p>
+            <p>${x.km.toFixed(1)} km</p>
+            <p>${Math.round(x.minutes)} min</p>
+            <p>${Math.round(x.dplus)} m D+</p>
+          </article>
+          <article class="main-dashboard-box">
+            <h3>${esc(athleteLabel(b))}</h3>
+            <p>${y.count} séances</p>
+            <p>${y.km.toFixed(1)} km</p>
+            <p>${Math.round(y.minutes)} min</p>
+            <p>${Math.round(y.dplus)} m D+</p>
+          </article>
+        </div>
+        <p style="font-size:.75rem;color:var(--text-sub)">Comparaison calculée uniquement sur les séances que Supabase autorise à lire. Les records par distance seront affinés avec des formats normalisés.</p>
+      `;
+    } catch (e) {
+      out.textContent = 'Comparaison impossible : ' + e.message;
+    }
+  };
+
+  window.loadDopamineGpsSessions = async function () {
+    const sel = $('dopamine-gps-session');
+    const info = $('dopamine-gps-info');
+    if (!sel) return;
+
+    try {
+      const u = await currentUser();
+      const s = await sessionsFor(u.id);
+      const routes = s.filter((x) => x.gpx_url || x.route_polyline);
+
+      sel.innerHTML =
+        '<option value="">Choisir une séance GPS…</option>' +
+        routes
+          .map(
+            (x) =>
+              `<option value="${esc(x.id)}">${esc(x.date || 'Date inconnue')} · ${esc(x.sport || 'Sport')} · ${esc(x.title || 'Séance')}</option>`
+          )
+          .join('');
+
+      if (info) {
+        info.textContent = routes.length
+          ? `${routes.length} séance(s) avec un tracé GPS trouvée(s) sur ${s.length}.`
+          : 'Aucun tracé GPX ou GPS trouvé dans tes séances.';
+      }
+    } catch (e) {
+      if (info) info.textContent = 'Chargement GPS impossible : ' + e.message;
+    }
+  };
+
+  function loadLeaflet() {
+    return new Promise((resolve, reject) => {
+      if (window.L) return resolve();
+
+      if (!document.getElementById('dopamine-leaflet-css')) {
+        const l = document.createElement('link');
+        l.id = 'dopamine-leaflet-css';
+        l.rel = 'stylesheet';
+        l.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(l);
+      }
+
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Impossible de charger la bibliothèque cartographique.'));
+      document.head.appendChild(s);
+    });
+  }
+
+  function decodePolyline(str) {
+    let i = 0;
+    let lat = 0;
+    let lng = 0;
+    const pts = [];
+
+    while (i < str.length) {
+      let b;
+      let shift = 0;
+      let result = 0;
+      do {
+        b = str.charCodeAt(i++) - 63;
+        result |= (b & 31) << shift;
+        shift += 5;
+      } while (b >= 32);
+      lat += result & 1 ? ~(result >> 1) : result >> 1;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = str.charCodeAt(i++) - 63;
+        result |= (b & 31) << shift;
+        shift += 5;
+      } while (b >= 32);
+      lng += result & 1 ? ~(result >> 1) : result >> 1;
+
+      pts.push([lat / 1e5, lng / 1e5]);
+    }
+    return pts;
+  }
+
+  window.displayDopamineGpsRoute = async function () {
+    const id = $('dopamine-gps-session')?.value;
+    const info = $('dopamine-gps-info');
+    if (!id) return;
+
+    try {
+      const u = await currentUser();
+      const r = await supabaseClient
+        .from('sessions')
+        .select('id,user_id,title,sport,gpx_url,route_polyline')
+        .eq('id', id)
+        .eq('user_id', u.id)
+        .maybeSingle();
+
+      if (r.error) throw r.error;
+      if (!r.data) throw new Error('Séance introuvable ou non autorisée.');
+
+      await loadLeaflet();
+      const el = $('dopamine-gps-map');
+
+      if (!gpsMap) {
+        gpsMap = L.map(el).setView([46.7, 1.7], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap'
+        }).addTo(gpsMap);
+      }
+
+      setTimeout(() => gpsMap.invalidateSize(), 100);
+
+      if (gpsLayer) {
+        gpsMap.removeLayer(gpsLayer);
+        gpsLayer = null;
+      }
+
+      let points = [];
+      if (r.data.route_polyline) {
+        points = decodePolyline(r.data.route_polyline);
+      } else if (r.data.gpx_url) {
+        const resp = await fetch(r.data.gpx_url);
+        if (!resp.ok) throw new Error('Le fichier GPX ne peut pas être téléchargé.');
+        const xml = new DOMParser().parseFromString(await resp.text(), 'application/xml');
+        points = [...xml.querySelectorAll('trkpt,rtept')]
+          .map((p) => [Number(p.getAttribute('lat')), Number(p.getAttribute('lon'))])
+          .filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+      }
+
+      if (points.length < 2) {
+        throw new Error('Le tracé ne contient pas assez de points GPS.');
+      }
+
+      gpsLayer = L.polyline(points, { color: '#ff6b00', weight: 5 }).addTo(gpsMap);
+      gpsMap.fitBounds(gpsLayer.getBounds(), { padding: [20, 20] });
+
+      if (info) {
+        info.textContent = `Tracé affiché : ${points.length} points GPS · ${r.data.title || r.data.sport || 'Séance'}.`;
+      }
+    } catch (e) {
+      if (info) info.textContent = 'Affichage impossible : ' + e.message;
+      console.error(e);
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if ($('dopamine-fitness-cards')) renderDopamineFitness();
+  });
+})();
 </script>
