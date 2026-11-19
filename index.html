@@ -5659,7 +5659,7 @@ const esc = (value) =>
     const end = new Date();
     end.setHours(0, 0, 0, 0);
     for (let i = 83; i >= 0; i--) {
-      const d = new Date(end);
+const d = new Date(end);
       d.setDate(end.getDate() - i);
       const key = d.toISOString().slice(0, 10);
       days.push({ date: key, load: byDay[key] || 0 });
@@ -5740,43 +5740,355 @@ const esc = (value) =>
     }
   };
 
+  const DOPAMINE_SPORTS_TABS = [
+    { key: 'natation', label: '🏊 Natation' },
+    { key: 'velo', label: '🚴 Vélo' },
+    { key: 'cap', label: '🏃 Course à pied' },
+    { key: 'marche', label: '🚶 Marche' },
+    { key: 'hiit', label: '⚡ HIIT & autres sports' },
+    { key: 'competition', label: '🏆 Compétition' }
+  ];
+
+  const DOPAMINE_CORE_DISTANCES = {
+    cap: [
+      { label: '100 m', km: 0.1 },
+      { label: '200 m', km: 0.2 },
+      { label: '500 m', km: 0.5 },
+      { label: '1 km', km: 1 },
+      { label: '2 km', km: 2 },
+      { label: '5 km', km: 5 },
+      { label: '10 km', km: 10 },
+      { label: '15 km', km: 15 },
+      { label: '20 km', km: 20 },
+      { label: 'Semi-marathon', km: 21.0975 }
+    ],
+    velo: [
+      { label: '5 km', km: 5 },
+      { label: '10 km', km: 10 },
+      { label: '20 km', km: 20 },
+      { label: '30 km', km: 30 },
+      { label: '50 km', km: 50 }
+    ],
+    marche: [
+      { label: '1 km', km: 1 },
+      { label: '2 km', km: 2 },
+      { label: '5 km', km: 5 },
+      { label: '10 km', km: 10 },
+      { label: '15 km', km: 15 },
+      { label: '20 km', km: 20 }
+    ],
+    natation: [
+      { label: '100 m', km: 0.1 },
+      { label: '200 m', km: 0.2 },
+      { label: '500 m', km: 0.5 },
+      { label: '1 km', km: 1 },
+      { label: '2 km', km: 2 }
+    ]
+  };
+
+  const DOPAMINE_BIG_DISTANCES = {
+    cap: [
+      { label: '30 km', km: 30 },
+      { label: 'Marathon', km: 42.195 },
+      { label: '50 km', km: 50 },
+      { label: '100 km', km: 100 },
+      { label: '150 km', km: 150 },
+      { label: '200 km', km: 200 }
+    ],
+    velo: [
+      { label: '100 km', km: 100 },
+      { label: '150 km', km: 150 },
+      { label: '200 km', km: 200 }
+    ],
+    marche: [
+      { label: '30 km', km: 30 },
+      { label: '40 km', km: 40 }
+    ],
+    natation: [
+      { label: '5 km', km: 5 },
+      { label: '10 km', km: 10 }
+    ]
+  };
+
+  let activeDopamineRecordSport = 'cap';
+
+  function matchesRecordSport(sportRaw, tabKey) {
+    const s = String(sportRaw || '').toLocaleLowerCase('fr');
+    if (tabKey === 'natation') return /natation|swim|piscine|eau libre/i.test(s);
+    if (tabKey === 'velo') return /v[ée]lo|cycl|route|vtt|gravel|home.?trainer|zwift/i.test(s);
+    if (tabKey === 'cap') return /course|running|run|trail|jog|cap/i.test(s);
+    if (tabKey === 'marche') return /marche|walk|rando/i.test(s);
+    if (tabKey === 'competition') return /comp[ée]tition|course officielle|triathlon|duathlon|race/i.test(s);
+    if (tabKey === 'hiit') {
+      return (
+        !/natation|swim|piscine|v[ée]lo|cycl|route|vtt|gravel|course|running|run|trail|cap|marche|walk|rando|comp[ée]tition|triathlon|duathlon|race/i.test(
+          s
+        ) || /hiit|renfo|muscu|autre|cross/i.test(s)
+      );
+    }
+    return false;
+  }
+
+  function maxSessionDistanceKm(sessions) {
+    return (sessions || []).reduce((maxKm, s) => {
+      const d = num(s.distance);
+      return d > maxKm ? d : maxKm;
+    }, 0);
+  }
+
+  function formatHmFromMinutes(totalMinutes) {
+    const mins = Math.max(0, Math.round(num(totalMinutes)));
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return `${m} min`;
+    return `${h}h ${String(m).padStart(2, '0')}min`;
+  }
+
+  function formatMinSecFromMinutes(totalMinutes) {
+    const totalSec = Math.max(0, Math.round(num(totalMinutes) * 60));
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}min ${String(s).padStart(2, '0')}s`;
+  }
+
+  function topSportSummary(sessions) {
+    if (!sessions || !sessions.length) return '—';
+    const counts = {};
+    sessions.forEach((s) => {
+      const name = String(s.sport || 'Autre').trim() || 'Autre';
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    if (!sorted.length) return '—';
+    return `${sorted[0][0]} (${sorted[0][1]})`;
+  }
+
+  function buildDistanceCardsSection(sportKey, sessions) {
+    const core = DOPAMINE_CORE_DISTANCES[sportKey] || [];
+    const big = DOPAMINE_BIG_DISTANCES[sportKey] || [];
+    const maxKm = maxSessionDistanceKm(sessions);
+
+    const unlockedBig = big.filter((item) => maxKm >= item.km * 0.97);
+    const pendingBigCount = big.length - unlockedBig.length;
+    const visibleItems = [...core, ...unlockedBig];
+
+    const cardsHtml = visibleItems
+      .map(
+        (item) => `
+          <div style="padding:12px 13px;border:1px solid var(--card-border);border-radius:11px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));">
+            <div style="font-weight:800;font-size:.92rem;color:var(--text-main);">${esc(item.label)}</div>
+            <div style="font-size:.78rem;color:var(--text-sub);margin-top:5px;">En attente de splits</div>
+          </div>
+        `
+      )
+      .join('');
+
+    const futureCardHtml =
+      pendingBigCount > 0
+        ? `
+          <div style="padding:12px 13px;border:1px dashed var(--card-border);border-radius:11px;background:rgba(255,107,0,.04);display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-weight:800;font-size:.86rem;color:var(--bike-orange);">Un jour viendra ✨</div>
+            <div style="font-size:.76rem;color:var(--text-sub);margin-top:4px;">${pendingBigCount} grand(s) cap(s) à venir dès que tu les franchiras.</div>
+          </div>
+        `
+        : '';
+
+    return `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-top:12px;">
+        ${cardsHtml}
+        ${futureCardHtml}
+      </div>
+    `;
+  }
+
+  window.selectDopamineRecordSport = function (sportKey) {
+    activeDopamineRecordSport = sportKey;
+    window.renderDopaminePersonalRecords();
+  };
+
   window.renderDopaminePersonalRecords = async function () {
     const out = $('dopamine-personal-records');
     if (!out) return;
 
+    out.textContent = 'Chargement des records et statistiques…';
+
     try {
       const u = await currentUser();
-      const sessions = await sessionsFor(u.id);
-      const runs = sessions.filter((s) => /course|running|run/i.test(s.sport || ''));
-      const best = {};
-
-      runs.forEach((s) => {
-        const d = num(s.distance);
-        const t = parseDurationMinutes(s.duration);
-        if (d > 0 && t > 0) {
-          const key = d.toFixed(2) + ' km';
-          if (!best[key] || t < best[key].minutes) {
-            best[key] = { minutes: t, title: s.title || 'Course', date: s.date || '' };
-          }
-        }
-      });
-
-      const entries = Object.entries(best).sort(
-        (a, b) => Number(a[0].split(' ')[0]) - Number(b[0].split(' ')[0])
+      const allSessions = await sessionsFor(u.id);
+      const filtered = allSessions.filter((s) =>
+        matchesRecordSport(s.sport, activeDopamineRecordSport)
       );
 
-      out.innerHTML = entries.length
-        ? entries
-            .map(
-              ([d, r]) =>
-                `<div style="display:flex;justify-content:space-between;gap:10px;padding:9px;border-bottom:1px solid var(--card-border)"><strong>${esc(d)}</strong><span>${r.minutes.toFixed(1)} min</span><small>${esc(r.date)}</small></div>`
-            )
-            .join('')
-        : 'Aucun record calculable dans les séances accessibles.';
+      const tabsHtml = `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          ${DOPAMINE_SPORTS_TABS.map((t) => {
+            const active = t.key === activeDopamineRecordSport;
+            return `<button type="button" class="df-btn" onclick="selectDopamineRecordSport('${t.key}')" style="${
+              active ? 'border-color:var(--bike-orange);background:rgba(255,107,0,.16);' : ''
+            }">${esc(t.label)}</button>`;
+          }).join('')}
+        </div>
+      `;
+
+      const splitNote = `
+        <p style="font-size:.76rem;color:var(--text-sub);margin:6px 0 10px;">
+          <strong>Info splits :</strong> un <em>split</em> est un tronçon intermédiaire (par km ou distance de référence) enregistré par ta montre/GPS ou importé (ex. Strava). Tant que les données de splits ne sont pas disponibles de manière fiable, les chronos restent en attente afin d'éviter toute estimation provisoire.
+        </p>
+      `;
+
+      let bodyHtml = '';
+      if (activeDopamineRecordSport === 'hiit') {
+        bodyHtml =
+          `<p style="font-size:.8rem;color:var(--text-sub);margin:6px 0 10px;">Vue globale des séances HIIT et autres disciplines.</p>` +
+          buildTotalsBlock(filtered, { showElevation: true }) +
+          buildHiitBreakdown(filtered);
+      } else if (activeDopamineRecordSport === 'competition') {
+        bodyHtml = buildCompetitionView(filtered);
+      } else {
+        bodyHtml =
+          splitNote +
+          buildDistanceCardsSection(activeDopamineRecordSport, filtered) +
+          buildTotalsBlock(filtered, { showElevation: true });
+      }
+
+      out.innerHTML = tabsHtml + bodyHtml;
     } catch (e) {
       out.textContent = 'Records indisponibles : ' + e.message;
     }
   };
+
+  function buildTotalsBlock(sessions, options = {}) {
+    const showElevation = options.showElevation !== false;
+    const count = sessions.length;
+    const distKm = sessions.reduce((acc, s) => acc + num(s.distance), 0);
+    const mins = sessions.reduce((acc, s) => acc + parseDurationMinutes(s.duration), 0);
+    const dplus = sessions.reduce((acc, s) => acc + num(s.elevation_m), 0);
+
+    const now = Date.now();
+    const fourWeeksMs = 28 * 24 * 60 * 60 * 1000;
+    const recent = sessions.filter((s) => {
+      const ts = Date.parse(s.date || s.created_at || '');
+      return Number.isFinite(ts) && now - ts <= fourWeeksMs;
+    });
+
+    const recentCount = recent.length;
+    const recentDistKm = recent.reduce((acc, s) => acc + num(s.distance), 0);
+    const recentMins = recent.reduce((acc, s) => acc + parseDurationMinutes(s.duration), 0);
+    const recentDplus = recent.reduce((acc, s) => acc + num(s.elevation_m), 0);
+
+    const wkActs = (recentCount / 4).toFixed(1).replace('.', ',');
+    const wkDur = formatMinSecFromMinutes(recentMins / 4);
+    const wkDist = `${(recentDistKm / 4).toFixed(1).replace('.', ',')} km`;
+    const topRecent = topSportSummary(recent);
+    const topAll = topSportSummary(sessions);
+
+    return `
+      <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
+        <div style="padding:12px;border:1px solid var(--card-border);border-radius:11px;background:rgba(255,255,255,.025);">
+          <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;">4 dernières semaines</div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Activité la plus faite</span><strong>${esc(topRecent)}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Activités/semaine</span><strong>${esc(wkActs)}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Durée moy./semaine</span><strong>${esc(wkDur)}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Distance moy./semaine</span><strong>${esc(wkDist)}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Activités</span><strong>${recentCount}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Temps</span><strong>${esc(formatHmFromMinutes(recentMins))}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Distance</span><strong>${recentDistKm.toFixed(1).replace('.', ',')} km</strong></div>
+          ${showElevation ? `<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Dénivelé</span><strong>${Math.round(recentDplus)} m</strong></div>` : ''}
+        </div>
+
+        <div style="padding:12px;border:1px solid var(--card-border);border-radius:11px;background:rgba(255,255,255,.025);">
+          <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;">De tout temps</div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Activité la plus faite</span><strong>${esc(topAll)}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Activités</span><strong>${count}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Temps</span><strong>${esc(formatHmFromMinutes(mins))}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Distance</span><strong>${distKm.toFixed(1).replace('.', ',')} km</strong></div>
+          ${showElevation ? `<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;"><span>Dénivelé</span><strong>${Math.round(dplus)} m</strong></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function buildHiitBreakdown(sessions) {
+    if (!sessions || !sessions.length) {
+      return `<p style="font-size:.8rem;color:var(--text-sub);margin-top:12px;">Aucune séance enregistrée dans HIIT & autres sports.</p>`;
+    }
+
+    const bySport = {};
+    sessions.forEach((s) => {
+      const key = String(s.sport || 'Autre').trim() || 'Autre';
+      if (!bySport[key]) bySport[key] = { count: 0, km: 0, mins: 0, dplus: 0 };
+      bySport[key].count += 1;
+      bySport[key].km += num(s.distance);
+      bySport[key].mins += parseDurationMinutes(s.duration);
+      bySport[key].dplus += num(s.elevation_m);
+    });
+
+    const rows = Object.entries(bySport).sort((a, b) => b[1].count - a[1].count);
+
+    return `
+      <div style="margin-top:16px;padding:12px;border:1px solid var(--card-border);border-radius:11px;background:rgba(255,255,255,.02);">
+        <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;">Ensemble des stats — HIIT & autres sports</div>
+        ${rows
+          .map(
+            ([sportName, st]) => `
+              <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.82rem;padding:6px 0;border-bottom:1px solid var(--card-border);">
+                <strong>${esc(sportName)}</strong>
+                <span>${st.count} séance(s)</span>
+                <span>${st.km.toFixed(1).replace('.', ',')} km</span>
+                <span>${esc(formatHmFromMinutes(st.mins))}</span>
+                <span>${Math.round(st.dplus)} m D+</span>
+              </div>
+            `
+          )
+          .join('')}
+      </div>
+    `;
+  }
+
+  function buildCompetitionView(sessions) {
+    const compList = sessions || [];
+    const formats = ['XS', 'S', 'M', 'L', 'XXL', 'Ironman'];
+
+    const renderEventBlock = (eventTitle, matcherRegex) => {
+      const matching = compList.filter((s) =>
+        matcherRegex.test(`${s.title || ''} ${s.sport || ''}`)
+      );
+
+      const formatRows = formats
+        .map((fmt) => {
+          const hit = matching.find((s) =>
+            new RegExp(`\\b${fmt}\\b`, 'i').test(`${s.title || ''} ${s.sport || ''}`)
+          );
+          const bestTime = hit
+            ? formatHmFromMinutes(parseDurationMinutes(hit.duration))
+            : 'Aucun temps enregistré';
+
+          return `
+            <div style="padding:10px;border:1px solid var(--card-border);border-radius:9px;background:rgba(255,255,255,.02);">
+              <div style="font-weight:700;font-size:.84rem;">Format ${esc(fmt)}</div>
+              <div style="font-size:.8rem;color:var(--text-sub);margin-top:3px;">Meilleur temps : <strong>${esc(bestTime)}</strong></div>
+              <div style="font-size:.74rem;color:var(--text-sub);margin-top:4px;">Détails : segments, transitions T1/T2 et D+ (en attente de données détaillées)</div>
+            </div>
+          `;
+        })
+        .join('');
+
+      return `
+        <div style="margin-top:12px;padding:14px;border:1px solid var(--card-border);border-radius:11px;background:rgba(255,255,255,.025);">
+          <div style="font-size:.75rem;color:var(--text-sub);">Type d'épreuve</div>
+          <div style="font-weight:800;font-size:.98rem;margin:2px 0 10px;">${esc(eventTitle)}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">
+            ${formatRows}
+          </div>
+        </div>
+      `;
+    };
+
+    return (
+      renderEventBlock('🏊🚴🏃 Triathlon', /triathlon/i) +
+      renderEventBlock('🏃🚴🏃 Duathlon', /duathlon/i)
+    );
+  }
 
   window.runDopamineFaceoff = async function () {
     const out = $('dopamine-faceoff-results');
