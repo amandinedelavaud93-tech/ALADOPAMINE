@@ -4406,13 +4406,14 @@ async function refreshFriendHub(){
         
         weekCounts[key] = (weekCounts[key] || 0) + 1;
       });
-
-      // Compter les semaines consécutives en remontant à partir de la semaine actuelle
+// Compter les semaines consécutives en remontant à partir de la semaine actuelle
       const now = new Date();
       let currentWeekCount = 0;
       let checkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      let safetyGuard = 0;
 
-      while (true) {
+      while (safetyGuard < 260) {
+        safetyGuard++;
         const d = new Date(checkDate.valueOf());
         const dayNr = (d.getDay() + 6) % 7;
         d.setDate(d.getDate() - dayNr + 3);
@@ -4427,14 +4428,10 @@ async function refreshFriendHub(){
 
         if (weekCounts[key] && weekCounts[key] >= 2) {
           currentWeekCount++;
-          // Reculer d'une semaine (7 jours)
           checkDate.setDate(checkDate.getDate() - 7);
         } else {
-          // Si c'est la semaine courante en cours et qu'elle n'a pas encore atteint 2 séances, tester la semaine précédente
           if (currentWeekCount === 0) {
             checkDate.setDate(checkDate.getDate() - 7);
-            const prevKey = key;
-            // Éviter boucle infinie
             if (checkDate.getFullYear() < 2020) break;
             continue;
           }
@@ -4468,18 +4465,22 @@ async function refreshFriendHub(){
         if(cal) cal.innerText = `${appData.stats.calories} kcal`;
       });
       
-      document.getElementById('user-level-num').innerText = appData.level;
-      document.getElementById('user-xp-text').innerText = `${appData.xp} / 500 XP`;
-      document.getElementById('xp-bar-fill').style.width = `${(appData.xp / 500) * 100}%`;
+      const lvlEl = document.getElementById('user-level-num');
+      if (lvlEl) lvlEl.innerText = appData.level;
+      const xpTextEl = document.getElementById('user-xp-text');
+      if (xpTextEl) xpTextEl.innerText = `${appData.xp} / 500 XP`;
+      const xpBarEl = document.getElementById('xp-bar-fill');
+      if (xpBarEl) xpBarEl.style.width = `${Math.min(100, Math.max(0, (appData.xp / 500) * 100))}%`;
 
       const homeLvl = document.getElementById('home-user-level-num');
       if(homeLvl) homeLvl.innerText = appData.level;
       const homeXp = document.getElementById('home-user-xp-text');
       if(homeXp) homeXp.innerText = `${appData.xp} / 500 XP`;
       const homeXpBar = document.getElementById('home-xp-bar-fill');
-      if(homeXpBar) homeXpBar.style.width = `${(appData.xp / 500) * 100}%`;
+      if(homeXpBar) homeXpBar.style.width = `${Math.min(100, Math.max(0, (appData.xp / 500) * 100))}%`;
       
-      document.getElementById('profile-name-display').innerText = appData.user.name || 'Sportif';
+      const profName = document.getElementById('profile-name-display');
+      if(profName) profName.innerText = appData.user.name || 'Sportif';
       const hName = document.getElementById('home-profile-name');
       if(hName) hName.innerText = appData.user.name;
       const span2 = document.getElementById('profile-name-span-2');
@@ -4502,85 +4503,90 @@ async function refreshFriendHub(){
 
       const headerLvl = document.getElementById('header-userlevel');
       if (headerLvl) headerLvl.textContent = `Niv. ${appData.level || 1}`;
-      document.getElementById('goal-natation-text').innerText = `${appData.stats.natation} / ${appData.goals.natation} km`;
-      document.getElementById('goal-natation-bar').style.width = `${Math.min(100, (appData.stats.natation / appData.goals.natation) * 100)}%`;
+      const gNatText = document.getElementById('goal-natation-text');
+      if (gNatText) gNatText.innerText = `${appData.stats.natation} / ${appData.goals.natation} km`;
+      const gNatBar = document.getElementById('goal-natation-bar');
+      if (gNatBar) gNatBar.style.width = `${Math.min(100, (appData.stats.natation / appData.goals.natation) * 100)}%`;
 
-      document.getElementById('goal-velo-text').innerText = `${appData.stats.velo} / ${appData.goals.velo} km`;
-      document.getElementById('goal-velo-bar').style.width = `${Math.min(100, (appData.stats.velo / appData.goals.velo) * 100)}%`;
+      const gVelText = document.getElementById('goal-velo-text');
+      if (gVelText) gVelText.innerText = `${appData.stats.velo} / ${appData.goals.velo} km`;
+      const gVelBar = document.getElementById('goal-velo-bar');
+      if (gVelBar) gVelBar.style.width = `${Math.min(100, (appData.stats.velo / appData.goals.velo) * 100)}%`;
 
-      document.getElementById('goal-course-text').innerText = `${appData.stats.course} / ${appData.goals.course} km`;
-      document.getElementById('goal-course-bar').style.width = `${Math.min(100, (appData.stats.course / appData.goals.course) * 100)}%`;
+      const gCouText = document.getElementById('goal-course-text');
+      if (gCouText) gCouText.innerText = `${appData.stats.course} / ${appData.goals.course} km`;
+      const gCouBar = document.getElementById('goal-course-bar');
+      if (gCouBar) gCouBar.style.width = `${Math.min(100, (appData.stats.course / appData.goals.course) * 100)}%`;
 
-// --- SYSTÈME DE QUÊTES DYNAMIQUES TOURNANTES ---
-    const questPool = [
-      {
-        title: "Quête Flash du Week-end ⚡",
-        desc: "Cumuler 30 km de Vélo ou 10 km de Course à pied.",
-        evaluate: () => {
-          const targetVelo = 30, targetCourse = 10;
-          const currentVelo = appData.stats.velo || 0;
-          const currentCourse = appData.stats.course || 0;
-          const ratioVelo = currentVelo / targetVelo;
-          const ratioCourse = currentCourse / targetCourse;
-          if (ratioCourse >= ratioVelo) {
-            return { text: `${currentCourse.toFixed(1)} / ${targetCourse} km (Course)`, percent: Math.min(100, ratioCourse * 100) };
-          } else {
-            return { text: `${currentVelo.toFixed(1)} / ${targetVelo} km (Vélo)`, percent: Math.min(100, ratioVelo * 100) };
+      // --- SYSTÈME DE QUÊTES DYNAMIQUES TOURNANTES ---
+      const questPool = [
+        {
+          title: "Quête Flash du Week-end ⚡",
+          desc: "Cumuler 30 km de Vélo ou 10 km de Course à pied.",
+          evaluate: () => {
+            const targetVelo = 30, targetCourse = 10;
+            const currentVelo = appData.stats.velo || 0;
+            const currentCourse = appData.stats.course || 0;
+            const ratioVelo = currentVelo / targetVelo;
+            const ratioCourse = currentCourse / targetCourse;
+            if (ratioCourse >= ratioVelo) {
+              return { text: `${currentCourse.toFixed(1)} / ${targetCourse} km (Course)`, percent: Math.min(100, ratioCourse * 100) };
+            } else {
+              return { text: `${currentVelo.toFixed(1)} / ${targetVelo} km (Vélo)`, percent: Math.min(100, ratioVelo * 100) };
+            }
+          }
+        },
+        {
+          title: "Quête Flash Endurance ⚡",
+          desc: "Cumuler 40 km de Vélo ou 15 km de Marche.",
+          evaluate: () => {
+            const targetVelo = 40, targetMarche = 15;
+            const currentVelo = appData.stats.velo || 0;
+            const currentMarche = appData.stats.marche || 0;
+            const ratioVelo = currentVelo / targetVelo;
+            const ratioMarche = currentMarche / targetMarche;
+            if (ratioMarche >= ratioVelo) {
+              return { text: `${currentMarche.toFixed(1)} / ${targetMarche} km (Marche)`, percent: Math.min(100, ratioMarche * 100) };
+            } else {
+              return { text: `${currentVelo.toFixed(1)} / ${targetVelo} km (Vélo)`, percent: Math.min(100, ratioVelo * 100) };
+            }
+          }
+        },
+        {
+          title: "Quête Flash Cardio ⚡",
+          desc: "Cumuler 120 min de HIIT ou 20 km de Course à pied.",
+          evaluate: () => {
+            const targetHiit = 120, targetCourse = 20;
+            const currentHiit = appData.stats.hiit || 0;
+            const currentCourse = appData.stats.course || 0;
+            const ratioHiit = currentHiit / targetHiit;
+            const ratioCourse = currentCourse / targetCourse;
+            if (ratioCourse >= ratioHiit) {
+              return { text: `${currentCourse.toFixed(1)} / ${targetCourse} km (Course)`, percent: Math.min(100, ratioCourse * 100) };
+            } else {
+              return { text: `${Math.round(currentHiit)} / ${targetHiit} min (HIIT)`, percent: Math.min(100, ratioHiit * 100) };
+            }
           }
         }
-      },
-      {
-        title: "Quête Flash Endurance ⚡",
-        desc: "Cumuler 40 km de Vélo ou 15 km de Marche.",
-        evaluate: () => {
-          const targetVelo = 40, targetMarche = 15;
-          const currentVelo = appData.stats.velo || 0;
-          const currentMarche = appData.stats.marche || 0;
-          const ratioVelo = currentVelo / targetVelo;
-          const ratioMarche = currentMarche / targetMarche;
-          if (ratioMarche >= ratioVelo) {
-            return { text: `${currentMarche.toFixed(1)} / ${targetMarche} km (Marche)`, percent: Math.min(100, ratioMarche * 100) };
-          } else {
-            return { text: `${currentVelo.toFixed(1)} / ${targetVelo} km (Vélo)`, percent: Math.min(100, ratioVelo * 100) };
-          }
-        }
-      },
-      {
-        title: "Quête Flash Cardio ⚡",
-        desc: "Cumuler 120 min de HIIT ou 20 km de Course à pied.",
-        evaluate: () => {
-          const targetHiit = 120, targetCourse = 20;
-          const currentHiit = appData.stats.hiit || 0;
-          const currentCourse = appData.stats.course || 0;
-          const ratioHiit = currentHiit / targetHiit;
-          const ratioCourse = currentCourse / targetCourse;
-          if (ratioCourse >= ratioHiit) {
-            return { text: `${currentCourse.toFixed(1)} / ${targetCourse} km (Course)`, percent: Math.min(100, ratioCourse * 100) };
-          } else {
-            return { text: `${Math.round(currentHiit)} / ${targetHiit} min (HIIT)`, percent: Math.min(100, ratioHiit * 100) };
-          }
-        }
-      }
-    ];
+      ];
 
-    // Calcul de la semaine de l'année pour sélectionner la quête active de manière unique
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const weekNumber = Math.ceil((((now - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
-    const activeQuest = questPool[weekNumber % questPool.length];
+      const nowQuest = new Date();
+      const startOfYear = new Date(nowQuest.getFullYear(), 0, 1);
+      const weekNumber = Math.ceil((((nowQuest - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
+      const activeQuest = questPool[weekNumber % questPool.length];
+      const questResult = activeQuest.evaluate();
 
-    // Évaluation de la progression de la quête active
-    const questResult = activeQuest.evaluate();
+      const titleEl = document.getElementById('quest-title-text');
+      const descEl = document.getElementById('quest-desc-text');
+      if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> ${activeQuest.title}`;
+      if (descEl) descEl.innerText = activeQuest.desc;
 
-    // Mise à jour sécurisée du DOM
-    const titleEl = document.getElementById('quest-title-text');
-    const descEl = document.getElementById('quest-desc-text');
-    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> ${activeQuest.title}`;
-    if (descEl) descEl.innerText = activeQuest.desc;
+      const qProg = document.getElementById('quest-progress-text');
+      if (qProg) qProg.innerText = questResult.text;
+      const qBar = document.getElementById('quest-bar');
+      if (qBar) qBar.style.width = `${questResult.percent}%`;
 
-    document.getElementById('quest-progress-text').innerText = questResult.text;
-    document.getElementById('quest-bar').style.width = `${questResult.percent}%`;
-      renderRanks();
+      if (typeof renderRanks === 'function') renderRanks();
       saveAppData();
     }
 
@@ -4613,66 +4619,75 @@ async function refreshFriendHub(){
         if (saved) {
           const parsed = JSON.parse(saved);
           appData = { ...appData, ...parsed, user: { ...appData.user, ...(parsed.user || {}), privacy: { ...appData.user.privacy, ...(parsed.user?.privacy || {}) }, notifications: { ...appData.user.notifications, ...(parsed.user?.notifications || {}) } } };
-          // Retire uniquement la séance de démonstration du 03/11/2026 si elle existe.
           appData.plannedSessions = (appData.plannedSessions || []).filter(item => !(item.date === '2026-11-03' && String(item.sport || '').toLowerCase().includes('velo')));
         }
       } catch (error) { console.warn('Données du compte illisibles :', error); }
     }
 
     function refreshAppAfterAccountLoad() {
-      ensureXpBaseline();
-      renderHomeCalendar();
-      recalculateStatsFromHistory();
+      appData.xp = 0;
+      appData.xpBaseTotal = 0;
+      appData.level = 1;
+      if (typeof ensureXpBaseline === 'function') ensureXpBaseline();
+      if (typeof renderHomeCalendar === 'function') renderHomeCalendar();
+      if (typeof recalculateStatsFromHistory === 'function') recalculateStatsFromHistory();
       if (typeof checkTrophiesUnlock === 'function') checkTrophiesUnlock();
-      renderHistory();
-      updateRaceCountdown();
-      updateAICoachAdvice();
-      if (appData.user?.city) refreshProfileWeather();
+      if (typeof renderHistory === 'function') renderHistory();
+      if (typeof updateRaceCountdown === 'function') updateRaceCountdown();
+      if (typeof updateAICoachAdvice === 'function') updateAICoachAdvice();
+      if (appData.user?.city && typeof refreshProfileWeather === 'function') refreshProfileWeather();
       if (typeof updateHeaderAuthUI === 'function') updateHeaderAuthUI();
       if (typeof updateFriendRequestBadge === 'function') updateFriendRequestBadge();
     }
-// V20 — l'historique canonique de l'application est appData.sessionsHistory.
-// Ne pas lire appData.workouts/history : ces tableaux ne sont pas la source utilisée par les formulaires.
-function getNormalizedWorkouts() {
-  return (Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[]).map(s=>({
-    ...s, discipline:trophySportOf(s), distance:getSessionDistanceKm(s), duration:getSessionDurationMinutesutes(s)
-  }));
-}
-function getWorkoutsByStrictDiscipline(key) {
-  return getNormalizedWorkouts().filter(w=>w.discipline===key);
-}
-function evaluateMetric(key, mode, target, metricType='distance') {
-  const rows=getWorkoutsByStrictDiscipline(key), field=metricType==='duration'?'duration':'distance';
-  const values=rows.map(w=>Number(w[field])||0);
-  const current=mode==='max'?Math.max(0,...values):values.reduce((a,b)=>a+b,0);
-  return {current,achieved:current>=Number(target),percent:Number(target)>0?Math.min(100,current/Number(target)*100):0};
-}
-// Recalcul non destructif : les trophées secrets restent inchangés tant que leurs règles ne sont pas auditées.
-// Cette fonction ne vide aucune table Supabase et ne supprime aucune séance.
-function recalculateAllTrophiesAndStats() {
-  recalculateStatsFromHistory();
-  let unlocked=0, relocked=0;
-  (appData.trophies||[]).forEach(t=>{
-    if(t.isSecret) return;
-    const eligible=isPublicTrophyEligible(t);
-    if(eligible && !t.unlocked) { unlockTrophy(t,'recalcul V20'); unlocked++; }
-    else if(!eligible && t.unlocked) {
-      t.unlocked=false; delete t.unlockedAt; const priorBonus=Math.max(0,Number(t.xp)||0); if(priorBonus){ensureXpBaseline();appData.xpBaseTotal=Math.max(0,(Number(appData.xpBaseTotal)||0)-priorBonus);recalculateXpFromHistory();} relocked++;
+
+    // V20 — l'historique canonique de l'application est appData.sessionsHistory.
+    function getNormalizedWorkouts() {
+      const durFn = typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes : getSessionDurationMinutesutes;
+      return (Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[]).map(s=>({
+        ...s, discipline:trophySportOf(s), distance:getSessionDistanceKm(s), duration:durFn(s)
+      }));
     }
-  });
-  saveAppData(); renderTrophiesAndRanks();
-  console.info(`Recalcul V20 terminé : ${unlocked} nouveau(x) déblocage(s), ${relocked} ancien(s) déblocage(s) invalidé(s).`);
-  return {unlocked,relocked};
-}
+    function getWorkoutsByStrictDiscipline(key) {
+      return getNormalizedWorkouts().filter(w=>w.discipline===key);
+    }
+    function evaluateMetric(key, mode, target, metricType='distance') {
+      const rows=getWorkoutsByStrictDiscipline(key), field=metricType==='duration'?'duration':'distance';
+      const values=rows.map(w=>Number(w[field])||0);
+      const current=mode==='max'?Math.max(0,...values):values.reduce((a,b)=>a+b,0);
+      return {current,achieved:current>=Number(target),percent:Number(target)>0?Math.min(100,current/Number(target)*100):0};
+    }
+
+    function recalculateAllTrophiesAndStats() {
+      appData.xp = 0;
+      appData.xpBaseTotal = 0;
+      appData.level = 1;
+      if (typeof recalculateStatsFromHistory === 'function') recalculateStatsFromHistory();
+      let unlocked=0, relocked=0;
+      (appData.trophies||[]).forEach(t=>{
+        if(t.isSecret) return;
+        const eligible=isPublicTrophyEligible(t);
+        if(eligible && !t.unlocked) { unlockTrophy(t,'recalcul V20'); unlocked++; }
+        else if(!eligible && t.unlocked) {
+          t.unlocked=false; delete t.unlockedAt;
+          relocked++;
+        }
+      });
+      if (typeof checkTrophiesUnlock === 'function') checkTrophiesUnlock();
+      saveAppData();
+      if (typeof renderTrophiesAndRanks === 'function') renderTrophiesAndRanks();
+      console.info(`Recalcul V20 terminé : ${unlocked} nouveau(x) déblocage(s), ${relocked} ancien(s) déblocage(s) invalidé(s).`);
+      return {unlocked,relocked};
+    }
 
     let cloudSaveTimer = null;
     let cloudSaveInFlight = Promise.resolve();
     let cloudSyncLastError = '';
     function sessionToSupabaseRow(session, userId) {
+      const durFn = typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes : getSessionDurationMinutesutes;
       const distanceKm=getSessionDistanceKm(session);
-      const durationMin=getSessionDurationMinutesutes(session);
+      const durationMin=durFn(session);
       const durationText=String(session.duration || `${durationMin} min`);
-      const distanceText=(session.sport==='natation' ? `${distanceKm} km` : `${distanceKm} km`);
+      const distanceText=`${distanceKm} km`;
       return {
         id: Number(session.id), user_id:userId, sport:String(session.sport||'autres'),
         title:String(session.title||'Séance').slice(0,200), date:session.date||localDateISO(new Date()),
@@ -4680,7 +4695,6 @@ function recalculateAllTrophiesAndStats() {
         raw_val:Number.isFinite(Number(session.rawVal))?Number(session.rawVal):distanceKm,
         xp:Math.max(0,Math.round(Number(session.xp)||0)), calories:Math.max(0,Math.round(Number(session.calories)||0)),
         feeling:String(session.feeling||'').slice(0,80), comment:String(session.comment||'').slice(0,1500),
-        // Colonnes ajoutées dans Supabase : conserver les critères utilisés par les trophées.
         average_hr:Number(session.averageBpm)>0?Math.round(Number(session.averageBpm)):null,
         rpe:Number(session.rpe)>0?Math.min(10,Math.max(1,Math.round(Number(session.rpe)))):null,
         terrain:session.terrain?String(session.terrain).slice(0,80):null,
@@ -4689,25 +4703,34 @@ function recalculateAllTrophiesAndStats() {
     }
     async function syncAppDataToSupabase() {
       if (!supabaseClient || !activeUserId) return {skipped:true};
-      const userId=activeUserId;
+      const userId=String(activeUserId);
       const snapshot=JSON.parse(JSON.stringify(appData)); delete snapshot._cloudPendingAt;
-      const {error:dataError}=await supabaseClient.from('user_data').upsert({user_id:String(userId),data:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+      const {error:dataError}=await supabaseClient.from('user_data').upsert({user_id:userId,data:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});
       if(dataError) throw new Error(`user_data : ${dataError.message}`);
       const sessions=Array.isArray(snapshot.sessionsHistory)?snapshot.sessionsHistory:[];
       for(let i=0;i<sessions.length;i+=100){
         const rows=sessions.slice(i,i+100).filter(x=>Number.isFinite(Number(x.id))).map(x=>sessionToSupabaseRow(x,userId));
         if(rows.length){const {error}=await supabaseClient.from('sessions').upsert(rows,{onConflict:'id'});if(error)throw new Error(`sessions : ${error.message}`);}
       }
-      const trophies=Array.isArray(snapshot.trophies)?snapshot.trophies:[];
+      const rawTrophies=Array.isArray(snapshot.trophies)?snapshot.trophies:[];
+      const uniqueTrophiesMap=new Map();
+      for(const tr of rawTrophies){
+        const trophyId=String(tr?.id ?? tr?.title ?? '').trim();
+        if(!trophyId) continue;
+        if(!uniqueTrophiesMap.has(trophyId) || tr?.unlocked){
+          uniqueTrophiesMap.set(trophyId,tr);
+        }
+      }
+      const trophies=Array.from(uniqueTrophiesMap.values());
       for(const trophy of trophies){
-        const {data:existing,error:readError}=await supabaseClient.from('user_trophies').select('id').eq('user_id',userId).eq('trophy_id',String(trophy.id)).limit(1).maybeSingle();
-        if(readError) throw new Error(`user_trophies (lecture) : ${readError.message}`);
+        const trophyId=String(trophy?.id ?? trophy?.title ?? '').trim();
+        if(!trophyId) continue;
         if(trophy.unlocked){
-          const payload={user_id:userId,trophy_id:String(trophy.id),unlocked_at:trophy.unlockedAt||new Date().toISOString(),progress:Number(trophy.progress)||0};
-          const result=existing?await supabaseClient.from('user_trophies').update(payload).eq('id',existing.id):await supabaseClient.from('user_trophies').insert(payload);
-          if(result.error)throw new Error(`user_trophies (écriture) : ${result.error.message}`);
-        } else if(existing){
-          const {error}=await supabaseClient.from('user_trophies').delete().eq('id',existing.id);
+          const payload={user_id:userId,trophy_id:trophyId,unlocked_at:trophy.unlockedAt||new Date().toISOString(),progress:Number(trophy.progress)||0};
+          const {error}=await supabaseClient.from('user_trophies').upsert(payload,{onConflict:'user_id,trophy_id'});
+          if(error)throw new Error(`user_trophies (écriture) : ${error.message}`);
+        } else {
+          const {error}=await supabaseClient.from('user_trophies').delete().eq('user_id',userId).eq('trophy_id',trophyId);
           if(error)throw new Error(`user_trophies (révocation) : ${error.message}`);
         }
       }
@@ -4729,7 +4752,6 @@ function recalculateAllTrophiesAndStats() {
     }
     async function hydrateAppDataFromSupabase(userId) {
       if(!supabaseClient||!userId)return {loaded:false};
-      // Si une sauvegarde locale attend encore le réseau, elle est prioritaire : ne pas l'écraser par un ancien état cloud.
       const pendingLocal=localStorage.getItem(`dopamine_app_data_${userId}`);
       if(pendingLocal){try{const pending=JSON.parse(pendingLocal);if(pending?._cloudPendingAt){appData={...createEmptyAppData(),...pending};await syncAppDataToSupabase();return {loaded:true,source:'local_pending_synced'};}}catch(e){console.warn('Cache local en attente illisible',e);}}
       const {data:cloud,error}=await supabaseClient.from('user_data').select('data,updated_at').eq('user_id',String(userId)).maybeSingle();
@@ -4740,16 +4762,14 @@ function recalculateAllTrophiesAndStats() {
         try{localStorage.setItem(`dopamine_app_data_${userId}`,JSON.stringify(appData));}catch(e){console.warn('Cache local indisponible',e);}
         return {loaded:true,source:'user_data'};
       }
-      // Migration initiale : l'ancien cache local est conservé et envoyé vers le cloud, jamais effacé.
       const local=localStorage.getItem(`dopamine_app_data_${userId}`);
       if(local){const parsed=JSON.parse(local);appData={...createEmptyAppData(),...parsed};await syncAppDataToSupabase();return {loaded:true,source:'migration_locale'};}
-      // Dernier recours : reconstruire les champs disponibles depuis public.sessions.
       const {data:sessionRows,error:sessionError}=await supabaseClient.from('sessions').select('id,user_id,sport,title,date,duration,distance,raw_val,xp,calories,feeling,comment,created_at').eq('user_id',userId).order('date',{ascending:false});
       if(sessionError) throw new Error(`Lecture sessions : ${sessionError.message}`);
       if(Array.isArray(sessionRows)&&sessionRows.length){
         appData=createEmptyAppData();
         appData.sessionsHistory=sessionRows.map(r=>({id:r.id,sport:r.sport||'autres',title:r.title||'Séance',date:r.date,duration:r.duration||'',distance:r.distance||'0 km',rawVal:Number(r.raw_val)||0,xp:Number(r.xp)||0,calories:Number(r.calories)||0,feeling:r.feeling||'',comment:r.comment||'',created_at:r.created_at,source:'supabase'}));
-        recalculateStatsFromHistory();
+        if(typeof recalculateStatsFromHistory==='function') recalculateStatsFromHistory();
         await syncAppDataToSupabase();
         return {loaded:true,source:'sessions'};
       }
@@ -4768,7 +4788,6 @@ function recalculateAllTrophiesAndStats() {
         return false;
       }
     }
-
 
     function editAnnualGoals() {
       const current = appData.goals || (appData.goals = {natation:15,velo:180,course:40});
