@@ -3123,7 +3123,45 @@ function validerLimitesNatation() {
       parts.forEach(part => { const el=document.getElementById(`${sport}-${part}`); if(el) el.value='0'; });
       syncActivityDuration(sport);
     }
+function resetSportForm(sport) {
+  const targetSport = sport || actualSport || 'course';
+  const idsToClear = [
+    `${targetSport}-dist`,
+    `${targetSport}-dist-km`,
+    `${targetSport}-dist-m`,
+    `${targetSport}-elev`,
+    `${targetSport}-bpm`,
+    `${targetSport}-watts`,
+    `${targetSport}-cadence`,
+    `${targetSport}-comment`
+  ];
+  idsToClear.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
 
+  if (typeof actualiserDistanceActivite === 'function') {
+    actualiserDistanceActivite(targetSport);
+  }
+  if (typeof resetActivityDuration === 'function') {
+    resetActivityDuration(targetSport);
+  }
+
+  const rpeSlider = document.getElementById(`${targetSport}-rpe-slider`);
+  if (rpeSlider) {
+    rpeSlider.value = '5';
+    if (typeof updateRPEValue === 'function') {
+      updateRPEValue(targetSport, 5);
+    } else {
+      rpeSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+
+  const dateInput = document.getElementById(`${targetSport}-date`);
+  if (dateInput && typeof localDateISO === 'function') {
+    dateInput.value = localDateISO(new Date());
+  }
+}
     function saveCurrentSession(sport) {
       const supportedSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres'];
       if (!supportedSports.includes(sport)) { alert("Le sport sélectionné n'est pas reconnu."); return; }
@@ -3186,14 +3224,29 @@ function validerLimitesNatation() {
         calories: Math.round(time * 9), source: 'manual', partners: [], is_competition: false
       };
       updateSessionDerivedMetrics(session);
-      appData.sessionsHistory.unshift(session);
-      // Sauvegarde immédiate : cette étape manquait dans cette fonction.
-      // Sans elle, une séance semblait validée à l'écran mais pouvait disparaître
-      // au rechargement et ne pas être envoyée dans la file de synchronisation.
+      const editingId = window.editingSessionId;
+      const existingIndex = editingId != null
+        ? appData.sessionsHistory.findIndex(item => String(item.id) === String(editingId))
+        : -1;
+      const previousSnapshot = existingIndex !== -1 ? { ...appData.sessionsHistory[existingIndex] } : null;
+
+      if (existingIndex !== -1) {
+        session.id = appData.sessionsHistory[existingIndex].id;
+        appData.sessionsHistory[existingIndex] = session;
+      } else {
+        appData.sessionsHistory.unshift(session);
+      }
+
       if (!saveAppData()) {
-        appData.sessionsHistory = appData.sessionsHistory.filter(item => String(item.id) !== String(session.id));
+        if (existingIndex !== -1 && previousSnapshot) {
+          appData.sessionsHistory[existingIndex] = previousSnapshot;
+        } else {
+          appData.sessionsHistory = appData.sessionsHistory.filter(item => String(item.id) !== String(session.id));
+        }
         return;
       }
+      window.editingSessionId = null;
+      setEditModeBanner(null);
       if (commentEl) commentEl.value = '';
       resetActivityDuration(formSport);
       if (actualSport === 'hiit') {
@@ -3203,6 +3256,7 @@ function validerLimitesNatation() {
       }
       const savedDateInput = document.getElementById(`${formSport}-date`); if (savedDateInput) savedDateInput.value = localDateISO(new Date());
       if (bpmInput) bpmInput.value = '';
+      resetSportForm(formSport);
       recalculateStatsFromHistory(); checkTrophiesUnlock(); renderHistory();
       triggerAchievementPopup(`Séance validée ! +${baseXp} XP`);
       showPage('stats');
@@ -3684,46 +3738,161 @@ Object.entries(secretRules).forEach(([id, rule]) => {
       if (help) help.textContent = candidates.length ? `${candidates.length} ami(s) proposé(s).` : 'La liste des amis n’est pas encore disponible dans cette fenêtre.';
     }
 
+window.editingSessionId = null;
+
+    function setEditModeBanner(session = null) {
+      let banner = document.getElementById('edit-mode-banner');
+      if (!session) {
+        if (banner) banner.remove();
+        return;
+      }
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'edit-mode-banner';
+        banner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin:0 0 12px;border-radius:10px;background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.45);color:var(--text-main);font-size:0.88rem;';
+        const targetHost = document.querySelector('#view-competition .calculator-panel')
+          || document.querySelector('.app-page:not(.hidden) .calculator-panel')
+          || document.body;
+        targetHost.prepend(banner);
+      }
+  const safeTitle = String(session.title || 'Activité')
+        .replace(/&/g, '\u0026amp;')
+        .replace(/</g, '\u0026lt;')
+        .replace(/>/g, '\u0026gt;')
+        .replace(/"/g, '\u0026quot;')
+        .replace(/'/g, '\u0026#39;');
+      banner.innerHTML = `
+        <span>✏️ <strong>Modification en cours :</strong> ${safeTitle} (${session.date || ''})</span>
+        <button type="button" onclick="cancelEditSession()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text-main);cursor:pointer;">Annuler</button>
+      `;
+    }
+
+    function cancelEditSession() {
+      window.editingSessionId = null;
+      setEditModeBanner(null);
+      ['natation','velo','course','marche','autres','hiit'].forEach(s => {
+        const c = document.getElementById(`${s}-comment`); if (c) c.value = '';
+        const b = document.getElementById(`${s}-bpm`); if (b) b.value = '';
+        const d = document.getElementById(`${s}-date`); if (d) d.value = localDateISO(new Date());
+      });
+      ['natation','velo','course','marche','autres'].forEach(s => {
+        if (typeof resetActivityDuration === 'function') resetActivityDuration(s);
+      });
+      if (typeof showPage === 'function') showPage('stats');
+    }
+
     function openEditSession(id) {
-      const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
-      if (!session) { alert('Cette activité est introuvable.'); return; }
-      const set=(key,value)=>{const el=document.getElementById('edit-session-'+key);if(el)el.value=value??'';};
-      set('id',String(session.id)); set('title',session.title||''); set('date',session.date||localDateISO(new Date()));
-      let totalSeconds=Number(session.durationSeconds)||Math.round(getSessionDurationMinutesutes(session)*60);
-      set('hours',Math.floor(totalSeconds/3600)); set('minutes',Math.floor((totalSeconds%3600)/60)); set('seconds',totalSeconds%60);
-      set('sport',session.type==='competition'||session.competitionDetails?'competition':(session.sport||'course'));
-      set('distance',getSessionDistanceKm(session)); if (typeof setDistancePickerValue === 'function') setDistancePickerValue('edit-session-distance', getSessionDistanceKm(session)); set('elevation',Number(session.elevationM||session.competitionDetails?.totalElevationM||0));
-      set('bpm',Number(session.averageBpm||0)); set('rpe',Number(session.rpe||5)); set('calories',Number(session.calories||0));
-      set('feeling',session.feeling||session.feelingLabel||getRPEFeeling(Number(session.rpe||5))); set('source',session.source||'manual');
-      set('watts',session.watts??''); set('cadence',session.cadence??''); set('terrain',session.terrain||''); set('weather',session.weather||''); set('format',session.format||session.competitionDetails?.format||'');
-      const partners=Array.isArray(session.partners)?session.partners.map(p=>typeof p==='string'?p:(p.username||p.name||'')).filter(Boolean).join(', '):'';
-      set('partners',partners); set('comment',session.comment||session.competitionDetails?.notes||'');
-      document.getElementById('edit-session-modal').style.display='block'; refreshEditSessionFriendSuggestions();
-    }
-    function closeEditSession() { const modal = document.getElementById('edit-session-modal'); if (modal) modal.style.display = 'none'; }
-    function saveEditedSession() {
-      const val=id=>document.getElementById('edit-session-'+id)?.value;
-      const session = appData.sessionsHistory.find(item => String(item.id) === String(val('id')));
-      if (!session) { alert('Cette activité est introuvable.'); closeEditSession(); return; }
-      const title=String(val('title')||'').trim(), date=val('date'), sport=val('sport');
-      const h=Number(val('hours')||0),m=Number(val('minutes')||0),sec=Number(val('seconds')||0),durationSeconds=h*3600+m*60+sec,durationMinutes=durationSeconds/60;
-      const distance=Number(val('distance')||0),elevation=Number(val('elevation')||0),bpm=Number(val('bpm')||0),rpe=Number(val('rpe')||5),calories=Number(val('calories')||0),watts=Number(val('watts')||0),cadence=Number(val('cadence')||0);
-      if(!title||!date||!['natation','velo','course','marche','hiit','autres','competition'].includes(sport)){alert('Vérifie le titre, la date et la discipline.');return;}
-      if(durationSeconds<=0||h>999||m>59||sec>59||distance<0||distance>1000||elevation<0||elevation>20000||bpm<0||bpm>250||!Number.isInteger(rpe)||rpe<1||rpe>10||calories<0||calories>50000||watts<0||watts>3000||cadence<0||cadence>300){alert('Vérifie la durée, la distance, le D+, le BPM, le RPE et les calories.');return;}
-      const previousSport=session.sport;
-      const isCompetition=sport==='competition';
-      Object.assign(session,{title,date,sport,type:isCompetition?'competition':'activity',durationSeconds,duration:`${String(h).padStart(2,'0')} h ${String(m).padStart(2,'0')} min ${String(sec).padStart(2,'0')} s`,distance:`${distance} km`,rawVal:['hiit','autres'].includes(sport)?durationMinutes:distance,elevationM:Math.round(elevation),averageBpm:bpm,rpe,feeling:val('feeling')||getRPEFeeling(rpe),comment:String(val('comment')||'').trim().slice(0,1500),calories:Math.round(calories),source:val('source')||'manual',partners:String(val('partners')||'').split(',').map(x=>x.trim()).filter(Boolean),watts:watts||null,cadence:cadence||null,terrain:String(val('terrain')||'').trim()||null,weather:String(val('weather')||'').trim()||null,format:String(val('format')||'').trim()||session.format||null,updatedAt:new Date().toISOString()});
-      if(isCompetition){session.is_competition=true;session.competitionDetails={...(session.competitionDetails||{}),format:session.format||session.competitionDetails?.format||'',durationMinutes,durationSeconds,totalDistanceKm:distance,totalElevationM:Math.round(elevation),averageBpm:bpm,rpe,notes:session.comment};}
-      else {session.is_competition=false; if(session.competitionDetails) session.competitionDetails={...session.competitionDetails,totalDistanceKm:distance,totalElevationM:Math.round(elevation),durationMinutes,durationSeconds,averageBpm:bpm,rpe,notes:session.comment};}
-      session.xp=calculateSessionXp({sport:isCompetition?'competition':sport,isCompetition,durationMinutes,distanceKm:distance,elevationM:elevation,averageBpm:bpm});
-      updateSessionDerivedMetrics(session);
-      ensureXpBaseline(); recalculateStatsFromHistory(); recalculateXpFromHistory(); checkTrophiesUnlock();
-      renderHistory(); if(typeof renderChart==='function')renderChart(); if(typeof renderHomeCalendar==='function')renderHomeCalendar(); if(typeof updateRaceCountdown==='function')updateRaceCountdown();
-      closeEditSession(); alert('Activité modifiée. Les statistiques, les XP et les trophées vérifiables ont été recalculés sur cet appareil.');
-    }
+      const session = (appData.sessionsHistory || []).find(item => String(item.id) === String(id));
+      if (!session) {
+        alert('Cette activité est introuvable.');
+        return;
+      }
+      window.editingSessionId = session.id;
 
-    document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.activity-date-input').forEach(input => { if (!input.value) input.value = localDateISO(new Date()); }); calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); renderHomeCalendar(); showDayDetails(calendarSelectedDate); });
+      // Cas Compétition
+      if (session.is_competition || session.sport === 'competition' || session.competitionDetails) {
+        if (typeof showPage === 'function') showPage('competition');
+        setEditModeBanner(session);
+        const d = session.competitionDetails || {};
+        const setVal = (elId, v) => { const el = document.getElementById(elId); if (el && v !== undefined && v !== null) el.value = v; };
+        setVal('competition-kind', session.eventKind || d.kind || 'triathlon');
+        if (typeof updateCompetitionFields === 'function') updateCompetitionFields();
+        setVal('competition-name', session.title || '');
+        setVal('competition-date', session.date || localDateISO(new Date()));
+        setVal('competition-format', session.format || d.format || 'M');
+        const totalSec = Number(session.durationSeconds) || Math.round((Number(d.durationMinutes) || 0) * 60);
+        setVal('competition-duration-hours', String(Math.floor(totalSec / 3600)).padStart(2, '0'));
+        setVal('competition-duration-minutes', String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0'));
+        setVal('competition-duration-seconds', String(totalSec % 60).padStart(2, '0'));
+        if (typeof updateCompetitionDuration === 'function') updateCompetitionDuration();
+        const distKm = Number(d.totalDistanceKm) || parseLocalizedNumber(session.distance) || 0;
+        setVal('competition-distance', distKm || '');
+        setVal('competition-elevation', session.elevationM ?? d.totalElevationM ?? '');
+        setVal('competition-bpm', session.averageBpm ?? d.averageBpm ?? '');
+        const rpeVal = session.rpe ?? d.rpe ?? 5;
+        setVal('competition-rpe', rpeVal);
+        const rpeTxt = document.getElementById('competition-rpe-value');
+        if (rpeTxt) rpeTxt.textContent = `${rpeVal}/10`;
+        setVal('competition-notes', session.comment || d.notes || '');
+        return;
+      }
 
+      // Cas séance normale
+      const rawSport = session.sport || 'course';
+      const formSport = rawSport === 'hiit' ? 'autres' : rawSport;
+      if (typeof openCalc === 'function') openCalc(formSport);
+      setEditModeBanner(session);
+
+      if (rawSport === 'hiit' || rawSport === 'autres') {
+        const sel = document.getElementById('autres-sport-select');
+        if (sel) {
+          sel.value = rawSport === 'hiit' ? 'HIIT' : (session.title?.replace(/^Séance\s+/i, '') || 'Autre');
+        }
+      }
+
+      const dateEl = document.getElementById(rawSport === 'hiit' ? 'hiit-date' : `${formSport}-date`);
+      if (dateEl) dateEl.value = session.date || localDateISO(new Date());
+
+      const totalSec = Number(session.durationSeconds) || 0;
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      if (formSport === 'natation') {
+        const eh = document.getElementById('natation-h'), em = document.getElementById('natation-m'), es = document.getElementById('natation-s');
+        if (eh) eh.value = h; if (em) em.value = m; if (es) es.value = s;
+        if (typeof syncActivityDuration === 'function') syncActivityDuration('natation');
+      } else {
+        const eh = document.getElementById(`${formSport}-hours`), em = document.getElementById(`${formSport}-minutes`), es = document.getElementById(`${formSport}-seconds`);
+        if (eh) eh.value = h; if (em) em.value = m; if (es) es.value = s;
+        if (typeof syncActivityDuration === 'function') syncActivityDuration(formSport);
+      }
+
+      const distKm = Number(getSessionDistanceKm?.(session)) || parseLocalizedNumber(session.distance) || 0;
+      const kmInt = Math.floor(distKm);
+      const mInt = Math.round((distKm - kmInt) * 1000);
+      const kmEl = document.getElementById(`${formSport}-dist-km`) || document.getElementById(`${formSport}-km`);
+      const mEl = document.getElementById(`${formSport}-dist-m`) || document.getElementById(`${formSport}-m`);
+      const distHidden = document.getElementById(`${formSport}-dist`);
+      if (kmEl) kmEl.value = kmInt;
+      if (mEl) mEl.value = mInt;
+      if (distHidden) distHidden.value = distKm;
+      if (typeof actualiserDistanceActivite === 'function') actualiserDistanceActivite(formSport);
+
+      const elevEl = document.getElementById(`${formSport}-elev`);
+      if (elevEl) elevEl.value = session.elevationM ?? '';
+
+      const bpmEl = document.getElementById(rawSport === 'hiit' ? 'hiit-bpm' : `${formSport}-bpm`);
+      if (bpmEl) bpmEl.value = session.averageBpm || '';
+
+      const wattsEl = document.getElementById(`${formSport}-watts`);
+      if (wattsEl && session.watts != null) wattsEl.value = session.watts;
+
+      const cadenceEl = document.getElementById(`${formSport}-cadence`);
+      if (cadenceEl && session.cadence != null) cadenceEl.value = session.cadence;
+
+      if (formSport === 'natation') {
+        const locEl = document.getElementById('natation-location');
+        const watEl = document.getElementById('natation-water');
+        if (locEl && (session.waterPlace || session.terrain)) locEl.value = session.waterPlace || session.terrain;
+        if (watEl && session.waterCondition) watEl.value = session.waterCondition;
+        if (typeof actualiserNatation === 'function') actualiserNatation();
+      } else {
+        const terEl = document.getElementById(`${formSport}-terrain`);
+        const weaEl = document.getElementById(`${formSport}-weather`);
+        if (terEl && session.terrain) terEl.value = session.terrain;
+        if (weaEl && session.weather) weaEl.value = session.weather;
+      }
+
+      const rpeSlider = document.getElementById(`${formSport}-rpe-slider`);
+      if (rpeSlider && session.rpe != null) {
+        rpeSlider.value = session.rpe;
+        if (typeof updateRPEValue === 'function') updateRPEValue(formSport, session.rpe);
+        else rpeSlider.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      const commentEl = document.getElementById(`${formSport}-comment`);
+      if (commentEl) commentEl.value = session.comment || '';
+    }
     function filterHistory(filter, btn) {
       historyFilter = filter;
       document.querySelectorAll('.history-box .medal-tab').forEach(b => b.classList.remove('active'));
