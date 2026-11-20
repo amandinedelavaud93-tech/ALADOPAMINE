@@ -3124,66 +3124,66 @@ function validerLimitesNatation() {
       syncActivityDuration(sport);
     }
 
-const commentResetEl = document.getElementById(`${formSport}-comment`);
+commentResetEl = document.getElementById(`${formSport}-comment`);
       if (commentResetEl) commentResetEl.value = '';
       if (typeof resetActivityDuration === 'function') resetActivityDuration(formSport);
 
-      const distKmEl = document.getElementById(`${formSport}-dist-km`);
-      const distMEl = document.getElementById(`${formSport}-dist-m`);
-      const distHiddenEl = document.getElementById(`${formSport}-dist`);
-      const distPreviewEl = document.getElementById(`${formSport}-dist-preview`);
+      distKmEl = document.getElementById(`${formSport}-dist-km`);
+      distMEl = document.getElementById(`${formSport}-dist-m`);
+      distHiddenEl = document.getElementById(`${formSport}-dist`);
+      distPreviewEl = document.getElementById(`${formSport}-dist-preview`);
       if (distKmEl) distKmEl.value = '';
       if (distMEl) distMEl.value = '';
       if (distHiddenEl) distHiddenEl.value = '0';
       if (distPreviewEl) distPreviewEl.textContent = '0 km';
 
       if (actualSport === 'hiit') {
-        const hiitTime = document.getElementById('hiit-time');
-        const hiitBpm = document.getElementById('hiit-bpm');
-        const hiitDate = document.getElementById('hiit-date');
-        const hiitComment = document.getElementById('hiit-comment');
-        if (hiitTime) hiitTime.value = '';
-        if (hiitBpm) hiitBpm.value = '';
-        if (hiitDate && typeof localDateISO === 'function') hiitDate.value = localDateISO(new Date());
-        if (hiitComment) hiitComment.value = '';
+        const hiitTimeReset = document.getElementById('hiit-time');
+        const hiitBpmReset = document.getElementById('hiit-bpm');
+        const hiitDateReset = document.getElementById('hiit-date');
+        const hiitCommentReset = document.getElementById('hiit-comment');
+        if (hiitTimeReset) hiitTimeReset.value = '';
+        if (hiitBpmReset) hiitBpmReset.value = '';
+        if (hiitDateReset && typeof localDateISO === 'function') hiitDateReset.value = localDateISO(new Date());
+        if (hiitCommentReset) hiitCommentReset.value = '';
       }
 
       if (formSport === 'autres') {
-        const autresSportSelect = document.getElementById('autres-sport-select');
-        const autresTime = document.getElementById('autres-time');
-        const autresDist = document.getElementById('autres-dist');
-        if (autresSportSelect && autresSportSelect.options.length > 0) autresSportSelect.selectedIndex = 0;
-        if (autresTime) autresTime.value = '';
-        if (autresDist) autresDist.value = '';
+        const autresSportSelectReset = document.getElementById('autres-sport-select');
+        const autresTimeReset = document.getElementById('autres-time');
+        const autresDistReset = document.getElementById('autres-dist');
+        if (autresSportSelectReset && autresSportSelectReset.options.length > 0) autresSportSelectReset.selectedIndex = 0;
+        if (autresTimeReset) autresTimeReset.value = '';
+        if (autresDistReset) autresDistReset.value = '';
       }
 
       if (formSport === 'natation') {
-        const natLocation = document.getElementById('natation-location');
-        const natWater = document.getElementById('natation-water');
-        if (natLocation && natLocation.options.length > 0) natLocation.selectedIndex = 0;
-        if (natWater && natWater.options.length > 0) natWater.selectedIndex = 0;
+        const natLocationReset = document.getElementById('natation-location');
+        const natWaterReset = document.getElementById('natation-water');
+        if (natLocationReset && natLocationReset.options.length > 0) natLocationReset.selectedIndex = 0;
+        if (natWaterReset && natWaterReset.options.length > 0) natWaterReset.selectedIndex = 0;
       }
 
-      const dateInput = document.getElementById(actualSport === 'hiit' ? 'hiit-date' : `${formSport}-date`);
-      if (dateInput && typeof localDateISO === 'function') dateInput.value = localDateISO(new Date());
+      const dateResetInput = document.getElementById(actualSport === 'hiit' ? 'hiit-date' : `${formSport}-date`);
+      if (dateResetInput && typeof localDateISO === 'function') dateResetInput.value = localDateISO(new Date());
 
       const bpmResetInput = document.getElementById(actualSport === 'hiit' ? 'hiit-bpm' : `${formSport}-bpm`);
       if (bpmResetInput) bpmResetInput.value = '';
 
-      const wattsInput = document.getElementById(`${formSport}-watts`);
-      const cadenceInput = document.getElementById(`${formSport}-cadence`);
-      const elevInput = document.getElementById(`${formSport}-elev`);
-      const terrainSelect = document.getElementById(`${formSport}-terrain`);
-      const weatherSelect = document.getElementById(`${formSport}-weather`);
+      wattsInput = document.getElementById(`${formSport}-watts`);
+      cadenceInput = document.getElementById(`${formSport}-cadence`);
+      elevInput = document.getElementById(`${formSport}-elev`);
+      terrainSelect = document.getElementById(`${formSport}-terrain`);
+      weatherSelect = document.getElementById(`${formSport}-weather`);
       if (wattsInput) wattsInput.value = '';
       if (cadenceInput) cadenceInput.value = '';
       if (elevInput) elevInput.value = '';
       if (terrainSelect && terrainSelect.options.length > 0) terrainSelect.selectedIndex = 0;
       if (weatherSelect && weatherSelect.options.length > 0) weatherSelect.selectedIndex = 0;
 
-      const rpeSlider = document.getElementById(`${formSport}-rpe-slider`);
-      if (rpeSlider) {
-        rpeSlider.value = '5';
+      const rpeSliderReset = document.getElementById(`${formSport}-rpe-slider`);
+      if (rpeSliderReset) {
+        rpeSliderReset.value = '5';
         if (typeof updateRPEValue === 'function') updateRPEValue(formSport, '5');
       }
 if (commentEl) commentEl.value = '';
@@ -3229,7 +3229,6 @@ if (commentEl) commentEl.value = '';
   renderHistory();
   triggerAchievementPopup(`Séance validée ! +${baseXp} XP`);
   showPage('stats');
-    }
 
     function competitionTimeField(id, label, defaults = {}) {
       const h = defaults.h || 0, m = defaults.m || 0, sec = defaults.s || 0;
