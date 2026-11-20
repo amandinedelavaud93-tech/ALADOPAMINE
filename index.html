@@ -4712,37 +4712,38 @@ async function refreshFriendHub(){
       return {current,achieved:current>=Number(target),percent:Number(target)>0?Math.min(100,current/Number(target)*100):0};
     }
 
-    function recalculateAllTrophiesAndStats() {
+   function recalculateAllTrophiesAndStats() {
       appData.xp = 0;
       appData.xpBaseTotal = 0;
       appData.level = 1;
       if (typeof recalculateStatsFromHistory === 'function') recalculateStatsFromHistory();
-      let unlocked=0, relocked=0;
-      (appData.trophies||[]).forEach(t=>{
-        if(t.isSecret) return;
-        const eligible=isPublicTrophyEligible(t);
-        if(eligible && !t.unlocked) { unlockTrophy(t,'recalcul V20'); unlocked++; }
-        else if(!eligible && t.unlocked) {
-          t.unlocked=false; delete t.unlockedAt;
+      let unlocked = 0, relocked = 0;
+      (appData.trophies || []).forEach(t => {
+        const eligible = isPublicTrophyEligible(t);
+        if (eligible && !t.unlocked) {
+          unlockTrophy(t, 'recalcul V20');
+          unlocked++;
+        } else if (!eligible && t.unlocked) {
+          t.unlocked = false;
+          delete t.unlockedAt;
           relocked++;
         }
       });
-      if (typeof checkTrophiesUnlock === 'function') checkTrophiesUnlock();
+      if (typeof recalculateXpFromHistory === 'function') recalculateXpFromHistory();
       saveAppData();
       if (typeof renderTrophiesAndRanks === 'function') renderTrophiesAndRanks();
       console.info(`Recalcul V20 terminé : ${unlocked} nouveau(x) déblocage(s), ${relocked} ancien(s) déblocage(s) invalidé(s).`);
-      return {unlocked,relocked};
+      return { unlocked, relocked };
     }
-
-    let cloudSaveTimer = null;
+    
+let cloudSaveTimer = null;
     let cloudSaveInFlight = Promise.resolve();
     let cloudSyncLastError = '';
     function sessionToSupabaseRow(session, userId) {
-      const durFn = typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes : getSessionDurationMinutesutes;
-      const distanceKm=getSessionDistanceKm(session);
-      const durationMin=durFn(session);
-      const durationText=String(session.duration || `${durationMin} min`);
-      const distanceText=`${distanceKm} km`;
+      const distanceKm = getSessionDistanceKm(session);
+      const durationMin = getSessionDurationMinutes(session);
+      const durationText = String(session.duration || `${durationMin} min`);
+      const distanceText = `${distanceKm} km`;
       return {
         id: Number(session.id), user_id:userId, sport:String(session.sport||'autres'),
         title:String(session.title||'Séance').slice(0,200), date:session.date||localDateISO(new Date()),
