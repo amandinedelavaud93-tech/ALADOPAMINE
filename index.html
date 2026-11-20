@@ -3178,16 +3178,24 @@ function resetSportForm(sport) {
       const selectedActivity = formSport === 'autres' ? (document.getElementById('autres-sport-select')?.value || 'Autre') : '';
       const actualSport = formSport === 'autres' ? (selectedActivity === 'HIIT' ? 'hiit' : 'autres') : formSport;
       let dist = 0, time = 0, elev = 0;
-      if (formSport === 'natation') { dist = parseLocalizedNumber(document.getElementById('natation-dist').value); time = parseFloat(document.getElementById('natation-time').value); }
-      else if (formSport === 'velo' || formSport === 'course' || formSport === 'marche') {
-        dist = parseLocalizedNumber(document.getElementById(`${formSport}-dist`).value);
-        time = parseFloat(document.getElementById(`${formSport}-time`).value);
-        elev = parseFloat(document.getElementById(`${formSport}-elev`)?.value) || 0;
-      } else {
-        time = actualSport === 'hiit'
-          ? (parseFloat(document.getElementById('hiit-time')?.value) || 0)
-          : parseFloat(document.getElementById('autres-time').value);
-        dist = actualSport === 'hiit' ? 0 : (parseLocalizedNumber(document.getElementById('autres-dist').value) || 0);
+      const getVal = (id) => {
+     const el = document.getElementById(id);
+       return el ? el.value : '';
+      };
+
+      if (formSport === 'natation') {
+     dist = parseLocalizedNumber(getVal('natation-dist') || 0);
+      time = parseFloat(getVal('natation-time') || 0);
+     } else if (['velo', 'course', 'marche'].includes(formSport)) {
+     dist = parseLocalizedNumber(getVal(`${formSport}-dist`) || 0);
+     time = parseFloat(getVal(`${formSport}-time`) || 0);
+     elev = parseFloat(getVal(`${formSport}-elev`) || 0) || 0;
+     } else {
+     time = actualSport === 'hiit'
+     ? (parseFloat(getVal('hiit-time')) || 0)
+      : (parseFloat(getVal(`${formSport}-time`)) || 0);
+     dist = actualSport === 'hiit' ? 0 : (parseLocalizedNumber(getVal('autres-dist')) || 0);
+     }
       }
       if (!Number.isFinite(time) || time <= 0) { alert("La durée doit être un nombre supérieur à zéro."); return; }
       if (!['hiit', 'autres'].includes(actualSport) && (!Number.isFinite(dist) || dist <= 0)) { alert("La distance doit être un nombre supérieur à zéro."); return; }
@@ -3260,7 +3268,6 @@ function resetSportForm(sport) {
       recalculateStatsFromHistory(); checkTrophiesUnlock(); renderHistory();
       triggerAchievementPopup(`Séance validée ! +${baseXp} XP`);
       showPage('stats');
-    }
 
     function competitionTimeField(id, label, defaults = {}) {
       const h = defaults.h || 0, m = defaults.m || 0, sec = defaults.s || 0;
