@@ -3228,6 +3228,11 @@ if (commentEl) commentEl.value = '';
   if (terrainSelect && terrainSelect.options.length > 0) terrainSelect.selectedIndex = 0;
   if (weatherSelect && weatherSelect.options.length > 0) weatherSelect.selectedIndex = 0;
   recalculateStatsFromHistory();
+  const rpeSlider = document.getElementById(`${formSport}-rpe-slider`);
+  if (rpeSlider) {
+    rpeSlider.value = '5';
+    if (typeof updateRPEValue === 'function') updateRPEValue(formSport, '5');
+  }
   checkTrophiesUnlock();
   renderHistory();
   triggerAchievementPopup(`Séance validée ! +${baseXp} XP`);
