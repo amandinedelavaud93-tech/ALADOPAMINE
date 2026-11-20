@@ -2894,9 +2894,9 @@ function resetActiveForm(sport) {
       if (!exists) { alert("Cette séance est introuvable."); return; }
       if (confirm("Supprimer cette séance ? Les statistiques et l'XP seront automatiquement recalculées.")) {
         appData.sessionsHistory = appData.sessionsHistory.filter(s => s.id !== id);
-        recalculateStatsFromHistory();
-        checkTrophiesUnlock();
-        renderHistory();
+       recalculateStatsFromHistory();
+      checkTrophiesUnlock();
+      renderHistory();
         if (document.getElementById('view-stats') && !document.getElementById('view-stats').classList.contains('hidden')) {
           renderChart();
         }
