@@ -3194,18 +3194,34 @@ function validerLimitesNatation() {
         appData.sessionsHistory = appData.sessionsHistory.filter(item => String(item.id) !== String(session.id));
         return;
       }
-      if (commentEl) commentEl.value = '';
-      resetActivityDuration(formSport);
-      if (actualSport === 'hiit') {
-        const hiitTime = document.getElementById('hiit-time'); if (hiitTime) hiitTime.value = '';
-        const hiitBpm = document.getElementById('hiit-bpm'); if (hiitBpm) hiitBpm.value = '';
-        const hiitDate = document.getElementById('hiit-date'); if (hiitDate) hiitDate.value = localDateISO(new Date());
-      }
-      const savedDateInput = document.getElementById(`${formSport}-date`); if (savedDateInput) savedDateInput.value = localDateISO(new Date());
-      if (bpmInput) bpmInput.value = '';
-      recalculateStatsFromHistory(); checkTrophiesUnlock(); renderHistory();
-      triggerAchievementPopup(`Séance validée ! +${baseXp} XP`);
-      showPage('stats');
+if (commentEl) commentEl.value = '';
+  resetActivityDuration(formSport);
+  const distKmEl = document.getElementById(`${formSport}-dist-km`);
+  const distMEl = document.getElementById(`${formSport}-dist-m`);
+  const distHiddenEl = document.getElementById(`${formSport}-dist`);
+  const distPreviewEl = document.getElementById(`${formSport}-dist-preview`);
+  if (distKmEl) distKmEl.value = '';
+  if (distMEl) distMEl.value = '';
+  if (distHiddenEl) distHiddenEl.value = '0';
+  if (distPreviewEl) distPreviewEl.textContent = '0 km';
+  if (actualSport === 'hiit') {
+    const hiitTime = document.getElementById('hiit-time');
+    const hiitBpm = document.getElementById('hiit-bpm');
+    const hiitDate = document.getElementById('hiit-date');
+    const hiitComment = document.getElementById('hiit-comment');
+    if (hiitTime) hiitTime.value = '';
+    if (hiitBpm) hiitBpm.value = '';
+    if (hiitDate) hiitDate.value = localDateISO(new Date());
+    if (hiitComment) hiitComment.value = '';
+  }
+  const savedDateInput = document.getElementById(`${formSport}-date`);
+  if (savedDateInput) savedDateInput.value = localDateISO(new Date());
+  if (bpmInput) bpmInput.value = '';
+  recalculateStatsFromHistory();
+  checkTrophiesUnlock();
+  renderHistory();
+  triggerAchievementPopup(`Séance validée ! +${baseXp} XP`);
+  showPage('stats');
     }
 
     function competitionTimeField(id, label, defaults = {}) {
