@@ -2809,25 +2809,52 @@ async function handleStravaOAuthCallback() {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
   const error = urlParams.get('error');
+  const stravaConnected = urlParams.get('strava_connected');
+  const accessTokenFromUrl = urlParams.get('strava_access_token');
+  const refreshTokenFromUrl = urlParams.get('strava_refresh_token');
+  const expiresAtFromUrl = urlParams.get('strava_expires_at');
+  const athleteIdFromUrl = urlParams.get('strava_athlete_id');
 
   if (error) {
     window.history.replaceState({}, document.title, window.location.pathname);
     alert('Autorisation Strava annulée ou refusée.');
     return;
   }
-  if (!code) return;
-
-  window.history.replaceState({}, document.title, window.location.pathname);
 
   try {
+    if (stravaConnected === '1' && accessTokenFromUrl) {
+      const tokenData = {
+        access_token: accessTokenFromUrl,
+        refresh_token: refreshTokenFromUrl || null,
+        expires_at: expiresAtFromUrl ? Number(expiresAtFromUrl) : null,
+        athlete: athleteIdFromUrl ? { id: Number(athleteIdFromUrl) } : null
+      };
+      window.history.replaceState({}, document.title, window.location.pathname);
+      localStorage.setItem(getStravaStorageKey(), JSON.stringify(tokenData));
+      await syncStravaActivities(tokenData);
+      return;
+    }
+
+    if (!code) return;
+
+    window.history.replaceState({}, document.title, window.location.pathname);
+
     const response = await fetch('/api/strava/callback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
     });
-    const tokenData = await response.json();
-    if (!response.ok || !tokenData.access_token) {
-      throw new Error(tokenData.error || 'Échec échange de token Strava');
+
+    const rawText = await response.text();
+    let tokenData;
+    try {
+      tokenData = JSON.parse(rawText);
+    } catch {
+      throw new Error(rawText || 'Réponse non-JSON du serveur Strava');
+    }
+
+    if (!response.ok || !tokenData?.access_token) {
+      throw new Error(tokenData?.error || tokenData?.message || 'Échec échange de token Strava');
     }
 
     localStorage.setItem(getStravaStorageKey(), JSON.stringify(tokenData));
@@ -2845,18 +2872,24 @@ async function syncStravaActivities(tokenData) {
 
     // Rafraîchir le token s'il est expiré
     const nowSec = Math.floor(Date.now() / 1000);
-    if (auth.expires_at && auth.expires_at < nowSec + 60 && auth.refresh_token) {
-      const refreshRes = await fetch('/api/strava/callback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: auth.refresh_token })
-      });
-      const refreshed = await refreshRes.json();
-      if (refreshRes.ok && refreshed.access_token) {
-        auth = { ...auth, ...refreshed };
-        localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
-      }
-    }
+if (auth.expires_at && auth.expires_at < nowSec + 60 && auth.refresh_token) {
+  const refreshRes = await fetch('/api/strava/callback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: auth.refresh_token })
+  });
+  const refreshRaw = await refreshRes.text();
+  let refreshed = null;
+  try {
+    refreshed = JSON.parse(refreshRaw);
+  } catch {
+    refreshed = null;
+  }
+  if (refreshRes.ok && refreshed?.access_token) {
+    auth = { ...auth, ...refreshed };
+    localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
+  }
+}
 
     const actRes = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
       headers: { Authorization: `Bearer ${auth.access_token}` }
