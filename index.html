@@ -2758,31 +2758,192 @@ function setupProfileCityAutocomplete() {
       try { localStorage.setItem('dopamine_theme', nextTheme); } catch (error) { console.warn('Préférence de thème non mémorisée.', error); }
     }
 
-    // Préparation des connexions : aucun faux import ni aucune séance aléatoire.
-    const platformIntegrationStatus = {
-      Strava: { status: 'non_configuree', method: 'OAuth 2.0 / API Strava' },
-      Garmin: { status: 'non_configuree', method: 'Programme Garmin Health / autorisation partenaire' },
-      Polar: { status: 'non_configuree', method: 'Polar AccessLink / OAuth' },
-      Zwift: { status: 'non_configuree', method: 'API ou autorisation partenaire à confirmer' }
-    };
+// Intégration Strava OAuth 2.0 + Import automatique multi-utilisateurs
+const STRAVA_CLIENT_ID = '299273';
+const STRAVA_REDIRECT_URI = window.location.origin;
 
-    function beginPlatformConnection(platformName) {
-      const details = platformIntegrationStatus[platformName];
-      if (!details) {
-        alert("Cette plateforme n'est pas encore configurée.");
-        return;
+const platformIntegrationStatus = {
+  Strava: { status: 'configuree', method: 'OAuth 2.0 / API Strava' },
+  Garmin: { status: 'non_configuree', method: 'Programme Garmin Health / autorisation partenaire' },
+  Polar: { status: 'non_configuree', method: 'Polar AccessLink / OAuth' },
+  Zwift: { status: 'non_configuree', method: 'API ou autorisation partenaire à confirmer' }
+};
+
+function mapStravaSportType(stravaType) {
+  const t = String(stravaType || '').toLowerCase();
+  if (t.includes('swim')) return 'natation';
+  if (t.includes('ride') || t.includes('cycl') || t.includes('bike')) return 'velo';
+  if (t.includes('run') || t.includes('trail')) return 'course';
+  if (t.includes('walk') || t.includes('hike')) return 'marche';
+  if (t.includes('hiit') || t.includes('crossfit') || t.includes('workout')) return 'hiit';
+  return 'autres';
+}
+
+function getStravaStorageKey() {
+  return `dopamine_strava_auth_${activeUserId || 'guest'}`;
+}
+
+function beginPlatformConnection(platformName) {
+  if (platformName !== 'Strava') {
+    const details = platformIntegrationStatus[platformName];
+    if (!details) {
+      alert("Cette plateforme n'est pas encore configurée.");
+      return;
+    }
+    alert(`Connexion ${platformName} non activée pour le moment.\n\nÉtape suivante : configurer l'application développeur officielle.`);
+    return;
+  }
+
+  const savedAuth = JSON.parse(localStorage.getItem(getStravaStorageKey()) || 'null');
+  if (savedAuth && savedAuth.access_token) {
+    syncStravaActivities(savedAuth);
+    return;
+  }
+
+  const scope = 'read,activity:read_all';
+  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}&approval_prompt=auto&scope=${scope}`;
+  window.location.href = authUrl;
+}
+
+async function handleStravaOAuthCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const error = urlParams.get('error');
+
+  if (error) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    alert('Autorisation Strava annulée ou refusée.');
+    return;
+  }
+  if (!code) return;
+
+  window.history.replaceState({}, document.title, window.location.pathname);
+
+  try {
+    const response = await fetch('/api/strava/callback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const tokenData = await response.json();
+    if (!response.ok || !tokenData.access_token) {
+      throw new Error(tokenData.error || 'Échec échange de token Strava');
+    }
+
+    localStorage.setItem(getStravaStorageKey(), JSON.stringify(tokenData));
+    await syncStravaActivities(tokenData);
+  } catch (err) {
+    console.error('Erreur connexion Strava:', err);
+    alert('Erreur lors de la connexion Strava : ' + err.message);
+  }
+}
+
+async function syncStravaActivities(tokenData) {
+  try {
+    let auth = tokenData || JSON.parse(localStorage.getItem(getStravaStorageKey()) || 'null');
+    if (!auth || !auth.access_token) return;
+
+    // Rafraîchir le token s'il est expiré
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (auth.expires_at && auth.expires_at < nowSec + 60 && auth.refresh_token) {
+      const refreshRes = await fetch('/api/strava/callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: auth.refresh_token })
+      });
+      const refreshed = await refreshRes.json();
+      if (refreshRes.ok && refreshed.access_token) {
+        auth = { ...auth, ...refreshed };
+        localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
       }
-      alert(`Connexion ${platformName} non activée pour le moment.
-
-Étape suivante : configurer l'application développeur officielle, le serveur HTTPS et le flux d'autorisation de la plateforme.
-
-Aucun mot de passe ni jeton d'accès ne doit être saisi dans cette page HTML. Aucune séance n'a été créée.`);
     }
 
-    // Compatibilité avec d'anciens boutons éventuels : cette fonction ne simule plus de synchronisation.
-    function simulateApiSync(platformName = 'Strava') {
-      beginPlatformConnection(platformName);
+    const actRes = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
+      headers: { Authorization: `Bearer ${auth.access_token}` }
+    });
+    if (!actRes.ok) throw new Error('Impossible de récupérer les activités Strava');
+    const activities = await actRes.json();
+
+    if (!Array.isArray(appData.sessionsHistory)) appData.sessionsHistory = [];
+    let importedCount = 0;
+
+    activities.forEach(act => {
+      const stravaId = `strava_${act.id}`;
+      const alreadyExists = appData.sessionsHistory.some(
+        s => String(s.id) === stravaId || String(s.stravaActivityId) === String(act.id)
+      );
+      if (alreadyExists) return;
+
+      const sport = mapStravaSportType(act.sport_type || act.type);
+      const durationSeconds = Math.round(act.moving_time || act.elapsed_time || 0);
+      const h = Math.floor(durationSeconds / 3600);
+      const m = Math.floor((durationSeconds % 3600) / 60);
+      const sec = durationSeconds % 60;
+      const distanceKm = Number(((act.distance || 0) / 1000).toFixed(2));
+      const elevation = Math.round(act.total_elevation_gain || 0);
+      const bpm = Math.round(act.average_heartrate || 0);
+      const dateStr = (act.start_date_local || act.start_date || '').slice(0, 10);
+
+      const newSession = {
+        id: stravaId,
+        stravaActivityId: act.id,
+        stravaAthleteId: auth.athlete?.id || null,
+        source: 'strava',
+        title: act.name || 'Séance Strava',
+        date: dateStr,
+        sport,
+        type: 'activity',
+        durationSeconds,
+        duration: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`,
+        durationMinutes: Math.round(durationSeconds / 60),
+        distanceKm,
+        distance: distanceKm,
+        elevation,
+        bpm,
+        rpe: 5
+      };
+
+      if (typeof calculateSessionXp === 'function') {
+        newSession.xp = calculateSessionXp({
+          sport,
+          isCompetition: false,
+          durationMinutes: newSession.durationMinutes,
+          distanceKm,
+          elevation
+        });
+      }
+      if (typeof updateSessionDerivedMetrics === 'function') {
+        updateSessionDerivedMetrics(newSession);
+      }
+
+      appData.sessionsHistory.unshift(newSession);
+      importedCount++;
+    });
+
+    if (typeof closeSyncModal === 'function') closeSyncModal();
+
+    if (importedCount > 0) {
+      if (typeof ensureXpBaseline === 'function') ensureXpBaseline();
+      if (typeof recalculateStatsFromHistory === 'function') recalculateStatsFromHistory();
+      if (typeof recalculateXpFromHistory === 'function') recalculateXpFromHistory();
+      if (typeof checkTrophiesUnlock === 'function') checkTrophiesUnlock();
+      if (typeof renderHistory === 'function') renderHistory();
+      if (typeof renderChart === 'function') renderChart();
+      if (typeof renderHomeCalendar === 'function') renderHomeCalendar();
+      if (typeof persistAppData === 'function') persistAppData();
+      alert(`${importedCount} nouvelle(s) séance(s) Strava importée(s) !`);
+    } else {
+      alert('Ton compte Strava est connecté : toutes tes séances récentes sont déjà à jour.');
     }
+  } catch (err) {
+    console.error('Erreur synchro Strava:', err);
+    alert('Erreur synchronisation Strava : ' + err.message);
+  }
+}
+
+function simulateApiSync(platformName = 'Strava') {
+  beginPlatformConnection(platformName);
+}
 
     function exportDataJSON() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
@@ -5418,6 +5579,7 @@ document.addEventListener('DOMContentLoaded', () => {
             refreshAppAfterAccountLoad();
           }
           updateHeaderAuthUI();
+          handleStravaOAuthCallback();
         });
       }
     });
