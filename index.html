@@ -2760,7 +2760,7 @@ function setupProfileCityAutocomplete() {
 
 // Intégration Strava OAuth 2.0 + Import automatique multi-utilisateurs
 const STRAVA_CLIENT_ID = '299273';
-const STRAVA_REDIRECT_URI = `${window.location.origin}/api/strava/callback`;
+const STRAVA_REDIRECT_URI = window.location.origin;
 
 const platformIntegrationStatus = {
   Strava: { status: 'configuree', method: 'OAuth 2.0 / API Strava' },
@@ -2809,52 +2809,25 @@ async function handleStravaOAuthCallback() {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
   const error = urlParams.get('error');
-  const stravaConnected = urlParams.get('strava_connected');
-  const accessTokenFromUrl = urlParams.get('strava_access_token');
-  const refreshTokenFromUrl = urlParams.get('strava_refresh_token');
-  const expiresAtFromUrl = urlParams.get('strava_expires_at');
-  const athleteIdFromUrl = urlParams.get('strava_athlete_id');
 
   if (error) {
     window.history.replaceState({}, document.title, window.location.pathname);
     alert('Autorisation Strava annulée ou refusée.');
     return;
   }
+  if (!code) return;
+
+  window.history.replaceState({}, document.title, window.location.pathname);
 
   try {
-    if (stravaConnected === '1' && accessTokenFromUrl) {
-      const tokenData = {
-        access_token: accessTokenFromUrl,
-        refresh_token: refreshTokenFromUrl || null,
-        expires_at: expiresAtFromUrl ? Number(expiresAtFromUrl) : null,
-        athlete: athleteIdFromUrl ? { id: Number(athleteIdFromUrl) } : null
-      };
-      window.history.replaceState({}, document.title, window.location.pathname);
-      localStorage.setItem(getStravaStorageKey(), JSON.stringify(tokenData));
-      await syncStravaActivities(tokenData);
-      return;
-    }
-
-    if (!code) return;
-
-    window.history.replaceState({}, document.title, window.location.pathname);
-
     const response = await fetch('/api/strava/callback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
     });
-
-    const rawText = await response.text();
-    let tokenData;
-    try {
-      tokenData = JSON.parse(rawText);
-    } catch {
-      throw new Error(rawText || 'Réponse non-JSON du serveur Strava');
-    }
-
-    if (!response.ok || !tokenData?.access_token) {
-      throw new Error(tokenData?.error || tokenData?.message || 'Échec échange de token Strava');
+    const tokenData = await response.json();
+    if (!response.ok || !tokenData.access_token) {
+      throw new Error(tokenData.error || 'Échec échange de token Strava');
     }
 
     localStorage.setItem(getStravaStorageKey(), JSON.stringify(tokenData));
@@ -2872,24 +2845,18 @@ async function syncStravaActivities(tokenData) {
 
     // Rafraîchir le token s'il est expiré
     const nowSec = Math.floor(Date.now() / 1000);
-if (auth.expires_at && auth.expires_at < nowSec + 60 && auth.refresh_token) {
-  const refreshRes = await fetch('/api/strava/callback', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: auth.refresh_token })
-  });
-  const refreshRaw = await refreshRes.text();
-  let refreshed = null;
-  try {
-    refreshed = JSON.parse(refreshRaw);
-  } catch {
-    refreshed = null;
-  }
-  if (refreshRes.ok && refreshed?.access_token) {
-    auth = { ...auth, ...refreshed };
-    localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
-  }
-}
+    if (auth.expires_at && auth.expires_at < nowSec + 60 && auth.refresh_token) {
+      const refreshRes = await fetch('/api/strava/callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: auth.refresh_token })
+      });
+      const refreshed = await refreshRes.json();
+      if (refreshRes.ok && refreshed.access_token) {
+        auth = { ...auth, ...refreshed };
+        localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
+      }
+    }
 
     const actRes = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
       headers: { Authorization: `Bearer ${auth.access_token}` }
@@ -2931,7 +2898,7 @@ if (auth.expires_at && auth.expires_at < nowSec + 60 && auth.refresh_token) {
       // durée OU distance concorde à 10 % (et si aucune autre métrique disponible ne contredit fortement la correspondance).
       const manualCandidates = appData.sessionsHistory.filter(s => {
         if (!s || s.source === 'strava' || s.stravaActivityId || String(s.date || '').slice(0, 10) !== dateStr || s.sport !== sport) return false;
-        const oldDuration = Number(s.durationSeconds) || Math.round((typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes(s) : 0) * 60);
+        const oldDuration = Number(s.durationSeconds) || Math.round((typeof getSessionDurationMinutesutes === 'function' ? getSessionDurationMinutesutes(s) : 0) * 60);
         const oldDistance = typeof getSessionDistanceKm === 'function' ? getSessionDistanceKm(s) : Number(s.distanceKm || s.distance || 0);
         const durationMatches = closeMetric(oldDuration, durationSeconds);
         const distanceMatches = closeMetric(oldDistance, distanceKm);
@@ -2951,7 +2918,23 @@ if (auth.expires_at && auth.expires_at < nowSec + 60 && auth.refresh_token) {
         calories: calorieValue || null, averageCadence: avgCadence, cadence: avgCadence,
         averageWatts: avgWatts, watts: avgWatts, averageSpeedKmh, maxSpeedKmh,
         workoutType: act.workout_type ?? null, routePolyline: polyline,
-        stravaSummary: { id: act.id, sportType: act.sport_type || act.type || null, startDate: act.start_date_local || act.start_date || null }
+        stravaSummary: {
+          id: act.id, athleteId: act.athlete?.id || auth.athlete?.id || null,
+          name: act.name || null, description: act.description || null,
+          type: act.type || null, sportType: act.sport_type || null, workoutType: act.workout_type ?? null,
+          startDateLocal: act.start_date_local || null, startDateUtc: act.start_date || null, timezone: act.timezone || null,
+          trainer: !!act.trainer, commute: !!act.commute, private: !!act.private, manual: !!act.manual, gearId: act.gear_id || null,
+          movingTime: Number(act.moving_time) || 0, elapsedTime: Number(act.elapsed_time) || 0, distanceMeters: Number(act.distance) || 0,
+          averageSpeed: Number(act.average_speed) || null, maxSpeed: Number(act.max_speed) || null,
+          totalElevationGain: Number(act.total_elevation_gain) || 0, elevationHigh: act.elev_high ?? null, elevationLow: act.elev_low ?? null,
+          hasHeartrate: !!act.has_heartrate, averageHeartrate: act.average_heartrate ?? null, maxHeartrate: act.max_heartrate ?? null,
+          averageCadence: act.average_cadence ?? null, deviceWatts: !!act.device_watts, averageWatts: act.average_watts ?? null,
+          maxWatts: act.max_watts ?? null, weightedAverageWatts: act.weighted_average_watts ?? null, kilojoules: act.kilojoules ?? null,
+          calories: act.calories ?? null, sufferScore: act.suffer_score ?? null,
+          startLatLng: act.start_latlng || null, endLatLng: act.end_latlng || null, summaryPolyline: polyline,
+          kudosCount: act.kudos_count ?? 0, commentCount: act.comment_count ?? 0, photoCount: act.total_photo_count ?? 0,
+          athleteCount: act.athlete_count ?? 0, prCount: act.pr_count ?? 0, achievementCount: act.achievement_count ?? 0
+        }
       };
 
       if (manualCandidates.length > 1) {
@@ -4065,7 +4048,7 @@ Object.entries(secretRules).forEach(([id, rule]) => {
       else saveAppData();
       return changed;}
 
-    function getSessionDurationMinutes(session) {
+    function getSessionDurationMinutesutes(session) {
       if (Number(session?.durationSeconds) > 0) return Number(session.durationSeconds) / 60;
       const splitHours = Number(session?.durationH ?? session?.hours ?? 0) || 0;
       const splitMinutes = Number(session?.durationM ?? session?.minutes ?? 0) || 0;
@@ -4086,7 +4069,7 @@ Object.entries(secretRules).forEach(([id, rule]) => {
     // La VAP fiable nécessite un profil altimétrique segment par segment (GPX), pas seulement le D+ total.
     function updateSessionDerivedMetrics(session) {
       const distanceKm = getSessionDistanceKm(session);
-      const durationMinutes = getSessionDurationMinutes(session);
+      const durationMinutes = getSessionDurationMinutesutes(session);
       session.avg_speed = distanceKm > 0 && durationMinutes > 0
         ? Number((distanceKm / (durationMinutes / 60)).toFixed(2)) : null;
       session.vap = null;
@@ -4110,7 +4093,8 @@ Object.entries(secretRules).forEach(([id, rule]) => {
       document.querySelectorAll('#edit-session-modal [data-edit-sport]').forEach(group=>{
         const rule=group.getAttribute('data-edit-sport');
         let visible=true;
-        if(rule==='distance') visible=!['hiit','autres'].includes(sport);
+        if(rule==='natation') visible=sport==='natation';
+        else if(rule==='distance') visible=!['hiit','autres'].includes(sport);
         else if(rule==='elevation') visible=!['hiit','autres'].includes(sport);
         else if(rule==='velo') visible=sport==='velo';
         else if(rule==='cadence') visible=['velo','course'].includes(sport);
@@ -4126,7 +4110,7 @@ Object.entries(secretRules).forEach(([id, rule]) => {
       if (!session) { alert('Cette activité est introuvable.'); return; }
       const set=(key,value)=>{const el=document.getElementById('edit-session-'+key);if(el)el.value=value??'';};
       set('id',String(session.id)); set('title',session.title||''); set('date',session.date||localDateISO(new Date()));
-      let totalSeconds=Number(session.durationSeconds)||Math.round(getSessionDurationMinutes(session)*60);
+      let totalSeconds=Number(session.durationSeconds)||Math.round(getSessionDurationMinutesutes(session)*60);
       set('hours',Math.floor(totalSeconds/3600)); set('minutes',Math.floor((totalSeconds%3600)/60)); set('seconds',totalSeconds%60);
       set('sport',session.type==='competition'||session.competitionDetails?'competition':(session.sport||'course'));
       set('distance',getSessionDistanceKm(session)); if (typeof setDistancePickerValue === 'function') setDistancePickerValue('edit-session-distance', getSessionDistanceKm(session)); set('elevation',Number(session.elevationM||session.competitionDetails?.totalElevationM||0));
@@ -4139,6 +4123,7 @@ Object.entries(secretRules).forEach(([id, rule]) => {
       ['swim','swim-distance','t1','bike','bike-distance','bike-elevation','t2','run1','run1-distance','run1-elevation','run','run-distance','run-elevation','other-duration','other-distance'].forEach(k=>setComp(k,cdet[k]));
       ['water-place','water-condition','bike-terrain','run-terrain','weather-condition','place'].forEach(k=>setComp(k,cd[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]));
       const partners=Array.isArray(session.partners)?session.partners.map(p=>typeof p==='string'?p:(p.username||p.name||'')).filter(Boolean).join(', '):'';
+      set('water-place',session.waterPlace||''); set('water-condition',session.waterCondition||''); set('swim-weather',session.swimWeather||'');
       set('partners',partners); set('comment',session.comment||session.competitionDetails?.notes||'');
       document.getElementById('edit-session-modal').style.display='block'; updateEditSessionFields(); refreshEditSessionFriendSuggestions();
       const detailBox=document.getElementById('edit-session-strava-details');
@@ -4146,32 +4131,79 @@ Object.entries(secretRules).forEach(([id, rule]) => {
     }
     async function loadStravaActivityDetails(session) {
       if(!session?.stravaActivityId) return;
-      const target=document.getElementById('edit-session-strava-details-content');
       if(session.stravaDetailsLoaded){renderStravaActivityDetails(session);return;}
       const auth=JSON.parse(localStorage.getItem(getStravaStorageKey())||'null');
       if(!auth?.access_token) throw new Error('Reconnecte Strava pour charger les détails.');
-      const response=await fetch(`https://www.strava.com/api/v3/activities/${encodeURIComponent(session.stravaActivityId)}`,{headers:{Authorization:`Bearer ${auth.access_token}`}});
-      if(!response.ok) throw new Error(response.status===429?'Limite de requêtes Strava atteinte.':'Strava n’a pas renvoyé le détail de cette activité.');
-      const detail=await response.json();
-      session.stravaDetails={splitsMetric:Array.isArray(detail.splits_metric)?detail.splits_metric:[],laps:Array.isArray(detail.laps)?detail.laps:[],segmentEfforts:Array.isArray(detail.segment_efforts)?detail.segment_efforts:[],prCount:Number(detail.pr_count)||0};
+      const headers={Authorization:`Bearer ${auth.access_token}`};
+      const response=await fetch(`https://www.strava.com/api/v3/activities/${encodeURIComponent(session.stravaActivityId)}`,{headers});
+      if(!response.ok) throw new Error(response.status===429?'Limite de requêtes Strava atteinte.':`Détail Strava indisponible (HTTP ${response.status}).`);
+      const d=await response.json();
+      session.stravaDetails={
+        raw:d, description:d.description||null, type:d.type||null, sportType:d.sport_type||null,
+        startDateLocal:d.start_date_local||null,startDateUtc:d.start_date||null,timezone:d.timezone||null,
+        movingTime:Number(d.moving_time)||0,elapsedTime:Number(d.elapsed_time)||0,distance:Number(d.distance)||0,
+        averageSpeed:Number(d.average_speed)||null,maxSpeed:Number(d.max_speed)||null,
+        totalElevationGain:Number(d.total_elevation_gain)||0,elevHigh:d.elev_high??null,elevLow:d.elev_low??null,
+        hasHeartrate:!!d.has_heartrate,averageHeartrate:d.average_heartrate??null,maxHeartrate:d.max_heartrate??null,
+        averageCadence:d.average_cadence??null,deviceWatts:!!d.device_watts,averageWatts:d.average_watts??null,
+        maxWatts:d.max_watts??null,weightedAverageWatts:d.weighted_average_watts??null,kilojoules:d.kilojoules??null,
+        calories:d.calories??null,sufferScore:d.suffer_score??null,workoutType:d.workout_type??null,
+        trainer:!!d.trainer,commute:!!d.commute,private:!!d.private,manual:!!d.manual,gear:d.gear||null,
+        deviceName:d.device_name||null,map:d.map||null,startLatLng:d.start_latlng||null,endLatLng:d.end_latlng||null,
+        kudosCount:d.kudos_count??0,commentCount:d.comment_count??0,photoCount:d.total_photo_count??0,
+        athleteCount:d.athlete_count??0,prCount:d.pr_count??0,achievementCount:d.achievement_count??0,
+        splitsMetric:Array.isArray(d.splits_metric)?d.splits_metric:[],splitsStandard:Array.isArray(d.splits_standard)?d.splits_standard:[],
+        laps:Array.isArray(d.laps)?d.laps:[],segmentEfforts:Array.isArray(d.segment_efforts)?d.segment_efforts:[],
+        bestEfforts:Array.isArray(d.best_efforts)?d.best_efforts:[]
+      };
       session.stravaDetailsLoaded=true;
-      session.maxSpeedKmh=Number(detail.max_speed)>0?Number((detail.max_speed*3.6).toFixed(2)):session.maxSpeedKmh;
-      session.averageSpeedKmh=Number(detail.average_speed)>0?Number((detail.average_speed*3.6).toFixed(2)):session.averageSpeedKmh;
-      session.averageCadence=Number(detail.average_cadence)||session.averageCadence||null;
-      session.averageWatts=Number(detail.average_watts)||session.averageWatts||null;
-      session.workoutType=detail.workout_type??session.workoutType??null;
-      if(Number(detail.calories)>0) session.calories=Math.round(detail.calories);
+      session.maxSpeedKmh=Number(d.max_speed)>0?Number((d.max_speed*3.6).toFixed(2)):session.maxSpeedKmh;
+      session.averageSpeedKmh=Number(d.average_speed)>0?Number((d.average_speed*3.6).toFixed(2)):session.averageSpeedKmh;
+      session.averageCadence=Number(d.average_cadence)||session.averageCadence||null;
+      session.averageWatts=Number(d.average_watts)||session.averageWatts||null;
+      session.workoutType=d.workout_type??session.workoutType??null;
+      if(Number(d.calories)>0) session.calories=Math.round(d.calories);
+      // Zones et flux seconde par seconde sont des endpoints séparés, parfois refusés selon les autorisations Strava.
+      const optional=await Promise.allSettled([
+        fetch(`https://www.strava.com/api/v3/activities/${encodeURIComponent(session.stravaActivityId)}/zones`,{headers}).then(r=>r.ok?r.json():null),
+        fetch(`https://www.strava.com/api/v3/activities/${encodeURIComponent(session.stravaActivityId)}/streams?keys=time,distance,latlng,altitude,velocity_smooth,heartrate,cadence,watts,temp&key_by_type=true`,{headers}).then(r=>r.ok?r.json():null)
+      ]);
+      session.stravaDetails.zones=optional[0].status==='fulfilled'?optional[0].value:null;
+      session.stravaDetails.streams=optional[1].status==='fulfilled'?optional[1].value:null;
       saveAppData();renderStravaActivityDetails(session);
     }
-    function renderStravaActivityDetails(session) {
-      const target=document.getElementById('edit-session-strava-details-content');if(!target)return;
-      const details=session.stravaDetails||{};
-      const splitRows=(details.splitsMetric||[]).map((x,i)=>`<div>Km ${i+1} : ${(Number(x.moving_time)||0)} s · ${(Number(x.average_speed)>0?(1000/Number(x.average_speed)/60).toFixed(2)+' min/km':'allure n/d')} · D+ ${Math.round(Number(x.elevation_difference)||0)} m</div>`).join('');
-      const lapRows=(details.laps||[]).map((x,i)=>`<div>Tour ${i+1} : ${esc(x.name||'Tour')} · ${(Number(x.distance||0)/1000).toFixed(2)} km · ${Math.round(Number(x.moving_time)||0)} s</div>`).join('');
-      const segmentRows=(details.segmentEfforts||[]).slice(0,8).map(x=>`<div>${esc(x.name||'Segment')} · ${(Number(x.distance||0)/1000).toFixed(2)} km</div>`).join('');
-      const metrics=[session.averageSpeedKmh?`Vitesse moy. : ${session.averageSpeedKmh} km/h`:null,session.maxSpeedKmh?`Vitesse max : ${session.maxSpeedKmh} km/h`:null,session.averageCadence?`Cadence : ${session.averageCadence} tr/min`:null,session.averageWatts?`Puissance : ${session.averageWatts} W`:null,session.workoutType!=null?`Type d'entraînement : ${session.workoutType}`:null,details.prCount?`Records Strava sur l'activité : ${details.prCount}`:null].filter(Boolean).map(esc).join(' · ');
-      target.innerHTML=`${metrics?`<p>${metrics}</p>`:''}${splitRows?`<strong>Splits par kilomètre</strong>${splitRows}`:''}${lapRows?`<strong style="display:block;margin-top:8px;">Tours / laps</strong>${lapRows}`:''}${segmentRows?`<strong style="display:block;margin-top:8px;">Segments</strong>${segmentRows}`:''}${!splitRows&&!lapRows&&!segmentRows?'<p>Aucun split, tour ou segment détaillé fourni par Strava.</p>':''}`;
+    function stravaSafeText(value){return escapeHTML(value==null?'':String(value));}
+    function stravaTime(seconds){const n=Math.max(0,Math.round(Number(seconds)||0));const h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return h?`${h} h ${m} min ${s} s`:`${m} min ${s} s`;}
+    function stravaPace(speed){return Number(speed)>0?`${Math.floor(1000/Number(speed)/60)}:${String(Math.floor(1000/Number(speed)%60)).padStart(2,'0')} /km`:'—';}
+    function renderStravaActivityDetails(session){
+      const d=session.stravaDetails||{};const target=document.getElementById('edit-session-strava-details-content');if(!target)return;
+      const metric=(label,value)=>value!==null&&value!==undefined&&value!==''?`<div class="strava-detail-metric"><small>${stravaSafeText(label)}</small><strong>${stravaSafeText(value)}</strong></div>`:'';
+      const rows=(items,fn)=>items?.length?items.map((x,i)=>`<tr><td>${i+1}</td>${fn(x).map(v=>`<td>${stravaSafeText(v)}</td>`).join('')}</tr>`).join(''):'<tr><td colspan="8">Aucune donnée fournie par Strava.</td></tr>';
+      const table=(title,headers,body)=>`<section class="strava-detail-section"><h4>${title}</h4><div class="strava-table-wrap"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div></section>`;
+      const splits=rows(d.splitsMetric,(x)=>[`${(Number(x.distance)||0).toFixed(0)} m`,stravaTime(x.moving_time),stravaPace(x.average_speed),`${Math.round(Number(x.elevation_difference)||0)} m`,x.average_heartrate?`${Math.round(x.average_heartrate)} bpm`:'—',x.average_cadence??'—']);
+      const laps=rows(d.laps,(x)=>[stravaSafeText(x.name||`Tour ${x.lap_index||''}`),`${(Number(x.distance)||0).toFixed(0)} m`,stravaTime(x.moving_time),stravaPace(x.average_speed),x.average_heartrate?`${Math.round(x.average_heartrate)} bpm`:'—',x.max_heartrate?`${Math.round(x.max_heartrate)} bpm`:'—',x.average_watts??'—']);
+      const segments=(d.segmentEfforts||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${(x.name||x.segment?.name||'Segment')}</td><td>${stravaTime(x.moving_time)}</td><td>${(Number(x.distance)||0).toFixed(0)} m</td><td>${x.average_heartrate?Math.round(x.average_heartrate)+' bpm':'—'}</td><td>${x.pr_rank||x.kom_rank||'—'}</td></tr>`).join('')||'<tr><td colspan="6">Aucun segment fourni.</td></tr>';
+      const best=(d.bestEfforts||[]).map((x,i)=>`<tr><td>${i+1}</td><td>${stravaSafeText(x.name)}</td><td>${stravaTime(x.moving_time)}</td><td>${x.pr_rank||'—'}</td></tr>`).join('')||'<tr><td colspan="4">Aucun meilleur effort fourni.</td></tr>';
+      const zoneHtml=Array.isArray(d.zones)?d.zones.map(z=>`<div><strong>${stravaSafeText(z.type||'Zone')}</strong> : ${(z.distribution||[]).map((v,i)=>`Z${i+1} ${Math.round(v)}%`).join(' · ')}</div>`).join(''):'Zones non disponibles avec les autorisations actuelles.';
+      const streamCount=Array.isArray(d.streams)?d.streams.reduce((n,x)=>n+(x.data?.length||0),0):Object.values(d.streams||{}).reduce((n,x)=>n+(x.data?.length||0),0);
+      const mapUrl=d.map?.polyline||session.routePolyline?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((d.startLatLng||[]).join(','))}`:null;
+      target.innerHTML=`<div class="strava-detail-grid">${metric('Temps en mouvement',stravaTime(d.movingTime))}${metric('Temps écoulé',stravaTime(d.elapsedTime))}${metric('Distance',`${((Number(d.distance)||0)/1000).toFixed(2)} km`)}${metric('Vitesse moyenne',d.averageSpeed?`${(d.averageSpeed*3.6).toFixed(2)} km/h`:'—')}${metric('Vitesse max',d.maxSpeed?`${(d.maxSpeed*3.6).toFixed(2)} km/h`:'—')}${metric('Dénivelé positif',`${Math.round(d.totalElevationGain||0)} m`)}${metric('Altitude min / max',`${d.elevLow??'—'} / ${d.elevHigh??'—'} m`)}${metric('BPM moyen / max',`${d.averageHeartrate??'—'} / ${d.maxHeartrate??'—'}`)}${metric('Cadence moyenne',d.averageCadence??'—')}${metric('Puissance moyenne / max',`${d.averageWatts??'—'} / ${d.maxWatts??'—'} W`)}${metric('Puissance pondérée',d.weightedAverageWatts?`${d.weightedAverageWatts} W`:'—')}${metric('Énergie',d.kilojoules?`${d.kilojoules} kJ`:'—')}${metric('Calories',d.calories?`${Math.round(d.calories)} kcal`:'—')}${metric('Effort relatif Strava',d.sufferScore??'—')}${metric('Type d’entraînement',d.workoutType??'—')}${metric('Appareil',d.deviceName||'Non fourni')}${metric('Équipement',d.gear?.name||'Non renseigné')}${metric('Kudos / commentaires',`${d.kudosCount||0} / ${d.commentCount||0}`)}${metric('Athlètes / photos',`${d.athleteCount||0} / ${d.photoCount||0}`)}${metric('Records / trophées',`${d.prCount||0} / ${d.achievementCount||0}`)}</div>
+      ${d.description?`<section class="strava-detail-section"><h4>Description</h4><p>${stravaSafeText(d.description)}</p></section>`:''}
+      ${table('Temps intermédiaires',['#','Distance','Temps','Allure','D+','BPM moy.','Cadence'],splits)}
+      ${table('Tours / laps',['#','Nom','Distance','Temps','Allure','BPM moy.','BPM max','Watts'],laps)}
+      ${table('Segments',['#','Segment','Temps','Distance','BPM','Classement'],segments)}
+      ${table('Meilleurs efforts',['#','Distance / effort','Temps','Record'],best)}
+      <section class="strava-detail-section"><h4>Zones cardio / puissance</h4>${zoneHtml}</section>
+      <section class="strava-detail-section"><h4>Flux détaillés</h4><p>${streamCount?`${streamCount.toLocaleString('fr-FR')} points de données chargés (GPS, altitude, vitesse, cardio, cadence, puissance selon disponibilité).`:'Flux seconde par seconde indisponibles ou non autorisés.'}</p></section>
+      <section class="strava-detail-section"><h4>GPS</h4><p>Départ : ${stravaSafeText((d.startLatLng||[]).join(', ')||'—')} · Arrivée : ${stravaSafeText((d.endLatLng||[]).join(', ')||'—')}</p>${mapUrl?`<a href="${mapUrl}" target="_blank" rel="noopener">Voir la zone de départ sur la carte</a>`:''}<p>Tracé GPS : ${d.map?.polyline||session.routePolyline?'disponible':'non fourni'}</p></section>`;
     }
+    function openStravaDetailsPage(){
+      const id=document.getElementById('edit-session-id')?.value;const session=appData.sessionsHistory.find(x=>String(x.id)===String(id));if(!session?.stravaActivityId){alert('Cette séance ne possède pas d’identifiant Strava.');return;}
+      const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='block';
+      const content=document.getElementById('strava-activity-details-page-content');if(content)content.innerHTML='<p>Chargement des données détaillées Strava…</p>';
+      loadStravaActivityDetails(session).then(()=>{if(content){const box=document.getElementById('edit-session-strava-details-content');content.innerHTML=box?.innerHTML||'Détails indisponibles.';}}).catch(err=>{if(content)content.textContent='Détails indisponibles : '+err.message;});
+    }
+    function closeStravaDetailsPage(){const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='none';}
     async function deleteEditedSession() {
       const id=document.getElementById('edit-session-id')?.value;
       const session=appData.sessionsHistory.find(item=>String(item.id)===String(id));
@@ -4202,7 +4234,7 @@ Object.entries(secretRules).forEach(([id, rule]) => {
       if(durationSeconds<=0||h>999||m>59||sec>59||distance<0||distance>1000||elevation<0||elevation>20000||bpm<0||bpm>250||!Number.isInteger(rpe)||rpe<1||rpe>10||calories<0||calories>50000||watts<0||watts>3000||cadence<0||cadence>300||averageSpeedKmh<0||averageSpeedKmh>200||maxSpeedKmh<0||maxSpeedKmh>200){alert('Vérifie la durée, la distance, le D+, le BPM, le RPE, les calories et les vitesses.');return;}
       const previousSport=session.sport;
       const isCompetition=sport==='competition';
-      Object.assign(session,{title,date,sport,type:isCompetition?'competition':'activity',durationSeconds,duration:`${String(h).padStart(2,'0')} h ${String(m).padStart(2,'0')} min ${String(sec).padStart(2,'0')} s`,distance:`${distance} km`,rawVal:['hiit','autres'].includes(sport)?durationMinutes:distance,elevationM:Math.round(elevation),averageBpm:bpm,rpe,feeling:val('feeling')||getRPEFeeling(rpe),comment:String(val('comment')||'').trim().slice(0,1500),calories:Math.round(calories),source:val('source')||'manual',partners:String(val('partners')||'').split(',').map(x=>x.trim()).filter(Boolean),watts:watts||null,averageWatts:watts||session.averageWatts||null,cadence:cadence||null,averageCadence:cadence||session.averageCadence||null,averageSpeedKmh:averageSpeedKmh||null,maxSpeedKmh:maxSpeedKmh||null,terrain:String(val('terrain')||'').trim()||null,weather:String(val('weather')||'').trim()||null,format:String(val('format')||'').trim()||session.format||null,updatedAt:new Date().toISOString()});
+      Object.assign(session,{title,date,sport,type:isCompetition?'competition':'activity',durationSeconds,duration:`${String(h).padStart(2,'0')} h ${String(m).padStart(2,'0')} min ${String(sec).padStart(2,'0')} s`,distance:`${distance} km`,rawVal:['hiit','autres'].includes(sport)?durationMinutes:distance,elevationM:Math.round(elevation),averageBpm:bpm,rpe,feeling:val('feeling')||getRPEFeeling(rpe),comment:String(val('comment')||'').trim().slice(0,1500),calories:Math.round(calories),source:val('source')||'manual',partners:String(val('partners')||'').split(',').map(x=>x.trim()).filter(Boolean),watts:watts||null,averageWatts:watts||session.averageWatts||null,cadence:cadence||null,averageCadence:cadence||session.averageCadence||null,averageSpeedKmh:averageSpeedKmh||null,maxSpeedKmh:maxSpeedKmh||null,terrain:String(val('terrain')||'').trim()||null,weather:String(val('weather')||'').trim()||null,waterPlace:val('water-place')||null,waterCondition:val('water-condition')||null,swimWeather:val('swim-weather')||null,format:String(val('format')||'').trim()||session.format||null,updatedAt:new Date().toISOString()});
       if(isCompetition){
         const previousDetails=session.competitionDetails||{}, detailValues={...(previousDetails.details||{})};
         ['swim','swim-distance','t1','bike','bike-distance','bike-elevation','t2','run1','run1-distance','run1-elevation','run','run-distance','run-elevation','other-duration','other-distance'].forEach(k=>{const el=document.getElementById('edit-session-comp-'+k);if(el){const n=Number(el.value);if(el.value.trim()===''||!Number.isFinite(n)||n===0)delete detailValues[k];else detailValues[k]=n;}});
@@ -5205,7 +5237,7 @@ async function refreshFriendHub(){
 
     // V20 — l'historique canonique de l'application est appData.sessionsHistory.
     function getNormalizedWorkouts() {
-      const durFn = typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes : getSessionDurationMinutes;
+      const durFn = typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes : getSessionDurationMinutesutes;
       return (Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[]).map(s=>({
         ...s, discipline:trophySportOf(s), distance:getSessionDistanceKm(s), duration:durFn(s)
       }));
@@ -5839,11 +5871,14 @@ document.addEventListener('DOMContentLoaded', () => {
      <div class="form-group"><label for="edit-session-comp-place">Lieu épreuve</label><input id="edit-session-comp-place" type="text" maxlength="120" style="width:100%;"></div>
     </div>
    </details>
+   <div class="form-group" data-edit-sport="natation"><label for="edit-session-water-place">Lieu de natation</label><select id="edit-session-water-place" style="width:100%;"><option value="">Non renseigné</option><option>Piscine 25 m</option><option>Piscine 50 m</option><option>Eau libre / mer</option><option>Lac / étang</option></select></div>
+   <div class="form-group" data-edit-sport="natation"><label for="edit-session-water-condition">État de l’eau</label><select id="edit-session-water-condition" style="width:100%;"><option value="">Non renseigné</option><option>Calme / lisse</option><option>Agité / clapot</option><option>Vagues / houle</option></select></div>
+   <div class="form-group" data-edit-sport="natation"><label for="edit-session-swim-weather">Météo</label><select id="edit-session-swim-weather" style="width:100%;"><option value="">Non renseignée</option><option>☀️ Soleil / idéal</option><option>🌧️ Pluie / humide</option><option>💨 Vent fort</option><option>Froid</option></select></div>
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-partners">Partenaires (pseudos séparés par des virgules)</label><input id="edit-session-partners" type="text" maxlength="500" list="edit-session-friend-options" placeholder="Choisir un ami ou saisir un pseudo" style="width:100%;"><datalist id="edit-session-friend-options"></datalist><small id="edit-session-partner-help" style="color:var(--text-sub);font-size:.68rem;">Les suggestions apparaîtront après chargement de ta liste d’amis.</small></div>
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-comment">Commentaire</label><textarea id="edit-session-comment" rows="3" maxlength="1500" style="width:100%;"></textarea></div>
   </div>
   <p style="font-size:.72rem;color:var(--text-sub);margin-top:8px;">Les statistiques, la vitesse moyenne et les trophées vérifiables seront recalculés après l’enregistrement. La VAP nécessite un tracé GPX détaillé.</p>
-  <div id="edit-session-strava-details" style="display:none;grid-column:1/-1;background:rgba(255,255,255,.04);border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-top:10px;"><strong>Détails Strava</strong><div id="edit-session-strava-details-content" style="font-size:.82rem;margin-top:8px;color:var(--text-sub);">Chargement des détails…</div></div>
+  <div id="edit-session-strava-details" style="display:none;grid-column:1/-1;background:rgba(255,255,255,.04);border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-top:10px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><strong>Détails Strava</strong><button type="button" class="medal-tab" onclick="openStravaDetailsPage()">Ouvrir la page complète des détails</button></div><div id="edit-session-strava-details-content" style="font-size:.82rem;margin-top:8px;color:var(--text-sub);">Chargement des détails…</div></div>
   <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:14px;"><button type="button" class="btn-delete-session" onclick="deleteEditedSession()" style="background:#b91c1c;color:white;border:0;border-radius:8px;padding:10px 14px;">Supprimer cette séance</button><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="medal-tab" onclick="closeEditSession()">Annuler</button><button type="button" class="btn-save-green" onclick="saveEditedSession()">Enregistrer les modifications</button></div></div>
  </div></div>
 </div>
@@ -6505,3 +6540,14 @@ const esc = (value) =>
   });
 })();
 </script>
+
+<div id="strava-activity-details-page" style="display:none;position:fixed;inset:0;z-index:11000;background:rgba(4,10,16,.96);padding:16px;overflow:auto;">
+ <div style="max-width:1100px;margin:2vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><h2 style="margin:0;color:var(--text-main);">Détails complets de l’activité Strava</h2><button type="button" class="medal-tab" onclick="closeStravaDetailsPage()">Fermer ✕</button></div>
+  <p style="color:var(--text-sub);font-size:.82rem;">Toutes les informations réellement fournies par Strava sont affichées. Les champs absents ou non autorisés restent indiqués comme indisponibles.</p>
+  <div id="strava-activity-details-page-content">Chargement…</div>
+ </div>
+</div>
+<style>
+.strava-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}.strava-detail-metric{background:rgba(255,255,255,.045);border:1px solid var(--card-border);border-radius:9px;padding:10px;min-width:0}.strava-detail-metric small{display:block;color:var(--text-sub);font-size:.68rem}.strava-detail-metric strong{display:block;color:var(--text-main);font-size:.95rem;margin-top:4px;overflow-wrap:anywhere}.strava-detail-section{margin-top:16px;padding:12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:10px}.strava-detail-section h4{margin:0 0 10px;color:var(--text-main)}.strava-table-wrap{overflow-x:auto}.strava-detail-section table{border-collapse:collapse;width:100%;font-size:.78rem;white-space:nowrap}.strava-detail-section th,.strava-detail-section td{padding:7px 9px;border-bottom:1px solid var(--card-border);text-align:left}.strava-detail-section th{color:var(--text-sub)}
+</style>
