@@ -1,5 +1,45 @@
 export default async function handler(req, res) {
   try {
+    const clientId = process.env.STRAVA_CLIENT_ID;
+    const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return res.status(500).json({
+        ok: false,
+        error: 'Missing STRAVA_CLIENT_ID or STRAVA_CLIENT_SECRET in environment variables'
+      });
+    }
+
+    const body = typeof req.body === 'string'
+      ? JSON.parse(req.body || '{}')
+      : (req.body || {});
+
+    if (req.method === 'POST' && body.refresh_token) {
+      const refreshResponse = await fetch('https://www.strava.com/oauth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: 'refresh_token',
+          refresh_token: body.refresh_token
+        })
+      });
+
+      const refreshRaw = await refreshResponse.text();
+      let refreshData;
+      try {
+        refreshData = JSON.parse(refreshRaw);
+      } catch {
+        return res.status(502).json({
+          ok: false,
+          error: `Non-JSON response from Strava token endpoint: ${refreshRaw.slice(0, 300)}`
+        });
+      }
+
+      return res.status(refreshResponse.status).json(refreshData);
+    }
+
     const { code, error, state } = req.query || {};
 
     if (error) {
@@ -13,16 +53,6 @@ export default async function handler(req, res) {
       return res.status(400).json({
         ok: false,
         error: 'Missing authorization code from Strava'
-      });
-    }
-
-    const clientId = process.env.STRAVA_CLIENT_ID;
-    const clientSecret = process.env.STRAVA_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
-      return res.status(500).json({
-        ok: false,
-        error: 'Missing STRAVA_CLIENT_ID or STRAVA_CLIENT_SECRET in environment variables'
       });
     }
 
