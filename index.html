@@ -130,6 +130,26 @@
     }
     .nav-menu a:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.08); }
     .nav-menu a.active { color: var(--xp-gold); background: rgba(255, 107, 0, 0.1); border-bottom: 3px solid var(--bike-orange); }
+    /* Améliorations lisibilité et ergonomie */
+    :root { --text-sub: #b7c3d3; }
+    .nav-menu a.active { box-shadow: inset 0 -2px 0 var(--bike-orange); }
+    .nav-menu a:focus-visible, .medal-tab:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--bike-orange); outline-offset: 2px; }
+    #faceoff-athlete-a, #faceoff-athlete-b {
+      min-height: 48px !important; padding: 12px 14px !important; font-size: .95rem !important;
+      border-radius: 11px !important; border-color: rgba(255,255,255,.2) !important;
+      box-shadow: 0 4px 14px rgba(0,0,0,.18);
+    }
+    #faceoff-athlete-a:focus, #faceoff-athlete-b:focus { border-color: var(--bike-orange) !important; box-shadow: 0 0 0 3px rgba(255,107,0,.16); }
+    .nav-menu a, .nav-menu a i { transition: color .18s ease, background .18s ease, border-color .18s ease; }
+    .history-box small, .main-dashboard-box small, .main-dashboard-box p, .main-dashboard-box label { color: var(--text-sub); }
+    @media (max-width: 700px) {
+      .nav-menu { justify-content: center; gap: 5px; }
+      .nav-menu a { min-height: 40px; padding: 9px 10px; font-size: .78rem; }
+      #faceoff-athlete-a, #faceoff-athlete-b { min-height: 52px !important; font-size: 1rem !important; }
+      .cal-day-cell-mini { min-height: 58px !important; padding: 7px 4px !important; }
+      .calendar-day { touch-action: manipulation; }
+    }
+
 
     .btn-sync-nav {
       background: linear-gradient(135deg, #fc4c02 0%, #e65c00 100%);
@@ -1426,6 +1446,15 @@
         </div>
       </section>
     </main>
+<!-- PAGE : FIL DOPAMINE (intégré dans le site, bandeau supérieur conservé) -->
+<main id="view-feed" class="app-page hidden">
+  <section class="dashboard-layout"><div class="main-dashboard-box">
+    <div class="card-title-flex"><h2><i class="fa-solid fa-users" style="color:var(--bike-orange)"></i> Fil Dopamine</h2><button class="medal-tab" type="button" onclick="refreshDopamineFeed()"><i class="fa-solid fa-rotate"></i> Actualiser</button></div>
+    <p style="color:var(--text-sub);font-size:.84rem;margin:6px 0 14px;">Les séances, publications et encouragements de la communauté.</p>
+    <div id="dopamine-feed-page-content"><div class="df-empty">Chargement du fil…</div></div>
+  </div></section>
+</main>
+
 <!-- PAGE : PROFILS SPORTIFS -->
 <main id="view-profiles" class="app-page hidden">
   <section class="dashboard-layout"><div class="main-dashboard-box">
@@ -1910,14 +1939,14 @@
       saveAppData();
     }
     function showPage(page) {
-      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'competition', 'stats', 'trophies', 'profiles', 'faceoff', 'gps'];
+      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'competition', 'stats', 'trophies', 'feed', 'profiles', 'faceoff', 'gps'];
       if (!allowedPages.includes(page)) return;
       document.querySelectorAll('.app-page').forEach(el => el.classList.add('hidden'));
       const target = document.getElementById(`view-${page}`);
       if (!target) { console.warn(`Page introuvable : view-${page}`); return; }
       target.classList.remove('hidden');
-      document.querySelectorAll('nav a, #nav-home, #nav-stats, #nav-trophies').forEach(el => el.classList.remove('active'));
-      const activeNav = document.getElementById(({home:'nav-home',stats:'nav-stats',trophies:'nav-trophies',profiles:'nav-profiles',faceoff:'nav-faceoff',gps:'nav-gps'})[page] || null);
+      document.querySelectorAll('.nav-menu a').forEach(el => el.classList.remove('active'));
+      const activeNav = document.getElementById(({home:'nav-home',stats:'nav-stats',trophies:'nav-trophies',feed:'nav-feed',profiles:'nav-profiles',faceoff:'nav-faceoff',gps:'nav-gps'})[page] || null);
       if (activeNav) activeNav.classList.add('active');
       document.querySelectorAll('.nav-discipline-btn').forEach(btn => btn.classList.toggle('active', (btn.getAttribute('onclick') || '').includes(`openCalc('${page}')`)));
       const submenu = document.getElementById('activity-submenu');
@@ -4798,18 +4827,25 @@ async function refreshFriendHub(){
       if (overlay) overlay.style.display = 'none';
     }
     async function showFeedComingSoon() {
+      showPage('feed');
       dopamineEnsureShell();
       const overlay = document.getElementById('dopamine-feed-overlay');
-      overlay.style.display = 'block';
-      document.body.style.overflow = 'hidden';
+      const pageContent = document.getElementById('dopamine-feed-page-content');
+      const feedPage = document.getElementById('view-feed');
+      if (overlay && pageContent && feedPage) {
+        const feedSection = overlay.querySelector('#dopamine-feed-panel');
+        if (feedSection) pageContent.replaceChildren(feedSection);
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
       await refreshDopamineFeed();
     }
     function dopamineRestoreScroll() { document.body.style.overflow = ''; }
     const dopamineOriginalClose = closeDopamineFeed;
-    closeDopamineFeed = function() { dopamineOriginalClose(); dopamineRestoreScroll(); };
+    closeDopamineFeed = function() { dopamineOriginalClose(); dopamineRestoreScroll(); if (document.getElementById('view-feed') && !document.getElementById('view-feed').classList.contains('hidden')) showPage('home'); };
 
     async function refreshDopamineFeed() {
-      const content = document.getElementById('dopamine-feed-content');
+      const content = document.getElementById('dopamine-feed-content') || document.getElementById('dopamine-feed-page-content');
       if (!content || dopamineFeedState.loading) return;
       dopamineFeedState.loading = true;
       content.innerHTML = '<div class="df-empty"><i class="fa-solid fa-spinner fa-spin"></i> Chargement des publications…</div>';
