@@ -4181,31 +4181,116 @@ function refreshEditSessionFriendSuggestions() {
       const detailBox=document.getElementById('edit-session-strava-details');
       if(detailBox){detailBox.style.display=(session.stravaActivityId?'block':'none');if(session.stravaActivityId){document.getElementById('edit-session-strava-details-content').textContent='Chargement des détails Strava…';loadStravaActivityDetails(session).catch(err=>{document.getElementById('edit-session-strava-details-content').textContent='Détails indisponibles : '+err.message;});}}
     }
-    const sheet = document.getElementById('dopamine-session-sheet');
+const sheet = document.getElementById('dopamine-session-sheet');
   if (sheet) {
-    const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
-    sheet.dataset.sport = sportMap[session.sport] || session.sport || 'run';
-    const adTitle = document.getElementById('ad-session-title');
-    if (adTitle) adTitle.value = session.title || session.name || '';
-    const adRpe = document.getElementById('ad-rpe-input');
-    const adRpeVal = document.getElementById('ad-rpe-val');
-    if (adRpe) { adRpe.value = Number(session.rpe || 5); if (adRpeVal) adRpeVal.textContent = adRpe.value; }
-    const adComment = document.getElementById('ad-comment-input');
-    if (adComment) adComment.value = session.comment || session.description || '';
-    sheet.querySelectorAll('.ad-tab').forEach((tab) => {
-      tab.onclick = () => {
-        sheet.querySelectorAll('.ad-tab').forEach((t) => t.classList.remove('is-active'));
-        sheet.querySelectorAll('.ad-panel').forEach((p) => p.classList.remove('is-active'));
-        tab.classList.add('is-active');
-if (panel) panel.classList.add('is-active');
-    };
-  });
-  if (adTitle) adTitle.oninput = () => { const el = document.getElementById('edit-session-title'); if (el) el.value = adTitle.value; };
-  if (adComment) adComment.oninput = () => { const el = document.getElementById('edit-session-comment'); if (el) el.value = adComment.value; };
-  if (adRpe) adRpe.oninput = () => {
-    if (adRpeVal) adRpeVal.textContent = adRpe.value;
-    const el = document.getElementById('edit-session-rpe');
-if (el) el.value = adRpe.value;
+    try {
+      const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
+      sheet.dataset.sport = sportMap[session.sport] || session.sport || 'run';
+
+      const adTitle = document.getElementById('ad-session-title');
+      const adRpe = document.getElementById('ad-rpe-input');
+      const adRpeVal = document.getElementById('ad-rpe-val');
+      const adComment = document.getElementById('ad-comment-input');
+
+      if (adTitle) {
+        adTitle.value = session.title || session.name || '';
+        adTitle.oninput = () => {
+          const el = document.getElementById('edit-session-title');
+          if (el) el.value = adTitle.value;
+        };
+      }
+
+      if (adRpe) {
+        adRpe.value = Number(session.rpe ?? 5);
+        if (adRpeVal) adRpeVal.textContent = adRpe.value;
+        adRpe.oninput = () => {
+          if (adRpeVal) adRpeVal.textContent = adRpe.value;
+          const el = document.getElementById('edit-session-rpe');
+          if (el) el.value = adRpe.value;
+        };
+      }
+
+      if (adComment) {
+        adComment.value = session.comment || session.description || '';
+        adComment.oninput = () => {
+          const el = document.getElementById('edit-session-comment');
+          if (el) el.value = adComment.value;
+        };
+      }
+
+      const tabs = Array.from(sheet.querySelectorAll('.ad-tab'));
+      const panels = Array.from(sheet.querySelectorAll('.ad-panel'));
+      const activateTab = (tabName) => {
+        tabs.forEach((t) => t.classList.toggle('is-active', t.dataset.tab === tabName));
+        panels.forEach((p) => p.classList.toggle('is-active', p.dataset.panel === tabName));
+      };
+      tabs.forEach((tab) => {
+        tab.onclick = (e) => {
+          e.preventDefault();
+          activateTab(tab.dataset.tab);
+        };
+      });
+      activateTab('apercu');
+
+      const totalSec = Number(session.durationSeconds)
+        || (typeof getSessionDurationMinutes === 'function' ? Math.round((Number(getSessionDurationMinutes(session)) || 0) * 60) : 0);
+      const fmtDur = (sec) => {
+        if (!sec) return '--';
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = Math.floor(sec % 60);
+        return h > 0 ? `${h} h ${m} min ${s} s` : `${m} min ${s} s`;
+      };
+      const distKm = typeof getSessionDistanceKm === 'function'
+        ? Number(getSessionDistanceKm(session) || 0)
+        : Number(session.distance || 0);
+      const avgHr = session.averageBpm || session.bpm || '--';
+      const speedKmh = session.averageSpeedKmh || session.averageSpeed || (distKm && totalSec ? (distKm / (totalSec / 3600)).toFixed(2) : '--');
+      const maxSpeedKmh = session.maxSpeedKmh || session.maxSpeed || '--';
+      const cadence = session.cadence || session.averageCadence || '--';
+      const elev = session.elevationGain ?? session.elevation_m ?? session.elevation ?? '--';
+      const calories = session.calories ?? '--';
+
+      const summaryGrid = document.getElementById('ad-summary-grid');
+      if (summaryGrid) {
+        const summaryItems = [
+          { label: 'Durée totale', value: fmtDur(totalSec) },
+          { label: 'Distance', value: distKm ? `${distKm.toFixed(2)} km` : '--' },
+          { label: 'Vitesse moyenne', value: speedKmh !== '--' ? `${speedKmh} km/h` : '--' },
+          { label: 'Vitesse max', value: maxSpeedKmh !== '--' ? `${maxSpeedKmh} km/h` : '--' },
+          { label: 'BPM moyen', value: avgHr !== '--' ? `${avgHr} bpm` : '--' },
+          { label: 'Cadence moyenne', value: cadence !== '--' ? `${cadence} tr/min` : '--' },
+          { label: 'Dénivelé', value: elev !== '--' ? `${elev} m` : '--' },
+          { label: 'Calories', value: calories !== '--' ? `${calories} kcal` : '--' }
+        ];
+        summaryGrid.innerHTML = summaryItems
+          .map((it) => `<div class="ad-stat"><span>${it.label}</span><strong>${it.value}</strong></div>`)
+          .join('');
+      }
+
+      const extraGrid = document.getElementById('ad-extra-grid');
+      if (extraGrid) {
+        const extraItems = [
+          { label: 'Discipline', value: session.sport || session.type || '--' },
+          { label: 'Date', value: session.date || '--' },
+          { label: 'Ressenti', value: session.feeling || session.feelingLabel || '--' },
+          { label: 'Source', value: session.source || (session.stravaActivityId ? 'Strava' : 'Manuel') },
+          { label: 'Terrain', value: session.terrain || session.runTerrain || session.bikeTerrain || '--' },
+          { label: 'Météo / conditions', value: session.weather || session.weatherCondition || '--' }
+        ];
+        extraGrid.innerHTML = extraItems
+          .map((ex) => `<div class="ad-stat"><span>${ex.label}</span><strong>${ex.value}</strong></div>`)
+          .join('');
+      }
+
+      const oldFormGrid = document.querySelector('#edit-session-modal .edit-session-dialog > div[style*="grid-template-columns"]');
+      const oldPartnersBox = document.getElementById('edit-session-partners')?.closest('.form-group');
+      const oldCommentBox = document.getElementById('edit-session-comment')?.closest('.form-group');
+      const oldHint = Array.from(document.querySelectorAll('#edit-session-modal p')).find((p) => p.textContent?.includes('VAP nécessite un tracé GPX'));
+      const oldFooter = document.querySelector('#edit-session-modal .btn-delete-session')?.closest('div[style*="justify-content:space-between"], div[style*="justify-content: space-between"]');
+      [oldFormGrid, oldPartnersBox, oldCommentBox, oldHint, oldFooter].forEach((el) => {
+        if (el) el.style.display = 'none';
+      });
 const photosCard = document.getElementById('ad-photos-card');
     const photosGrid = document.getElementById('ad-photos-grid');
     const photosCount = document.getElementById('ad-photos-count');
