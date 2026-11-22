@@ -4181,125 +4181,241 @@ function refreshEditSessionFriendSuggestions() {
       const detailBox=document.getElementById('edit-session-strava-details');
       if(detailBox){detailBox.style.display=(session.stravaActivityId?'block':'none');if(session.stravaActivityId){document.getElementById('edit-session-strava-details-content').textContent='Chargement des détails Strava…';loadStravaActivityDetails(session).catch(err=>{document.getElementById('edit-session-strava-details-content').textContent='Détails indisponibles : '+err.message;});}}
 const sheet = document.getElementById('dopamine-session-sheet');
-  if (sheet) {
-    try {
-      const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
-      sheet.dataset.sport = sportMap[session.sport] || session.sport || 'run';
+      if (sheet) {
+        try {
+          const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
+          const updateSheetSport = (sp) => {
+            sheet.dataset.sport = sportMap[sp] || sp || 'run';
+          };
+          updateSheetSport(session.sport);
 
-      const adTitle = document.getElementById('ad-session-title');
-      const adRpe = document.getElementById('ad-rpe-input');
-      const adRpeVal = document.getElementById('ad-rpe-val');
-      const adComment = document.getElementById('ad-comment-input');
+          // Titre, Date & Heure Strava/locale
+          const adTitle = document.getElementById('ad-session-title');
+          const adDate = document.getElementById('ad-session-date');
+          const adTime = document.getElementById('ad-session-time');
 
-      if (adTitle) {
-        adTitle.value = session.title || session.name || '';
-        adTitle.oninput = () => {
-          const el = document.getElementById('edit-session-title');
-          if (el) el.value = adTitle.value;
-        };
-      }
+          if (adTitle) {
+            adTitle.value = session.title || session.name || '';
+            adTitle.oninput = () => {
+              const el = document.getElementById('edit-session-title');
+              if (el) el.value = adTitle.value;
+            };
+          }
 
-      if (adRpe) {
-        adRpe.value = Number(session.rpe ?? 5);
-        if (adRpeVal) adRpeVal.textContent = adRpe.value;
-        adRpe.oninput = () => {
-          if (adRpeVal) adRpeVal.textContent = adRpe.value;
-          const el = document.getElementById('edit-session-rpe');
-          if (el) el.value = adRpe.value;
-        };
-      }
+          if (adDate) adDate.textContent = session.date || '--';
+          const rawStart = session.startDateLocal || session.stravaDetails?.startDateLocal || session.start_date_local || session.startTime || '';
+          const parsedTime = typeof rawStart === 'string' && rawStart.includes('T')
+            ? rawStart.split('T')[1].slice(0, 5)
+            : (session.time || '--:--');
+          if (adTime) adTime.textContent = parsedTime;
 
-      if (adComment) {
-        adComment.value = session.comment || session.description || '';
-        adComment.oninput = () => {
-          const el = document.getElementById('edit-session-comment');
-          if (el) el.value = adComment.value;
-        };
-      }
+          // RPE & Commentaire
+          const adRpe = document.getElementById('ad-rpe-input');
+          const adRpeVal = document.getElementById('ad-rpe-val');
+          const adComment = document.getElementById('ad-comment-input');
 
-      const tabs = Array.from(sheet.querySelectorAll('.ad-tab'));
-      const panels = Array.from(sheet.querySelectorAll('.ad-panel'));
-      const activateTab = (tabName) => {
-        tabs.forEach((t) => t.classList.toggle('is-active', t.dataset.tab === tabName));
-        panels.forEach((p) => p.classList.toggle('is-active', p.dataset.panel === tabName));
-      };
-      tabs.forEach((tab) => {
-        tab.onclick = (e) => {
-          e.preventDefault();
-          activateTab(tab.dataset.tab);
-        };
-      });
-      activateTab('apercu');
+          if (adRpe) {
+            adRpe.value = Number(session.rpe ?? 5);
+            if (adRpeVal) adRpeVal.textContent = adRpe.value;
+            adRpe.oninput = () => {
+              if (adRpeVal) adRpeVal.textContent = adRpe.value;
+              const el = document.getElementById('edit-session-rpe');
+              if (el) el.value = adRpe.value;
+            };
+          }
 
-      const totalSec = Number(session.durationSeconds)
-        || (typeof getSessionDurationMinutes === 'function' ? Math.round((Number(getSessionDurationMinutes(session)) || 0) * 60) : 0);
-      const fmtDur = (sec) => {
-        if (!sec) return '--';
-        const h = Math.floor(sec / 3600);
-        const m = Math.floor((sec % 3600) / 60);
-        const s = Math.floor(sec % 60);
-        return h > 0 ? `${h} h ${m} min ${s} s` : `${m} min ${s} s`;
-      };
-      const distKm = typeof getSessionDistanceKm === 'function'
-        ? Number(getSessionDistanceKm(session) || 0)
-        : Number(session.distance || 0);
-      const avgHr = session.averageBpm || session.bpm || '--';
-      const speedKmh = session.averageSpeedKmh || session.averageSpeed || (distKm && totalSec ? (distKm / (totalSec / 3600)).toFixed(2) : '--');
-      const maxSpeedKmh = session.maxSpeedKmh || session.maxSpeed || '--';
-      const cadence = session.cadence || session.averageCadence || '--';
-      const elev = session.elevationGain ?? session.elevation_m ?? session.elevation ?? '--';
-      const calories = session.calories ?? '--';
+          if (adComment) {
+            adComment.value = session.comment || session.description || '';
+            adComment.oninput = () => {
+              const el = document.getElementById('edit-session-comment');
+              if (el) el.value = adComment.value;
+            };
+          }
 
-      const summaryGrid = document.getElementById('ad-summary-grid');
-      if (summaryGrid) {
-        const summaryItems = [
-          { label: 'Durée totale', value: fmtDur(totalSec) },
-          { label: 'Distance', value: distKm ? `${distKm.toFixed(2)} km` : '--' },
-          { label: 'Vitesse moyenne', value: speedKmh !== '--' ? `${speedKmh} km/h` : '--' },
-          { label: 'Vitesse max', value: maxSpeedKmh !== '--' ? `${maxSpeedKmh} km/h` : '--' },
-          { label: 'BPM moyen', value: avgHr !== '--' ? `${avgHr} bpm` : '--' },
-          { label: 'Cadence moyenne', value: cadence !== '--' ? `${cadence} tr/min` : '--' },
-          { label: 'Dénivelé', value: elev !== '--' ? `${elev} m` : '--' },
-          { label: 'Calories', value: calories !== '--' ? `${calories} kcal` : '--' }
-        ];
-        summaryGrid.innerHTML = summaryItems
-          .map((it) => `<div class="ad-stat"><span>${it.label}</span><strong>${it.value}</strong></div>`)
-          .join('');
-      }
+          // Amis À LA DOPAMINE (liste + ajout pseudo ou e-mail Strava)
+          const friendSelect = document.getElementById('ad-friend-select');
+          const friendCustomInput = document.getElementById('ad-friend-custom-input');
+          const friendAddBtn = document.getElementById('ad-friend-add-btn');
+          const friendsListBox = document.getElementById('ad-friends-list');
 
-      const extraGrid = document.getElementById('ad-extra-grid');
-      if (extraGrid) {
-        const extraItems = [
-          { label: 'Discipline', value: session.sport || session.type || '--' },
-          { label: 'Date', value: session.date || '--' },
-          { label: 'Ressenti', value: session.feeling || session.feelingLabel || '--' },
-          { label: 'Source', value: session.source || (session.stravaActivityId ? 'Strava' : 'Manuel') },
-          { label: 'Terrain', value: session.terrain || session.runTerrain || session.bikeTerrain || '--' },
-          { label: 'Météo / conditions', value: session.weather || session.weatherCondition || '--' }
-        ];
-        extraGrid.innerHTML = extraItems
-          .map((ex) => `<div class="ad-stat"><span>${ex.label}</span><strong>${ex.value}</strong></div>`)
-          .join('');
-      }
+          let selectedFriends = Array.isArray(session.partners)
+            ? session.partners.map((p) => (typeof p === 'string' ? p : (p.username || p.name || p.email || ''))).filter(Boolean)
+            : [];
 
-      const oldFormGrid = document.querySelector('#edit-session-modal .edit-session-dialog > div[style*="grid-template-columns"]');
-      const oldPartnersBox = document.getElementById('edit-session-partners')?.closest('.form-group');
-      const oldCommentBox = document.getElementById('edit-session-comment')?.closest('.form-group');
-      const oldHint = Array.from(document.querySelectorAll('#edit-session-modal p')).find((p) => p.textContent?.includes('VAP nécessite un tracé GPX'));
-      const oldFooter = document.querySelector('#edit-session-modal .btn-delete-session')?.closest('div[style*="justify-content:space-between"], div[style*="justify-content: space-between"]');
-      [oldFormGrid, oldPartnersBox, oldCommentBox, oldHint, oldFooter].forEach((el) => {
-        if (el) el.style.display = 'none';
-      });
-const photosCard = document.getElementById('ad-photos-card');
-    const photosGrid = document.getElementById('ad-photos-grid');
-    const photosCount = document.getElementById('ad-photos-count');
-    const photoInput = document.getElementById('ad-photo-input');
-    const addPhotoBtn = document.getElementById('ad-add-photo-btn');
+          const syncFriends = () => {
+            session.partners = [...selectedFriends];
+            const hiddenPartners = document.getElementById('edit-session-partners');
+            if (hiddenPartners) hiddenPartners.value = selectedFriends.join(', ');
+            if (friendsListBox) {
+              friendsListBox.innerHTML = selectedFriends.map((f, idx) => `
+                <span class="ad-friend-chip">
+                  👤 ${escapeHTML(f)}
+                  <button type="button" data-remove-friend="${idx}" title="Retirer">×</button>
+                </span>
+              `).join('');
+              friendsListBox.querySelectorAll('[data-remove-friend]').forEach((btn) => {
+                btn.onclick = () => {
+                  const i = Number(btn.dataset.removeFriend);
+                  selectedFriends.splice(i, 1);
+                  syncFriends();
+                };
+              });
+            }
+          };
 
-    let currentPhotos = Array.isArray(session.photos) ? session.photos.slice(0, 3) : [];
-    session.photos = currentPhotos;
+          if (friendSelect) {
+            const knownFriends = Array.isArray(appData?.friends) ? appData.friends : [];
+            friendSelect.innerHTML = '<option value="">+ Choisir un ami inscrit...</option>' + knownFriends.map((fr) => {
+              const label = typeof fr === 'string' ? fr : (fr.username || fr.name || fr.email || '');
+              return label ? `<option value="${escapeHTML(label)}">${escapeHTML(label)}</option>` : '';
+            }).join('');
+            friendSelect.onchange = () => {
+              const val = friendSelect.value.trim();
+              if (val && !selectedFriends.includes(val)) {
+                selectedFriends.push(val);
+                syncFriends();
+              }
+              friendSelect.value = '';
+            };
+          }
 
-const renderSessionPhotos = () => {
+          if (friendAddBtn && friendCustomInput) {
+            friendAddBtn.onclick = () => {
+              const raw = friendCustomInput.value.trim();
+              if (!raw) return;
+              if (!selectedFriends.includes(raw)) {
+                selectedFriends.push(raw);
+                if (Array.isArray(appData?.friends) && !appData.friends.some((f) => (typeof f === 'string' ? f : f.username || f.email) === raw)) {
+                  appData.friends.push(raw);
+                }
+                syncFriends();
+              }
+              friendCustomInput.value = '';
+            };
+          }
+          syncFriends();
+
+          // Onglets
+          const tabs = Array.from(sheet.querySelectorAll('.ad-tab[data-tab]'));
+          const panels = Array.from(sheet.querySelectorAll('.ad-panel'));
+          const activateTab = (tabName) => {
+            tabs.forEach((t) => t.classList.toggle('is-active', t.dataset.tab === tabName));
+            panels.forEach((p) => p.classList.toggle('is-active', p.dataset.panel === tabName));
+          };
+          tabs.forEach((tab) => {
+            tab.onclick = (e) => {
+              e.preventDefault();
+              activateTab(tab.dataset.tab);
+            };
+          });
+          activateTab('apercu');
+
+          // Synthèse du flux (toutes les métriques dispo)
+          const totalSec = Number(session.durationSeconds)
+            || (typeof getSessionDurationMinutes === 'function' ? Math.round((Number(getSessionDurationMinutes(session)) || 0) * 60) : 0);
+          const fmtDur = (sec) => {
+            if (!sec) return '--';
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            const s = Math.floor(sec % 60);
+            return h > 0 ? `${h} h ${m} min ${s} s` : `${m} min ${s} s`;
+          };
+          const distKm = typeof getSessionDistanceKm === 'function'
+            ? Number(getSessionDistanceKm(session) || 0)
+            : Number(session.distance || 0);
+          const avgHr = session.averageBpm || session.bpm || '--';
+          const maxHr = session.maxBpm || session.stravaDetails?.maxHeartrate || '--';
+          const speedKmh = session.averageSpeedKmh || session.averageSpeed || (distKm && totalSec ? (distKm / (totalSec / 3600)).toFixed(2) : '--');
+          const maxSpeedKmh = session.maxSpeedKmh || session.maxSpeed || '--';
+          const cadence = session.cadence || session.averageCadence || '--';
+          const watts = session.watts || session.averageWatts || '--';
+          const elev = session.elevationGain ?? session.elevationM ?? session.elevation ?? '--';
+          const calories = session.calories ?? '--';
+
+          const summaryGrid = document.getElementById('ad-summary-grid');
+          if (summaryGrid) {
+            const summaryItems = [
+              { label: 'Durée totale', value: fmtDur(totalSec) },
+              { label: 'Distance', value: distKm ? `${distKm.toFixed(2)} km` : '--' },
+              { label: 'Vitesse moyenne', value: speedKmh !== '--' ? `${speedKmh} km/h` : '--' },
+              { label: 'Vitesse max', value: maxSpeedKmh !== '--' ? `${maxSpeedKmh} km/h` : '--' },
+              { label: 'BPM moyen / max', value: avgHr !== '--' ? `${avgHr}${maxHr !== '--' ? ` / ${maxHr}` : ''} bpm` : '--' },
+              { label: 'Cadence moyenne', value: cadence !== '--' ? `${cadence} tr/min` : '--' },
+              { label: 'Puissance moyenne', value: watts !== '--' ? `${watts} W` : '--' },
+              { label: 'Dénivelé / Calories', value: `${elev !== '--' ? `${elev} m` : '--'} · ${calories !== '--' ? `${calories} kcal` : '--'}` }
+            ];
+            summaryGrid.innerHTML = summaryItems
+              .map((it) => `<div class="ad-stat"><span>${it.label}</span><strong>${it.value}</strong></div>`)
+              .join('');
+          }
+
+          // Infos annexes éditables (Discipline, Source, Terrain, Météo)
+          const extraSport = document.getElementById('ad-extra-sport');
+          const extraSource = document.getElementById('ad-extra-source');
+          const extraTerrain = document.getElementById('ad-extra-terrain');
+          const extraWeather = document.getElementById('ad-extra-weather');
+
+          if (extraSport) {
+            extraSport.value = session.type === 'competition' ? 'competition' : (session.sport || 'course');
+            extraSport.onchange = () => {
+              session.sport = extraSport.value;
+              updateSheetSport(extraSport.value);
+              const el = document.getElementById('edit-session-sport');
+              if (el) el.value = extraSport.value;
+            };
+          }
+          if (extraSource) {
+            extraSource.value = (session.source || (session.stravaActivityId ? 'strava' : 'manual')).toLowerCase();
+            extraSource.onchange = () => {
+              session.source = extraSource.value;
+              const el = document.getElementById('edit-session-source');
+              if (el) el.value = extraSource.value;
+            };
+          }
+          if (extraTerrain) {
+            extraTerrain.value = session.terrain || '';
+            extraTerrain.onchange = () => {
+              session.terrain = extraTerrain.value;
+              const el = document.getElementById('edit-session-terrain');
+              if (el) el.value = extraTerrain.value;
+            };
+          }
+          if (extraWeather) {
+            extraWeather.value = session.weather || '';
+            extraWeather.onchange = () => {
+              session.weather = extraWeather.value;
+              const el = document.getElementById('edit-session-weather');
+              if (el) el.value = extraWeather.value;
+            };
+          }
+
+          // Masquer les anciens blocs en doublon
+          const oldFormGrid = document.querySelector('#edit-session-modal .edit-session-dialog > div[style*="grid-template-columns"]');
+          const oldPartnersBox = document.getElementById('edit-session-partners')?.closest('.form-group');
+          const oldCommentBox = document.getElementById('edit-session-comment')?.closest('.form-group');
+          const oldHint = Array.from(document.querySelectorAll('#edit-session-modal p')).find((p) => p.textContent?.includes('VAP nécessite un tracé GPX'));
+          const oldFooter = document.querySelector('#edit-session-modal .btn-delete-session')?.closest('div[style*="justify-content:space-between"], div[style*="justify-content: space-between"]');
+          [oldFormGrid, oldPartnersBox, oldCommentBox, oldHint, oldFooter].forEach((el) => {
+            if (el) el.style.display = 'none';
+          });
+
+          // Boutons Enregistrer & Supprimer de la fiche
+          const adSaveBtn = document.getElementById('ad-save-btn');
+          const adDeleteBtn = document.getElementById('ad-delete-btn');
+          if (adSaveBtn) adSaveBtn.onclick = () => { if (typeof saveEditedSession === 'function') saveEditedSession(); };
+          if (adDeleteBtn) adDeleteBtn.onclick = () => { if (typeof deleteEditedSession === 'function') deleteEditedSession(); };
+
+          // Photos (3 max, masquées si 0)
+          const photosCard = document.getElementById('ad-photos-card');
+          const photosGrid = document.getElementById('ad-photos-grid');
+          const photosCount = document.getElementById('ad-photos-count');
+          const photoInput = document.getElementById('ad-photo-input');
+          const addPhotoBtn = document.getElementById('ad-add-photo-btn');
+
+          let currentPhotos = Array.isArray(session.photos) ? session.photos.slice(0, 3) : [];
+          session.photos = currentPhotos;
+
+          const renderSessionPhotos = () => {
             if (!photosCard || !photosGrid || !photosCount || !addPhotoBtn) return;
             photosCount.textContent = String(currentPhotos.length);
             photosCard.style.display = currentPhotos.length > 0 ? 'block' : 'none';
@@ -4346,7 +4462,12 @@ const renderSessionPhotos = () => {
               });
             };
           }
-} catch (err) {
+
+          // Remplir immédiatement les 4 onglets si les détails Strava sont déjà en mémoire
+          if (typeof populateDopamineSheetDetails === 'function') {
+            populateDopamineSheetDetails(session);
+          }
+        } catch (err) {
           console.error('Affichage fiche séance :', err);
         }
       }
@@ -4412,9 +4533,116 @@ const renderSessionPhotos = () => {
       ]);
       session.stravaDetails.zones=optional[0].status==='fulfilled'?optional[0].value:null;
       session.stravaDetails.streams=optional[1].status==='fulfilled'?optional[1].value:null;
-      saveAppData();renderStravaActivityDetails(session);
+      saveAppData();renderStravaActivityDetails(session);if(typeof populateDopamineSheetDetails==='function')populateDopamineSheetDetails(session);
     }
+function populateDopamineSheetDetails(session) {
+      const d = session?.stravaDetails || {};
 
+      const adTime = document.getElementById('ad-session-time');
+      if (adTime && d.startDateLocal && d.startDateLocal.includes('T')) {
+        adTime.textContent = d.startDateLocal.split('T')[1].slice(0, 5);
+      }
+
+      const splitsBody = document.getElementById('ad-splits-body');
+      if (splitsBody) {
+        const splits = (Array.isArray(d.splitsMetric) && d.splitsMetric.length)
+          ? d.splitsMetric
+          : (Array.isArray(d.laps) ? d.laps : []);
+        splitsBody.innerHTML = splits.length
+          ? splits.map((s, idx) => `
+              <tr>
+                <td>${idx + 1}</td>
+                <td>${s.distance ? `${(Number(s.distance) / 1000).toFixed(2)} km` : '--'}</td>
+                <td>${stravaTime(s.moving_time || s.elapsed_time)}</td>
+                <td>${stravaPace(s.average_speed)}</td>
+                <td>${s.average_heartrate ? `${Math.round(s.average_heartrate)} bpm` : '--'}</td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="5" style="color:#94a3b8;">Aucun temps intermédiaire disponible.</td></tr>';
+      }
+
+      const curvesBox = document.getElementById('ad-curves-box');
+      if (curvesBox) {
+        const splits = Array.isArray(d.splitsMetric) ? d.splitsMetric : [];
+        curvesBox.innerHTML = splits.length >= 2
+          ? buildPaceSvgChart(splits)
+          : '<span style="color:#94a3b8;">Courbe disponible dès que plusieurs kilomètres sont enregistrés.</span>';
+      }
+
+      const mapBox = document.getElementById('ad-map-box');
+      if (mapBox) {
+        const hasGps = Boolean(d.map?.summary_polyline || (Array.isArray(d.startLatlng) && d.startLatlng.length === 2));
+        mapBox.innerHTML = hasGps
+          ? `<div><strong>Tracé GPS synchronisé</strong><br><span style="font-size:0.82rem;color:#94a3b8;">Départ : ${d.startLatlng ? d.startLatlng.join(', ') : 'GPS actif'} · Dénivelé : ${d.totalElevationGain || 0} m</span></div>`
+          : '<span style="color:#94a3b8;">Activité sans trace GPS (intérieur ou saisie manuelle).</span>';
+      }
+
+      const coachTip = document.getElementById('ad-coach-tip');
+      if (coachTip) {
+        coachTip.innerHTML = typeof buildCoachZonesAdvice === 'function' ? buildCoachZonesAdvice(session, d) : '';
+      }
+
+      const zonesList = document.getElementById('ad-zones-list');
+      if (zonesList) {
+        const hrZoneBlock = Array.isArray(d.zones) ? d.zones.find((z) => z.type === 'heartrate') : null;
+        const buckets = Array.isArray(hrZoneBlock?.distribution_buckets) ? hrZoneBlock.distribution_buckets : [];
+        const totalBucketSec = buckets.reduce((acc, b) => acc + (Number(b.time) || 0), 0);
+        zonesList.innerHTML = buckets.length && totalBucketSec > 0
+          ? buckets.map((b, idx) => {
+              const pct = Math.round(((Number(b.time) || 0) / totalBucketSec) * 100);
+              return `
+                <div style="margin-bottom:10px;">
+                  <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                    <span>Zone ${idx + 1} (${b.min}–${b.max === -1 ? 'max' : b.max} bpm)</span>
+                    <strong>${stravaTime(b.time)} (${pct}%)</strong>
+                  </div>
+                  <div class="ad-bar-track"><div class="ad-bar-fill" style="width:${pct}%;"></div></div>
+                </div>
+              `;
+            }).join('')
+          : '<p style="color:#94a3b8;margin:0;">Zones cardiaques Strava non disponibles sur cette sortie (FC moy : ' + (d.averageHeartrate || session.averageBpm || '--') + ' bpm).</p>';
+      }
+
+      const zonesMetrics = document.getElementById('ad-zones-metrics');
+      if (zonesMetrics) {
+        zonesMetrics.innerHTML = `
+          <div class="ad-grid-4">
+            <div class="ad-stat"><span>Effort relatif (Suffer)</span><strong>${d.sufferScore ?? '--'}</strong></div>
+            <div class="ad-stat"><span>Puissance pondérée</span><strong>${d.weightedAverageWatts ? `${d.weightedAverageWatts} W` : '--'}</strong></div>
+            <div class="ad-stat"><span>Énergie</span><strong>${d.kilojoules ? `${d.kilojoules} kJ` : '--'}</strong></div>
+            <div class="ad-stat"><span>Appareil</span><strong>${stravaSafeText(d.deviceName || '--')}</strong></div>
+          </div>
+        `;
+      }
+
+      const effortsBody = document.getElementById('ad-efforts-body');
+      if (effortsBody) {
+        const efforts = Array.isArray(d.bestEfforts) ? d.bestEfforts : [];
+        effortsBody.innerHTML = efforts.length
+          ? efforts.map((ef) => `
+              <tr>
+                <td>${stravaSafeText(ef.name || '--')}</td>
+                <td>${stravaTime(ef.elapsed_time || ef.moving_time)}</td>
+                <td>${ef.distance && ef.elapsed_time ? stravaPace(Number(ef.distance) / Number(ef.elapsed_time)) : '--'}</td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="3" style="color:#94a3b8;">Aucun meilleur effort enregistré sur cette sortie.</td></tr>';
+      }
+
+      const segmentsBody = document.getElementById('ad-segments-body');
+      if (segmentsBody) {
+        const segs = Array.isArray(d.segmentEfforts) ? d.segmentEfforts : [];
+        segmentsBody.innerHTML = segs.length
+          ? segs.map((sg) => `
+              <tr>
+                <td>${stravaSafeText(sg.name || '--')}</td>
+                <td>${stravaTime(sg.elapsed_time || sg.moving_time)}</td>
+                <td>${sg.distance ? `${(Number(sg.distance) / 1000).toFixed(2)} km` : '--'}</td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="3" style="color:#94a3b8;">Aucun segment Strava traversé sur cette sortie.</td></tr>';
+      }
+    }
     function stravaSafeText(value){return escapeHTML(value==null?'':String(value));}
     function stravaTime(seconds){const n=Math.max(0,Math.round(Number(seconds)||0));const h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return h?`${h} h ${m} min ${s} s`:`${m} min ${s} s`;}
     function stravaPace(speed){return Number(speed)>0?`${Math.floor(1000/Number(speed)/60)}:${String(Math.floor(1000/Number(speed)%60)).padStart(2,'0')} /km`:'—';}
@@ -6211,7 +6439,7 @@ document.addEventListener('DOMContentLoaded', () => {
       border-radius: 16px;
       padding: 20px;
       max-width: 1040px;
-      margin: 16px auto;
+      margin: 12px auto;
       font-family: system-ui, -apple-system, sans-serif;
     }
     .ad-sheet[data-sport="bike"] { --sport-color: #38bdf8; --sport-bg: rgba(56, 189, 248, 0.12); }
@@ -6220,53 +6448,11 @@ document.addEventListener('DOMContentLoaded', () => {
     .ad-sheet[data-sport="hiit"] { --sport-color: #c084fc; --sport-bg: rgba(192, 132, 252, 0.12); }
     .ad-sheet[data-sport="race"] { --sport-color: #f43f5e; --sport-bg: rgba(244, 63, 94, 0.12); }
 
-    .ad-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .ad-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
-    .ad-strava-badge {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      background: var(--sport-bg);
-      color: var(--sport-color);
-      border: 1px solid var(--sport-color);
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
-      font-weight: 700;
-    }
-    .ad-title-input {
-      background: #161e2b;
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 10px;
-      padding: 8px 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      width: 100%;
-      max-width: 520px;
-    }
-    .ad-title-input:focus {
-      outline: none;
-      border-color: var(--sport-color);
-    }
-
     .ad-tabs {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin: 16px 0;
+      margin: 0 0 14px;
     }
     .ad-tab {
       background: #161e2b;
@@ -6283,6 +6469,52 @@ document.addEventListener('DOMContentLoaded', () => {
       color: #fff;
       border-color: var(--sport-color);
     }
+
+    .ad-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .ad-title-wrap {
+      flex: 1 1 420px;
+      min-width: 240px;
+    }
+    .ad-title-input {
+      background: #161e2b;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .ad-title-input:focus {
+      outline: none;
+      border-color: var(--sport-color);
+    }
+    .ad-datetime-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .ad-datetime-badge {
+      background: #161e2b;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      color: #e2e8f0;
+      white-space: nowrap;
+    }
+    .ad-datetime-badge strong { color: var(--sport-color); }
 
     .ad-panel { display: none; }
     .ad-panel.is-active { display: block; }
@@ -6301,7 +6533,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     .ad-grid-4 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
       gap: 10px;
     }
     .ad-grid-2 {
@@ -6315,20 +6547,47 @@ document.addEventListener('DOMContentLoaded', () => {
       border-radius: 10px;
       padding: 10px 12px;
     }
-    .ad-stat span { display: block; font-size: 0.78rem; color: #94a3b8; }
+    .ad-stat span { display: block; font-size: 0.78rem; color: #94a3b8; margin-bottom: 4px; }
     .ad-stat strong { font-size: 1rem; color: #f8fafc; }
 
     .ad-field { margin-bottom: 12px; }
     .ad-field label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 6px; }
-    .ad-textarea, .ad-select, .ad-range {
+    .ad-textarea, .ad-select, .ad-input-sm, .ad-range {
       width: 100%;
+      box-sizing: border-box;
       background: #0f141c;
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 10px;
       padding: 8px 10px;
+      font-size: 0.9rem;
     }
     .ad-range { padding: 0; accent-color: var(--sport-color); }
+
+    .ad-friend-add-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .ad-friend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--sport-bg);
+      border: 1px solid var(--sport-color);
+      color: #fff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.82rem;
+    }
+    .ad-friend-chip button {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      padding: 0 2px;
+    }
 
     .ad-table {
       width: 100%;
@@ -6384,20 +6643,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   </style>
 
+  <!-- 1. Onglets au-dessus du nom de la sortie -->
+  <div class="ad-tabs" role="tablist">
+    <button type="button" class="ad-tab is-active" data-tab="apercu">Aperçu & Saisie</button>
+    <button type="button" class="ad-tab" data-tab="allure">Analyse Allure</button>
+    <button type="button" class="ad-tab" data-tab="zones">Zones</button>
+    <button type="button" class="ad-tab" data-tab="efforts">Meilleurs efforts</button>
+  </div>
+
+  <!-- 2. Titre élargi (sans S) + Date et Heure de la séance -->
   <div class="ad-header">
     <div class="ad-title-wrap">
-      <span class="ad-strava-badge" title="Données issues du flux Strava">S</span>
-      <input id="ad-session-title" class="ad-title-input" type="text" value="Sortie matinale — Flux Strava" />
+      <input id="ad-session-title" class="ad-title-input" type="text" placeholder="Nom de la sortie..." />
+    </div>
+    <div class="ad-datetime-wrap">
+      <span class="ad-datetime-badge">📅 <strong id="ad-session-date">--</strong></span>
+      <span class="ad-datetime-badge">🕒 <strong id="ad-session-time">--:--</strong></span>
     </div>
   </div>
 
-  <div class="ad-tabs" role="tablist">
-    <button class="ad-tab is-active" data-tab="apercu">Aperçu & Saisie</button>
-    <button class="ad-tab" data-tab="allure">Analyse Allure</button>
-    <button class="ad-tab" data-tab="zones">Zones</button>
-    <button class="ad-tab" data-tab="efforts">Meilleurs efforts</button>
-  </div>
-
+  <!-- ONGLET 1 : APERÇU & SAISIE -->
   <section class="ad-panel is-active" data-panel="apercu">
     <div class="ad-card">
       <h3>Synthèse du flux</h3>
@@ -6414,29 +6679,91 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="ad-field">
           <label for="ad-friend-select">Identifier un ami À LA DOPAMINE</label>
           <select id="ad-friend-select" class="ad-select">
-            <option value="">+ Ajouter un ami...</option>
+            <option value="">+ Choisir un ami inscrit...</option>
           </select>
+          <div class="ad-friend-add-row">
+            <input id="ad-friend-custom-input" class="ad-input-sm" type="text" placeholder="Pseudo À LA DOPAMINE ou e-mail Strava..." />
+            <button type="button" id="ad-friend-add-btn" class="ad-tab" style="white-space:nowrap;">+ Lier</button>
+          </div>
           <div id="ad-friends-list" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"></div>
         </div>
       </div>
+
       <div class="ad-field">
         <label for="ad-comment-input">Description / commentaire</label>
         <textarea id="ad-comment-input" class="ad-textarea" rows="3" placeholder="Ajoute ton ressenti ou tes notes de séance..."></textarea>
       </div>
-      <div class="ad-card" id="ad-photos-card" style="display:none;">
-      <h3>Photos de la séance (<span id="ad-photos-count">0</span>/3)</h3>
-      <div id="ad-photos-grid" class="ad-grid-4" style="margin-bottom:10px;"></div>
-      <input id="ad-photo-input" type="file" accept="image/*" multiple style="display:none;" />
-      <button type="button" id="ad-add-photo-btn" class="ad-tab">+ Ajouter une photo (3 max)</button>
-    </div>
+
+      <div style="margin-top:10px;">
+        <div id="ad-photos-card" style="display:none;margin-bottom:10px;">
+          <div style="font-size:0.85rem;color:#cbd5e1;margin-bottom:8px;">Photos de la séance (<span id="ad-photos-count">0</span>/3)</div>
+          <div id="ad-photos-grid" class="ad-grid-4"></div>
+        </div>
+        <input id="ad-photo-input" type="file" accept="image/*" multiple style="display:none;" />
+        <button type="button" id="ad-add-photo-btn" class="ad-tab">+ Ajouter une photo (3 max)</button>
+      </div>
     </div>
 
     <div class="ad-card">
-      <h3>Infos annexes</h3>
-      <div class="ad-grid-4" id="ad-extra-grid"></div>
+      <h3>Infos annexes (Stats & Trophées)</h3>
+      <div class="ad-grid-4">
+        <div class="ad-stat">
+          <span>Discipline</span>
+          <select id="ad-extra-sport" class="ad-select">
+            <option value="course">Course à pied</option>
+            <option value="velo">Vélo</option>
+            <option value="natation">Natation</option>
+            <option value="marche">Marche / Rando</option>
+            <option value="hiit">HIIT / Renfo</option>
+            <option value="competition">Compétition</option>
+          </select>
+        </div>
+        <div class="ad-stat">
+          <span>Source</span>
+          <select id="ad-extra-source" class="ad-select">
+            <option value="strava">Strava</option>
+            <option value="manual">Manuel</option>
+            <option value="garmin">Garmin</option>
+            <option value="coros">Coros</option>
+            <option value="polar">Polar</option>
+            <option value="wahoo">Wahoo</option>
+            <option value="zwift">Zwift</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+        <div class="ad-stat">
+          <span>Terrain (Trophées)</span>
+          <select id="ad-extra-terrain" class="ad-select">
+            <option value="">Non renseigné / Autre</option>
+            <option value="route">Route / Bitume</option>
+            <option value="chemin">Chemin / Sous-bois</option>
+            <option value="trail">Trail / Montagne</option>
+            <option value="piste">Piste d'athlétisme</option>
+            <option value="tapis">Tapis / Home-trainer</option>
+            <option value="piscine">Piscine</option>
+            <option value="eau-libre">Eau libre</option>
+            <option value="autre">Autre terrain</option>
+          </select>
+        </div>
+        <div class="ad-stat">
+          <span>Météo / conditions</span>
+          <select id="ad-extra-weather" class="ad-select">
+            <option value="">Non renseigné / Autre</option>
+            <option value="soleil">Ensoleillé</option>
+            <option value="nuageux">Nuageux / Couvert</option>
+            <option value="pluie">Pluie / Humide</option>
+            <option value="vent">Venteux</option>
+            <option value="froid">Froid / Hivernal</option>
+            <option value="chaleur">Forte chaleur</option>
+            <option value="interieur">Intérieur</option>
+            <option value="autre">Autre météo</option>
+          </select>
+        </div>
+      </div>
     </div>
   </section>
 
+  <!-- ONGLET 2 : ANALYSE ALLURE -->
   <section class="ad-panel" data-panel="allure">
     <div class="ad-grid-2">
       <div class="ad-card">
@@ -6448,23 +6775,24 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="ad-card">
         <h3>Carte & flux GPS</h3>
-        <div id="ad-map-box" style="min-height:180px;display:grid;place-items:center;background:#0f141c;border-radius:10px;color:#94a3b8;">
-          Tracé GPS & flux prêts pour rendu carte
+        <div id="ad-map-box" style="min-height:180px;display:grid;place-items:center;background:#0f141c;border-radius:10px;color:#94a3b8;padding:12px;text-align:center;">
+          Aucune trace GPS disponible pour cette sortie.
         </div>
       </div>
     </div>
     <div class="ad-card">
       <h3>Courbes d'évolution & moyennes</h3>
-      <div id="ad-curves-box" style="min-height:140px;display:grid;place-items:center;background:#0f141c;border-radius:10px;color:#94a3b8;">
+      <div id="ad-curves-box" style="min-height:140px;display:grid;place-items:center;background:#0f141c;border-radius:10px;color:#94a3b8;padding:12px;">
         Allure · VAP · Dénivelé · BPM
       </div>
     </div>
   </section>
 
+  <!-- ONGLET 3 : ZONES -->
   <section class="ad-panel" data-panel="zones">
     <div class="ad-card">
       <h3>Conseil du Coach IA</h3>
-      <p id="ad-coach-tip" style="margin:0;color:#e2e8f0;"></p>
+      <div id="ad-coach-tip" style="margin:0;color:#e2e8f0;"></div>
     </div>
     <div class="ad-grid-2">
       <div class="ad-card">
@@ -6478,6 +6806,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   </section>
 
+  <!-- ONGLET 4 : MEILLEURS EFFORTS -->
   <section class="ad-panel" data-panel="efforts">
     <div class="ad-card">
       <h3>Meilleurs efforts</h3>
@@ -6499,10 +6828,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <button type="button" id="ad-delete-btn" class="ad-btn-delete">Supprimer cette séance</button>
     <button type="button" id="ad-save-btn" class="ad-btn-save">ENREGISTRER LA SÉANCE</button>
   </div>
-</div>  <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:14px;"><button type="button" class="btn-delete-session" onclick="deleteEditedSession()" style="background:#b91c1c;color:white;border:0;border-radius:8px;padding:10px 14px;">Supprimer cette séance</button><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="medal-tab" onclick="closeEditSession()">Annuler</button><button type="button" class="btn-save-green" onclick="saveEditedSession()">Enregistrer les modifications</button></div></div>
- </div></div>
 </div>
-
 
 <script>
 
