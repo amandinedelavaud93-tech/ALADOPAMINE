@@ -2872,25 +2872,48 @@ async function syncStravaActivities(tokenData) {
     let auth = tokenData || JSON.parse(localStorage.getItem(getStravaStorageKey()) || 'null');
     if (!auth || !auth.access_token) return;
 
-    // Rafraîchir le token s'il est expiré
-    const nowSec = Math.floor(Date.now() / 1000);
-    if (auth.expires_at && auth.expires_at < nowSec + 60 && auth.refresh_token) {
-      const refreshRes = await fetch('/api/strava/callback', {
+// Rafraîchir le token s'il est expiré ou si l'appel renvoie 401
+      const nowSec = Math.floor(Date.now() / 1000);
+      if (auth.refresh_token && (!auth.expires_at || auth.expires_at < nowSec + 60)) {
+        try {
+          const refreshRes = await fetch('/api/strava/callback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: auth.refresh_token })
+          });
+          if (refreshRes.ok) {
+            const refreshed = await refreshRes.json();
+            if (refreshed && refreshed.access_token) {
+              auth = { ...auth, ...refreshed };
+              localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
+            }
+          }
+        } catch (_) {}
+      }
+
+  let actRes = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
+    headers: { Authorization: `Bearer ${auth.access_token}` }
+  });
+  if (actRes.status === 401 && auth.refresh_token) {
+    try {
+      const retryRefresh = await fetch('/api/strava/callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: auth.refresh_token })
       });
-      const refreshed = await refreshRes.json();
-      if (refreshRes.ok && refreshed.access_token) {
-        auth = { ...auth, ...refreshed };
-        localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
+      if (retryRefresh.ok) {
+        const refreshed = await retryRefresh.json();
+        if (refreshed && refreshed.access_token) {
+          auth = { ...auth, ...refreshed };
+          localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
+          actRes = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
+            headers: { Authorization: `Bearer ${auth.access_token}` }
+          });
+        }
       }
-    }
-
-    const actRes = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
-      headers: { Authorization: `Bearer ${auth.access_token}` }
-    });
-    if (!actRes.ok) throw new Error('Impossible de récupérer les activités Strava');
+    } catch (_) {}
+  }
+  if (!actRes.ok) throw new Error('Impossible de récupérer les activités Strava');
     const activities = await actRes.json();
 
     if (!Array.isArray(appData.sessionsHistory)) appData.sessionsHistory = [];
