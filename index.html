@@ -4181,6 +4181,88 @@ function refreshEditSessionFriendSuggestions() {
       const detailBox=document.getElementById('edit-session-strava-details');
       if(detailBox){detailBox.style.display=(session.stravaActivityId?'block':'none');if(session.stravaActivityId){document.getElementById('edit-session-strava-details-content').textContent='Chargement des détails Strava…';loadStravaActivityDetails(session).catch(err=>{document.getElementById('edit-session-strava-details-content').textContent='Détails indisponibles : '+err.message;});}}
     }
+    const sheet = document.getElementById('dopamine-session-sheet');
+  if (sheet) {
+    const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
+    sheet.dataset.sport = sportMap[session.sport] || session.sport || 'run';
+    const adTitle = document.getElementById('ad-session-title');
+    if (adTitle) adTitle.value = session.title || session.name || '';
+    const adRpe = document.getElementById('ad-rpe-input');
+    const adRpeVal = document.getElementById('ad-rpe-val');
+    if (adRpe) { adRpe.value = Number(session.rpe || 5); if (adRpeVal) adRpeVal.textContent = adRpe.value; }
+    const adComment = document.getElementById('ad-comment-input');
+    if (adComment) adComment.value = session.comment || session.description || '';
+    sheet.querySelectorAll('.ad-tab').forEach((tab) => {
+      tab.onclick = () => {
+        sheet.querySelectorAll('.ad-tab').forEach((t) => t.classList.remove('is-active'));
+        sheet.querySelectorAll('.ad-panel').forEach((p) => p.classList.remove('is-active'));
+        tab.classList.add('is-active');
+if (panel) panel.classList.add('is-active');
+    };
+  });
+  if (adTitle) adTitle.oninput = () => { const el = document.getElementById('edit-session-title'); if (el) el.value = adTitle.value; };
+  if (adComment) adComment.oninput = () => { const el = document.getElementById('edit-session-comment'); if (el) el.value = adComment.value; };
+  if (adRpe) adRpe.oninput = () => {
+    if (adRpeVal) adRpeVal.textContent = adRpe.value;
+    const el = document.getElementById('edit-session-rpe');
+if (el) el.value = adRpe.value;
+const photosCard = document.getElementById('ad-photos-card');
+    const photosGrid = document.getElementById('ad-photos-grid');
+    const photosCount = document.getElementById('ad-photos-count');
+    const photoInput = document.getElementById('ad-photo-input');
+    const addPhotoBtn = document.getElementById('ad-add-photo-btn');
+
+    let currentPhotos = Array.isArray(session.photos) ? session.photos.slice(0, 3) : [];
+    session.photos = currentPhotos;
+
+    const renderSessionPhotos = () => {
+      if (!photosCard || !photosGrid || !photosCount || !addPhotoBtn) return;
+      photosCount.textContent = String(currentPhotos.length);
+      photosCard.style.display = currentPhotos.length > 0 ? 'block' : 'none';
+      addPhotoBtn.disabled = currentPhotos.length >= 3;
+      addPhotoBtn.style.opacity = currentPhotos.length >= 3 ? '0.5' : '1';
+      photosGrid.innerHTML = currentPhotos.map((src, idx) => `
+        <div style="position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.12);background:#0f141c;">
+          <img src="${src}" alt="Photo ${idx + 1}" style="width:100%;height:110px;object-fit:cover;display:block;" />
+          <button type="button" data-del-photo="${idx}" title="Supprimer la photo" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:999px;border:none;background:rgba(0,0,0,0.75);color:#fff;cursor:pointer;font-weight:700;">×</button>
+        </div>
+      `).join('');
+      photosGrid.querySelectorAll('[data-del-photo]').forEach((btn) => {
+        btn.onclick = () => {
+          const i = Number(btn.dataset.delPhoto);
+          currentPhotos = currentPhotos.filter((_, k) => k !== i);
+          session.photos = currentPhotos;
+          renderSessionPhotos();
+        };
+      });
+    };
+
+    renderSessionPhotos();
+
+    if (addPhotoBtn && photoInput) {
+      addPhotoBtn.onclick = () => {
+        if (currentPhotos.length >= 3) return;
+        if (photosCard) photosCard.style.display = 'block';
+        photoInput.value = '';
+        photoInput.click();
+      };
+      photoInput.onchange = () => {
+        const files = Array.from(photoInput.files || []);
+        const remaining = 3 - currentPhotos.length;
+        files.slice(0, remaining).forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            if (typeof ev.target?.result === 'string' && currentPhotos.length < 3) {
+              currentPhotos.push(ev.target.result);
+              session.photos = currentPhotos;
+              renderSessionPhotos();
+}
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+    }}
+  }
     async function loadStravaActivityDetails(session) {
       if(!session?.stravaActivityId) return;
       if(session.stravaDetailsLoaded){renderStravaActivityDetails(session);return;}
@@ -6028,8 +6110,307 @@ document.addEventListener('DOMContentLoaded', () => {
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-comment">Commentaire</label><textarea id="edit-session-comment" rows="3" maxlength="1500" style="width:100%;"></textarea></div>
   </div>
   <p style="font-size:.72rem;color:var(--text-sub);margin-top:8px;">Les statistiques, la vitesse moyenne et les trophées vérifiables seront recalculés après l’enregistrement. La VAP nécessite un tracé GPX détaillé.</p>
-  <div id="edit-session-strava-details" style="display:none;grid-column:1/-1;background:rgba(255,255,255,.04);border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-top:10px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><strong>Détails Strava</strong><button type="button" class="medal-tab" onclick="openStravaDetailsPage()">Ouvrir la page complète des détails</button></div><div id="edit-session-strava-details-content" style="font-size:.82rem;margin-top:8px;color:var(--text-sub);">Chargement des détails…</div></div>
-  <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:14px;"><button type="button" class="btn-delete-session" onclick="deleteEditedSession()" style="background:#b91c1c;color:white;border:0;border-radius:8px;padding:10px 14px;">Supprimer cette séance</button><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="medal-tab" onclick="closeEditSession()">Annuler</button><button type="button" class="btn-save-green" onclick="saveEditedSession()">Enregistrer les modifications</button></div></div>
+ <div id="dopamine-session-sheet" class="ad-sheet" data-sport="run">
+  <style>
+    .ad-sheet {
+      --sport-color: #ff6b00;
+      --sport-bg: rgba(255, 107, 0, 0.12);
+      background: #0f141c;
+      color: #eef2f7;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 4px solid var(--sport-color);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 1040px;
+      margin: 16px auto;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .ad-sheet[data-sport="bike"] { --sport-color: #38bdf8; --sport-bg: rgba(56, 189, 248, 0.12); }
+    .ad-sheet[data-sport="swim"] { --sport-color: #2dd4bf; --sport-bg: rgba(45, 212, 191, 0.12); }
+    .ad-sheet[data-sport="walk"] { --sport-color: #a3e635; --sport-bg: rgba(163, 230, 53, 0.12); }
+    .ad-sheet[data-sport="hiit"] { --sport-color: #c084fc; --sport-bg: rgba(192, 132, 252, 0.12); }
+    .ad-sheet[data-sport="race"] { --sport-color: #f43f5e; --sport-bg: rgba(244, 63, 94, 0.12); }
+
+    .ad-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .ad-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .ad-strava-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--sport-bg);
+      color: var(--sport-color);
+      border: 1px solid var(--sport-color);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      font-weight: 700;
+    }
+    .ad-title-input {
+      background: #161e2b;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      width: 100%;
+      max-width: 520px;
+    }
+    .ad-title-input:focus {
+      outline: none;
+      border-color: var(--sport-color);
+    }
+
+    .ad-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .ad-tab {
+      background: #161e2b;
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ad-tab.is-active {
+      background: var(--sport-bg);
+      color: #fff;
+      border-color: var(--sport-color);
+    }
+
+    .ad-panel { display: none; }
+    .ad-panel.is-active { display: block; }
+
+    .ad-card {
+      background: #151c28;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .ad-card h3 {
+      margin: 0 0 12px;
+      font-size: 0.95rem;
+      color: var(--sport-color);
+    }
+    .ad-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+    }
+    .ad-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .ad-stat {
+      background: #0f141c;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .ad-stat span { display: block; font-size: 0.78rem; color: #94a3b8; }
+    .ad-stat strong { font-size: 1rem; color: #f8fafc; }
+
+    .ad-field { margin-bottom: 12px; }
+    .ad-field label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 6px; }
+    .ad-textarea, .ad-select, .ad-range {
+      width: 100%;
+      background: #0f141c;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .ad-range { padding: 0; accent-color: var(--sport-color); }
+
+    .ad-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .ad-table th, .ad-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      text-align: left;
+    }
+    .ad-table th { color: #94a3b8; font-weight: 600; }
+
+    .ad-bar-track {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .ad-bar-fill {
+      height: 100%;
+      background: var(--sport-color);
+      border-radius: 999px;
+    }
+
+    .ad-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .ad-btn-save {
+      background: #16a34a;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .ad-btn-delete {
+      background: rgba(239, 68, 68, 0.14);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+
+  <div class="ad-header">
+    <div class="ad-title-wrap">
+      <span class="ad-strava-badge" title="Données issues du flux Strava">S</span>
+      <input id="ad-session-title" class="ad-title-input" type="text" value="Sortie matinale — Flux Strava" />
+    </div>
+  </div>
+
+  <div class="ad-tabs" role="tablist">
+    <button class="ad-tab is-active" data-tab="apercu">Aperçu & Saisie</button>
+    <button class="ad-tab" data-tab="allure">Analyse Allure</button>
+    <button class="ad-tab" data-tab="zones">Zones</button>
+    <button class="ad-tab" data-tab="efforts">Meilleurs efforts</button>
+  </div>
+
+  <section class="ad-panel is-active" data-panel="apercu">
+    <div class="ad-card">
+      <h3>Synthèse du flux</h3>
+      <div class="ad-grid-4" id="ad-summary-grid"></div>
+    </div>
+
+    <div class="ad-card">
+      <h3>Édition de la séance</h3>
+      <div class="ad-grid-2">
+        <div class="ad-field">
+          <label for="ad-rpe-input">Effort ressenti (RPE : <span id="ad-rpe-val">5</span>/10)</label>
+          <input id="ad-rpe-input" class="ad-range" type="range" min="1" max="10" value="5" />
+        </div>
+        <div class="ad-field">
+          <label for="ad-friend-select">Identifier un ami À LA DOPAMINE</label>
+          <select id="ad-friend-select" class="ad-select">
+            <option value="">+ Ajouter un ami...</option>
+          </select>
+          <div id="ad-friends-list" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+      <div class="ad-field">
+        <label for="ad-comment-input">Description / commentaire</label>
+        <textarea id="ad-comment-input" class="ad-textarea" rows="3" placeholder="Ajoute ton ressenti ou tes notes de séance..."></textarea>
+      </div>
+      <div class="ad-card" id="ad-photos-card" style="display:none;">
+      <h3>Photos de la séance (<span id="ad-photos-count">0</span>/3)</h3>
+      <div id="ad-photos-grid" class="ad-grid-4" style="margin-bottom:10px;"></div>
+      <input id="ad-photo-input" type="file" accept="image/*" multiple style="display:none;" />
+      <button type="button" id="ad-add-photo-btn" class="ad-tab">+ Ajouter une photo (3 max)</button>
+    </div>
+    </div>
+
+    <div class="ad-card">
+      <h3>Infos annexes</h3>
+      <div class="ad-grid-4" id="ad-extra-grid"></div>
+    </div>
+  </section>
+
+  <section class="ad-panel" data-panel="allure">
+    <div class="ad-grid-2">
+      <div class="ad-card">
+        <h3>Temps intermédiaires / Laps</h3>
+        <table class="ad-table">
+          <thead><tr><th>#</th><th>Distance</th><th>Temps</th><th>Allure</th><th>BPM</th></tr></thead>
+          <tbody id="ad-splits-body"></tbody>
+        </table>
+      </div>
+      <div class="ad-card">
+        <h3>Carte & flux GPS</h3>
+        <div id="ad-map-box" style="min-height:180px;display:grid;place-items:center;background:#0f141c;border-radius:10px;color:#94a3b8;">
+          Tracé GPS & flux prêts pour rendu carte
+        </div>
+      </div>
+    </div>
+    <div class="ad-card">
+      <h3>Courbes d'évolution & moyennes</h3>
+      <div id="ad-curves-box" style="min-height:140px;display:grid;place-items:center;background:#0f141c;border-radius:10px;color:#94a3b8;">
+        Allure · VAP · Dénivelé · BPM
+      </div>
+    </div>
+  </section>
+
+  <section class="ad-panel" data-panel="zones">
+    <div class="ad-card">
+      <h3>Conseil du Coach IA</h3>
+      <p id="ad-coach-tip" style="margin:0;color:#e2e8f0;"></p>
+    </div>
+    <div class="ad-grid-2">
+      <div class="ad-card">
+        <h3>Zones cardiaques & allure / puissance</h3>
+        <div id="ad-zones-list"></div>
+      </div>
+      <div class="ad-card">
+        <h3>Répartition détaillée</h3>
+        <div id="ad-zones-metrics"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ad-panel" data-panel="efforts">
+    <div class="ad-card">
+      <h3>Meilleurs efforts</h3>
+      <table class="ad-table">
+        <thead><tr><th>Distance</th><th>Temps</th><th>Allure</th></tr></thead>
+        <tbody id="ad-efforts-body"></tbody>
+      </table>
+    </div>
+    <div class="ad-card">
+      <h3>Segments traversés</h3>
+      <table class="ad-table">
+        <thead><tr><th>Segment</th><th>Temps</th><th>Distance</th></tr></thead>
+        <tbody id="ad-segments-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="ad-footer">
+    <button type="button" id="ad-delete-btn" class="ad-btn-delete">Supprimer cette séance</button>
+    <button type="button" id="ad-save-btn" class="ad-btn-save">ENREGISTRER LA SÉANCE</button>
+  </div>
+</div>  <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:14px;"><button type="button" class="btn-delete-session" onclick="deleteEditedSession()" style="background:#b91c1c;color:white;border:0;border-radius:8px;padding:10px 14px;">Supprimer cette séance</button><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="medal-tab" onclick="closeEditSession()">Annuler</button><button type="button" class="btn-save-green" onclick="saveEditedSession()">Enregistrer les modifications</button></div></div>
  </div></div>
 </div>
 
