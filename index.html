@@ -4180,7 +4180,6 @@ function refreshEditSessionFriendSuggestions() {
       document.getElementById('edit-session-modal').style.display='block'; updateEditSessionFields(); refreshEditSessionFriendSuggestions();
       const detailBox=document.getElementById('edit-session-strava-details');
       if(detailBox){detailBox.style.display=(session.stravaActivityId?'block':'none');if(session.stravaActivityId){document.getElementById('edit-session-strava-details-content').textContent='Chargement des détails Strava…';loadStravaActivityDetails(session).catch(err=>{document.getElementById('edit-session-strava-details-content').textContent='Détails indisponibles : '+err.message;});}}
-    }
 const sheet = document.getElementById('dopamine-session-sheet');
   if (sheet) {
     try {
@@ -4347,10 +4346,12 @@ const renderSessionPhotos = () => {
               });
             };
           }
-        } catch (err) {
+} catch (err) {
           console.error('Affichage fiche séance :', err);
         }
       }
+    }
+
     async function loadStravaActivityDetails(session) {
       if(!session?.stravaActivityId) return;
       if(session.stravaDetailsLoaded){renderStravaActivityDetails(session);return;}
