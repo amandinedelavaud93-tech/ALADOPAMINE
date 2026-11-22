@@ -4300,54 +4300,57 @@ const photosCard = document.getElementById('ad-photos-card');
     let currentPhotos = Array.isArray(session.photos) ? session.photos.slice(0, 3) : [];
     session.photos = currentPhotos;
 
-    const renderSessionPhotos = () => {
-      if (!photosCard || !photosGrid || !photosCount || !addPhotoBtn) return;
-      photosCount.textContent = String(currentPhotos.length);
-      photosCard.style.display = currentPhotos.length > 0 ? 'block' : 'none';
-      addPhotoBtn.disabled = currentPhotos.length >= 3;
-      addPhotoBtn.style.opacity = currentPhotos.length >= 3 ? '0.5' : '1';
-      photosGrid.innerHTML = currentPhotos.map((src, idx) => `
-        <div style="position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.12);background:#0f141c;">
-          <img src="${src}" alt="Photo ${idx + 1}" style="width:100%;height:110px;object-fit:cover;display:block;" />
-          <button type="button" data-del-photo="${idx}" title="Supprimer la photo" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:999px;border:none;background:rgba(0,0,0,0.75);color:#fff;cursor:pointer;font-weight:700;">×</button>
-        </div>
-      `).join('');
-      photosGrid.querySelectorAll('[data-del-photo]').forEach((btn) => {
-        btn.onclick = () => {
-          const i = Number(btn.dataset.delPhoto);
-          currentPhotos = currentPhotos.filter((_, k) => k !== i);
-          session.photos = currentPhotos;
-          renderSessionPhotos();
-        };
-      });
-    };
-
-    renderSessionPhotos();
-
-    if (addPhotoBtn && photoInput) {
-      addPhotoBtn.onclick = () => {
-        if (currentPhotos.length >= 3) return;
-        if (photosCard) photosCard.style.display = 'block';
-        photoInput.value = '';
-        photoInput.click();
-      };
-      photoInput.onchange = () => {
-        const files = Array.from(photoInput.files || []);
-        const remaining = 3 - currentPhotos.length;
-        files.slice(0, remaining).forEach((file) => {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            if (typeof ev.target?.result === 'string' && currentPhotos.length < 3) {
-              currentPhotos.push(ev.target.result);
-              session.photos = currentPhotos;
-              renderSessionPhotos();
-}
+const renderSessionPhotos = () => {
+            if (!photosCard || !photosGrid || !photosCount || !addPhotoBtn) return;
+            photosCount.textContent = String(currentPhotos.length);
+            photosCard.style.display = currentPhotos.length > 0 ? 'block' : 'none';
+            addPhotoBtn.disabled = currentPhotos.length >= 3;
+            addPhotoBtn.style.opacity = currentPhotos.length >= 3 ? '0.5' : '1';
+            photosGrid.innerHTML = currentPhotos.map((src, idx) => `
+              <div style="position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.12);background:#0f141c;">
+                <img src="${src}" alt="Photo ${idx + 1}" style="width:100%;height:110px;object-fit:cover;display:block;" />
+                <button type="button" data-del-photo="${idx}" title="Supprimer la photo" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:999px;border:none;background:rgba(0,0,0,0.75);color:#fff;cursor:pointer;font-weight:700;">×</button>
+              </div>
+            `).join('');
+            photosGrid.querySelectorAll('[data-del-photo]').forEach((btn) => {
+              btn.onclick = () => {
+                const i = Number(btn.dataset.delPhoto);
+                currentPhotos = currentPhotos.filter((_, k) => k !== i);
+                session.photos = currentPhotos;
+                renderSessionPhotos();
+              };
+            });
           };
-          reader.readAsDataURL(file);
-        });
-      };
-    }}
-  }
+
+          renderSessionPhotos();
+
+          if (addPhotoBtn && photoInput) {
+            addPhotoBtn.onclick = () => {
+              if (currentPhotos.length >= 3) return;
+              if (photosCard) photosCard.style.display = 'block';
+              photoInput.value = '';
+              photoInput.click();
+            };
+            photoInput.onchange = () => {
+              const files = Array.from(photoInput.files || []);
+              const remaining = 3 - currentPhotos.length;
+              files.slice(0, remaining).forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  if (typeof ev.target?.result === 'string' && currentPhotos.length < 3) {
+                    currentPhotos.push(ev.target.result);
+                    session.photos = currentPhotos;
+                    renderSessionPhotos();
+                  }
+                };
+                reader.readAsDataURL(file);
+              });
+            };
+          }
+        } catch (err) {
+          console.error('Affichage fiche séance :', err);
+        }
+      }
     async function loadStravaActivityDetails(session) {
       if(!session?.stravaActivityId) return;
       if(session.stravaDetailsLoaded){renderStravaActivityDetails(session);return;}
