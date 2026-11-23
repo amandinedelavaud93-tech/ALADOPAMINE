@@ -4236,6 +4236,82 @@ function refreshEditSessionFriendSuggestions() {
         const isMissing = !rawVal || emptyTokens.includes(rawVal);
         el.classList.toggle('ad-field-missing', isMissing);
       });
+    }function syncTerrainOptionsBySport(sportValue, preferredValue = '', root = document) {
+      const select = root.getElementById('ad-extra-terrain');
+      if (!select) return;
+
+      const sp = String(sportValue || 'course').toLowerCase().trim();
+
+      const terrainBySport = {
+        natation: [
+          { value: '', label: 'Non renseigné / Autre' },
+          { value: 'Piscine', label: 'Piscine' },
+          { value: 'Eau libre', label: 'Eau libre' },
+          { value: 'Autre terrain', label: 'Autre terrain' }
+        ],
+        velo: [
+          { value: '', label: 'Non renseigné / Autre' },
+          { value: 'Route / Bitume', label: 'Route / Bitume' },
+          { value: 'Chemin / Gravel', label: 'Chemin / Gravel' },
+          { value: 'Trail / Montagne', label: 'VTT / Montagne' },
+          { value: 'Piste', label: 'Piste' },
+          { value: 'Tapis / Home-trainer', label: 'Home-trainer' },
+          { value: 'Autre terrain', label: 'Autre terrain' }
+        ],
+        course: [
+          { value: '', label: 'Non renseigné / Autre' },
+          { value: 'Route / Bitume', label: 'Route / Bitume' },
+          { value: 'Chemin / Sous-bois', label: 'Chemin / Sous-bois' },
+          { value: 'Trail / Montagne', label: 'Trail / Montagne' },
+          { value: "Piste d'athlétisme", label: "Piste d'athlétisme" },
+          { value: 'Tapis / Home-trainer', label: 'Tapis de course' },
+          { value: 'Autre terrain', label: 'Autre terrain' }
+        ],
+        marche: [
+          { value: '', label: 'Non renseigné / Autre' },
+          { value: 'Route / Bitume', label: 'Route / Bitume' },
+          { value: 'Chemin / Sous-bois', label: 'Chemin / Sous-bois' },
+          { value: 'Trail / Montagne', label: 'Randonnée / Montagne' },
+          { value: 'Autre terrain', label: 'Autre terrain' }
+        ],
+        hiit: [
+          { value: '', label: 'Non renseigné / Autre' },
+          { value: 'Salle / Intérieur', label: 'Salle / Intérieur' },
+          { value: 'Extérieur', label: 'Extérieur' },
+          { value: 'Autre terrain', label: 'Autre terrain' }
+        ],
+        competition: [
+          { value: '', label: 'Non renseigné / Autre' },
+          { value: 'Route / Bitume', label: 'Route / Bitume' },
+          { value: 'Chemin / Sous-bois', label: 'Chemin / Sous-bois' },
+          { value: 'Trail / Montagne', label: 'Trail / Montagne' },
+          { value: 'Eau libre', label: 'Eau libre' },
+          { value: 'Piscine', label: 'Piscine' },
+          { value: 'Autre terrain', label: 'Autre terrain' }
+        ]
+      };
+
+      const normalizedKey =
+        sp.includes('nat') || sp.includes('swim') ? 'natation' :
+        sp.includes('velo') || sp.includes('vélo') || sp.includes('bike') || sp.includes('cycl') ? 'velo' :
+        sp.includes('march') || sp.includes('walk') || sp.includes('rand') ? 'marche' :
+        sp.includes('hiit') || sp.includes('renfo') || sp.includes('muscu') ? 'hiit' :
+        sp.includes('comp') || sp.includes('race') || sp.includes('tri') ? 'competition' :
+        'course';
+
+      const options = terrainBySport[normalizedKey] || terrainBySport.course;
+      const candidate = String(preferredValue || select.value || '').trim();
+      const allowedValues = new Set(options.map((o) => o.value.toLowerCase()));
+      const nextValue = allowedValues.has(candidate.toLowerCase()) ? candidate : '';
+
+      select.innerHTML = options
+        .map((opt) => `<option value="${escapeHTML(opt.value)}">${escapeHTML(opt.label)}</option>`)
+        .join('');
+
+      select.value = nextValue;
+      if (typeof syncMissingFieldHighlights === 'function') {
+        syncMissingFieldHighlights(root);
+      }
     }
     function openEditSession(id) {
       const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
@@ -4269,16 +4345,16 @@ const resolvedStravaId = session.stravaActivityId || session.strava_id || sessio
           console.warn('Chargement détails Strava :', err);
           if (detContent) detContent.textContent='Détails indisponibles : '+err.message;
         });
-      }const sheet = document.getElementById('dopamine-session-sheet');
-      if (sheet) {
+         }const sheet = document.getElementById('dopamine-session-sheet');
+          if (sheet) {
         setDopamineSheetMode('edit');
         try {
           const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
           const updateSheetSport = (sp) => {
             sheet.dataset.sport = sportMap[sp] || sp || 'run';
-          };
+          syncTerrainOptionsBySport(sp, document.getElementById('ad-extra-terrain')?.value || session.terrain || '', sheet);
           updateSheetSport(session.sport);
-
+         };
           // Titre, Date & Heure Strava/locale
           const adTitle = document.getElementById('ad-session-title');
           const adDate = document.getElementById('ad-session-date');
@@ -4463,13 +4539,14 @@ const resolvedStravaId = session.stravaActivityId || session.strava_id || sessio
             };
           }
           if (extraTerrain) {
-            extraTerrain.value = session.terrain || '';
-            extraTerrain.onchange = () => {
-              session.terrain = extraTerrain.value;
-              const el = document.getElementById('edit-session-terrain');
-              if (el) el.value = extraTerrain.value;
-            };
-          }
+          const currentSport = sheet?.dataset?.sport || extraSport?.value || session.sport || 'course';
+          syncTerrainOptionsBySport(currentSport, session.terrain || '', sheet);
+          extraTerrain.onchange = () => {
+            session.terrain = extraTerrain.value;
+            const el = document.getElementById('edit-session-terrain');
+            if (el) el.value = extraTerrain.value;
+          };
+        }
           if (extraWeather) {
             extraWeather.value = session.weather || '';
             extraWeather.onchange = () => {
