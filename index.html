@@ -517,7 +517,86 @@
 
     .activity-date-bpm { min-width:0; }
     .activity-date-bpm input { width:100%; }
+
+.ad-private-note{font-size:.76rem;color:#9fb5c0;margin:-5px 0 12px;}
+#ad-zones-metrics .ad-stat small{display:block;color:#a9bdc8;font-size:.72rem;line-height:1.45;margin-top:7px;}
 </style>
+
+<style id="dopamine-profile-faceoff-design">
+/* Profils sportifs + Face-à-Face : identité visuelle commune */
+#view-profiles .main-dashboard-box, #view-faceoff .main-dashboard-box { overflow:hidden; }
+#view-profiles .profile-toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:18px 0; }
+#view-profiles .dopamine-search-box { display:flex; align-items:center; gap:12px; flex:1; min-width:240px; padding:5px 15px; background:#101f27; border:1px solid #29404b; border-radius:14px; transition:.2s; }
+#view-profiles .dopamine-search-box:focus-within { border-color:#ff8a32; box-shadow:0 0 0 3px rgba(255,107,0,.14); }
+#view-profiles .dopamine-search-box i { color:#ff9a45; font-size:1.05rem; }
+#view-profiles .dopamine-search-box input { flex:1; min-width:0; padding:12px 0; color:#f1f5f9; background:transparent; border:0; outline:0; font-size:.95rem; }
+#view-profiles .dopamine-search-box input::placeholder { color:#91a4af; }
+#dopamine-profile-results { display:grid !important; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:13px !important; margin-top:16px !important; }
+.dopamine-athlete-card { display:flex; align-items:center; gap:13px; width:100%; min-width:0; padding:15px; text-align:left; color:#f1f5f9; background:linear-gradient(145deg,#172b36,#0d1920); border:1px solid #294653; border-radius:15px; cursor:pointer; transition:transform .18s,border-color .18s,box-shadow .18s; }
+.dopamine-athlete-card:hover { transform:translateY(-2px); border-color:#ff8a32; box-shadow:0 10px 24px rgba(0,0,0,.2); }
+.dopamine-athlete-card img,.dopamine-athlete-avatar { width:52px; height:52px; flex:0 0 52px; border-radius:50%; object-fit:cover; border:2px solid #46616d; }
+.dopamine-athlete-avatar { display:grid; place-items:center; color:#9fb5c0; font-size:1.8rem; background:#203743; }
+.dopamine-athlete-card .athlete-card-copy { min-width:0; display:flex; flex-direction:column; gap:4px; }
+.dopamine-athlete-card .athlete-card-copy strong { color:#fff; font-size:.98rem; overflow-wrap:anywhere; }
+.dopamine-athlete-card .athlete-card-copy small { color:#a9bdc8; font-size:.78rem; }
+.dopamine-profile-detail-card { padding:22px; margin-top:18px; background:linear-gradient(145deg,#172b36,#0b171e); border:1px solid #34505e; border-radius:18px; box-shadow:0 12px 30px rgba(0,0,0,.2); }
+.dopamine-profile-hero { display:flex; align-items:center; gap:16px; padding-bottom:16px; border-bottom:1px solid #34505e; }
+.dopamine-profile-hero img,.dopamine-profile-hero .dopamine-athlete-avatar { width:76px !important; height:76px !important; flex-basis:76px !important; }
+.dopamine-profile-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:10px; margin-top:16px; }
+.dopamine-profile-stat { padding:13px; background:#203743; border:1px solid #34505e; border-radius:12px; }
+.dopamine-profile-stat small { display:block; color:#a9bdc8; margin-bottom:5px; }
+.dopamine-profile-stat strong { color:#fff; font-size:1.18rem; font-variant-numeric:tabular-nums; }
+/* Sélecteurs Face-à-Face */
+.faceoff-selectors { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:20px 0; }
+.faceoff-select-card { padding:16px; border:1px solid #34505e; border-radius:16px; background:#121f29; }
+.faceoff-select-card.faceoff-select-a { border-top:4px solid #258bd0; }
+.faceoff-select-card.faceoff-select-b { border-top:4px solid #ff6b00; }
+.faceoff-select-title { display:flex; align-items:center; gap:9px; margin-bottom:10px; color:#fff; font-weight:850; }
+.faceoff-select-title .faceoff-dot { width:10px; height:10px; border-radius:50%; background:#258bd0; }
+.faceoff-select-b .faceoff-dot { background:#ff6b00; }
+.faceoff-select-card select { display:block; width:100%; min-height:48px; padding:11px 12px; margin-top:5px; color:#f1f5f9; background:#0b171e; border:1px solid #405966; border-radius:10px; font-size:.95rem; }
+.faceoff-compare-button { min-height:48px; padding:12px 22px; border-radius:12px; font-weight:850; letter-spacing:.2px; }
+.faceoff-intro { padding:14px 16px; margin:18px 0; color:#c4d5de; background:rgba(37,139,208,.08); border-left:3px solid #258bd0; border-radius:10px; line-height:1.55; }
+.faceoff-compare-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-top:18px; }
+.faceoff-athlete-card { min-width:0; padding:21px; overflow:hidden; background:linear-gradient(155deg,#142a38,#0b171e); border:2px solid #258bd0; border-radius:20px; box-shadow:0 12px 30px rgba(0,0,0,.23); }
+.faceoff-athlete-card.faceoff-b { background:linear-gradient(155deg,#352316,#19120e); border-color:#ff6b00; }
+.faceoff-athlete-head { display:flex; align-items:center; gap:13px; padding-bottom:16px; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,.12); }
+.faceoff-athlete-head img,.faceoff-athlete-head .faceoff-avatar { width:58px; height:58px; flex:0 0 58px; object-fit:cover; border-radius:50%; border:2px solid #258bd0; }
+.faceoff-b .faceoff-athlete-head img,.faceoff-b .faceoff-athlete-head .faceoff-avatar { border-color:#ff6b00; }
+.faceoff-avatar { display:grid; place-items:center; background:#203743; color:#a9bdc8; font-size:2rem; }
+.faceoff-athlete-label { display:inline-flex; align-items:center; gap:7px; padding:5px 10px; margin-bottom:7px; color:#75c5ff; background:rgba(37,139,208,.17); border-radius:30px; font-size:.7rem; font-weight:900; letter-spacing:1px; }
+.faceoff-b .faceoff-athlete-label { color:#ffb27e; background:rgba(255,107,0,.17); }
+.faceoff-athlete-card h3 { margin:0; color:#fff; font-size:1.2rem; overflow-wrap:anywhere; }
+.faceoff-athlete-card .faceoff-location { margin-top:4px; color:#a9bdc8; font-size:.78rem; }
+.faceoff-stat { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid rgba(255,255,255,.1); }
+.faceoff-stat:last-child { border-bottom:0; }
+.faceoff-stat span { color:#b5c5ce; font-size:.86rem; }
+.faceoff-stat strong { color:#fff; font-size:1.05rem; font-weight:850; text-align:right; font-variant-numeric:tabular-nums; }
+.faceoff-stat .faceoff-leader { color:#86efac; }
+.faceoff-footnote { margin-top:16px; color:#a9bdc8; font-size:.78rem; line-height:1.6; }
+@media(max-width:650px) { .faceoff-selectors,.faceoff-compare-grid { grid-template-columns:1fr; gap:12px; } .faceoff-athlete-card { padding:17px; } #dopamine-profile-results { grid-template-columns:1fr; } }
+.ad-chart-help{color:#a9bdc8;font-size:.8rem;line-height:1.5;margin:-3px 0 12px;}
+.ad-chart-toggles{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
+.ad-chart-toggles label{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;background:#101f27;border:1px solid #34505e;border-radius:999px;color:#d7e3e9;font-size:.78rem;}
+.ad-chart-toggles input{accent-color:#ff8a32;}
+.ad-chart-toggles input:disabled+span{opacity:.55;}
+.ad-curves-canvas-wrap{position:relative;min-height:260px;background:#0b141c;border:1px solid #263d49;border-radius:12px;padding:12px;}
+.ad-chart-empty{display:none;position:absolute;inset:0;place-items:center;text-align:center;padding:20px;color:#a9bdc8;font-size:.84rem;}
+.ad-chart-averages{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.ad-chart-average{padding:8px 11px;background:#203743;border:1px solid #34505e;border-radius:9px;color:#e5edf1;font-size:.78rem;}
+@media(max-width:650px){.ad-curves-canvas-wrap{min-height:220px;padding:7px}.ad-chart-toggles label{font-size:.72rem}}
+
+.ad-mode-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 13px;margin:0 0 12px;background:#14232d;border:1px solid #34505e;border-radius:12px;color:#cbd9df;font-size:.8rem;}
+.ad-mode-toolbar span{font-weight:800;}
+.ad-mode-toggle{padding:8px 13px;border:1px solid #ff8a32;border-radius:9px;background:rgba(255,107,0,.12);color:#ffb27e;font-weight:800;cursor:pointer;}
+#dopamine-session-sheet[data-sheet-mode="inspect"] .ad-title-input,#dopamine-session-sheet[data-sheet-mode="inspect"] .ad-textarea,#dopamine-session-sheet[data-sheet-mode="inspect"] .ad-input-sm{opacity:.9;}
+#dopamine-session-sheet[data-sheet-mode="inspect"] .ad-footer{display:none;}
+#dopamine-session-sheet[data-sheet-mode="inspect"] #ad-add-photo-btn{display:none!important;}
+#dopamine-session-sheet[data-sheet-mode="inspect"] [data-del-photo]{display:none!important;}
+@media(max-width:520px){.ad-mode-toolbar{align-items:flex-start;flex-direction:column}.ad-mode-toggle{width:100%}}
+
+</style>
+
 </head>
 <body>
 
@@ -1460,7 +1539,7 @@
   <section class="dashboard-layout"><div class="main-dashboard-box">
     <div class="card-title-flex"><h2><i class="fa-solid fa-users" style="color:var(--bike-orange)"></i> Profils sportifs</h2><button class="medal-tab" onclick="loadDopamineProfiles()">Actualiser</button></div>
     <p style="color:var(--text-sub);font-size:.82rem;">Consulte ton profil sportif et découvre les athlètes qui ont choisi de rendre leur profil public.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;"><button class="medal-tab active" onclick="loadMyDopamineProfile()">Mon profil sportif</button><input id="dopamine-profile-search" placeholder="Rechercher un pseudo…" oninput="searchDopamineProfiles()" style="flex:1;min-width:180px;padding:10px;border-radius:8px;background:var(--card-bg);color:var(--text-main);border:1px solid var(--card-border);"></div>
+    <div class="profile-toolbar"><button class="medal-tab active" type="button" onclick="loadMyDopamineProfile()"><i class="fa-solid fa-user"></i> Mon profil sportif</button><label class="dopamine-search-box" for="dopamine-profile-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="dopamine-profile-search" type="search" placeholder="Rechercher un sportif ou un pseudo…" oninput="searchDopamineProfiles()" autocomplete="off"></label></div>
     <div id="dopamine-profile-message" style="color:var(--text-sub);font-size:.82rem;margin:8px 0;" aria-live="polite"></div>
     <div id="dopamine-profile-detail"></div>
     <div id="dopamine-profile-results" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px;"></div>
@@ -1472,11 +1551,11 @@
   <section class="dashboard-layout"><div class="main-dashboard-box">
     <div class="card-title-flex"><h2><i class="fa-solid fa-scale-balanced" style="color:var(--bike-orange)"></i> Face-à-Face</h2><button class="medal-tab" onclick="loadDopamineProfiles()">Actualiser les athlètes</button></div>
     <p style="color:var(--text-sub);font-size:.82rem;">Compare les statistiques des profils publics ou de tes coéquipiers acceptés, selon les autorisations Supabase.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0;">
-      <label>Premier athlète<select id="faceoff-athlete-a" style="display:block;width:100%;padding:10px;margin-top:5px;background:var(--card-bg);color:var(--text-main);border:1px solid var(--card-border);border-radius:8px;"></select></label>
-      <label>Deuxième athlète<select id="faceoff-athlete-b" style="display:block;width:100%;padding:10px;margin-top:5px;background:var(--card-bg);color:var(--text-main);border:1px solid var(--card-border);border-radius:8px;"></select></label>
+    <div class="faceoff-selectors">
+      <label class="faceoff-select-card faceoff-select-a"><span class="faceoff-select-title"><span class="faceoff-dot"></span> SPORTIF A · BLEU</span><select id="faceoff-athlete-a" aria-label="Choisir le premier sportif"><option value="">Choisir le premier sportif…</option></select></label>
+      <label class="faceoff-select-card faceoff-select-b"><span class="faceoff-select-title"><span class="faceoff-dot"></span> SPORTIF B · ORANGE</span><select id="faceoff-athlete-b" aria-label="Choisir le deuxième sportif"><option value="">Choisir le deuxième sportif…</option></select></label>
     </div>
-    <button class="btn-pro" onclick="runDopamineFaceoff()">Comparer les sportifs</button>
+    <button class="btn-pro faceoff-compare-button" onclick="runDopamineFaceoff()"><i class="fa-solid fa-scale-balanced"></i> Comparer les deux sportifs</button>
     <div id="dopamine-faceoff-results" style="margin-top:15px;"></div>
     <hr style="border-color:var(--card-border);margin:22px 0;">
     <h3>Mes records personnels</h3><div id="dopamine-personal-records" style="margin-top:10px;"></div>
@@ -2950,7 +3029,7 @@ async function syncStravaActivities(tokenData) {
       // durée OU distance concorde à 10 % (et si aucune autre métrique disponible ne contredit fortement la correspondance).
       const manualCandidates = appData.sessionsHistory.filter(s => {
         if (!s || s.source === 'strava' || s.stravaActivityId || String(s.date || '').slice(0, 10) !== dateStr || s.sport !== sport) return false;
-        const oldDuration = Number(s.durationSeconds) || Math.round((typeof getSessionDurationMinutesutes === 'function' ? getSessionDurationMinutesutes(s) : 0) * 60);
+        const oldDuration = Number(s.durationSeconds) || Math.round((typeof getSessionDurationMinutesutes === 'function' ? getSessionDurationMinutes(s) : 0) * 60);
         const oldDistance = typeof getSessionDistanceKm === 'function' ? getSessionDistanceKm(s) : Number(s.distanceKm || s.distance || 0);
         const durationMatches = closeMetric(oldDuration, durationSeconds);
         const distanceMatches = closeMetric(oldDistance, distanceKm);
@@ -4182,6 +4261,7 @@ function refreshEditSessionFriendSuggestions() {
       if(detailBox){detailBox.style.display=(session.stravaActivityId?'block':'none');if(session.stravaActivityId){document.getElementById('edit-session-strava-details-content').textContent='Chargement des détails Strava…';loadStravaActivityDetails(session).catch(err=>{document.getElementById('edit-session-strava-details-content').textContent='Détails indisponibles : '+err.message;});}}
 const sheet = document.getElementById('dopamine-session-sheet');
       if (sheet) {
+        setDopamineSheetMode('edit');
         try {
           const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
           const updateSheetSport = (sp) => {
@@ -4388,6 +4468,16 @@ const sheet = document.getElementById('dopamine-session-sheet');
               if (el) el.value = extraWeather.value;
             };
           }
+          const extraActivityType = document.getElementById('ad-extra-activity-type');
+          if (extraActivityType) {
+            extraActivityType.value = session.activityType || session.workoutType || 'autre entraînement';
+            extraActivityType.onchange = () => {
+              session.activityType = extraActivityType.value;
+              session.workoutType = extraActivityType.value;
+              const advice = document.getElementById('ad-coach-tip');
+              if (advice) advice.innerHTML = buildCoachZonesAdvice(session, session.stravaDetails || {});
+            };
+          }
 
           // Masquer les anciens blocs en doublon
           const oldFormGrid = document.querySelector('#edit-session-modal .edit-session-dialog > div[style*="grid-template-columns"]');
@@ -4535,54 +4625,6 @@ const sheet = document.getElementById('dopamine-session-sheet');
       session.stravaDetails.streams=optional[1].status==='fulfilled'?optional[1].value:null;
       saveAppData();renderStravaActivityDetails(session);if(typeof populateDopamineSheetDetails==='function')populateDopamineSheetDetails(session);
     }
-    function buildGpsSvgTrace(d, session) {
-      const polyline =
-        d?.map?.summary_polyline ||
-        d?.summary_polyline ||
-        session?.map?.summary_polyline ||
-        session?.summary_polyline ||
-        session?.polyline ||
-        '';
-
-      const coords = Array.isArray(session?.gpsPoints) && session.gpsPoints.length >= 2
-        ? session.gpsPoints
-        : (typeof decodeStravaPolyline === 'function' && polyline ? decodeStravaPolyline(polyline) : []);
-
-      if (!Array.isArray(coords) || coords.length < 2) {
-        return '<div style="padding:12px;color:#94a3b8;font-size:0.85rem;">Aucune trace GPS disponible pour cette séance.</div>';
-      }
-
-      const lats = coords.map((p) => Number(p[0])).filter(Number.isFinite);
-      const lngs = coords.map((p) => Number(p[1])).filter(Number.isFinite);
-      if (lats.length < 2 || lngs.length < 2) {
-        return '<div style="padding:12px;color:#94a3b8;font-size:0.85rem;">Coordonnées GPS incomplètes.</div>';
-      }
-
-      const minLat = Math.min(...lats);
-      const maxLat = Math.max(...lats);
-      const minLng = Math.min(...lngs);
-      const maxLng = Math.max(...lngs);
-      const spanLat = Math.max(maxLat - minLat, 0.0001);
-      const spanLng = Math.max(maxLng - minLng, 0.0001);
-
-      const w = 420;
-      const h = 180;
-      const pad = 16;
-
-      const pts = coords.map((p) => {
-        const lat = Number(p[0]);
-        const lng = Number(p[1]);
-        const x = pad + ((lng - minLng) / spanLng) * (w - pad * 2);
-        const y = (h - pad) - ((lat - minLat) / spanLat) * (h - pad * 2);
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-      }).join(' ');
-
-      return `
-        <svg viewBox="0 0 ${w} ${h}" style="width:100%;max-height:200px;background:rgba(15,23,42,0.6);border-radius:10px;display:block;">
-          <polyline fill="none" stroke="#ff6b00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${pts}" />
-        </svg>
-      `;
-    }
 function populateDopamineSheetDetails(session) {
       const d = session?.stravaDetails || {};
 
@@ -4593,33 +4635,55 @@ function populateDopamineSheetDetails(session) {
 
       const splitsBody = document.getElementById('ad-splits-body');
       if (splitsBody) {
-        const splits = (Array.isArray(d.splitsMetric) && d.splitsMetric.length)
-          ? d.splitsMetric
-          : (Array.isArray(d.laps) ? d.laps : []);
-        splitsBody.innerHTML = splits.length
-          ? splits.map((s, idx) => `
-              <tr>
-                <td>${idx + 1}</td>
-                <td>${s.distance ? `${(Number(s.distance) / 1000).toFixed(2)} km` : '--'}</td>
-                <td>${stravaTime(s.moving_time || s.elapsed_time)}</td>
-                <td>${stravaPace(s.average_speed)}</td>
-                <td>${s.average_heartrate ? `${Math.round(s.average_heartrate)} bpm` : '--'}</td>
-              </tr>
-            `).join('')
-          : '<tr><td colspan="5" style="color:#94a3b8;">Aucun temps intermédiaire disponible.</td></tr>';
+        const splits = (Array.isArray(d.splitsMetric) && d.splitsMetric.length) ? d.splitsMetric : (Array.isArray(d.laps) ? d.laps : []);
+        splitsBody.innerHTML = splits.length ? splits.map((part, idx) => {
+          const distanceKm = Number(part.distance) > 0 ? Number(part.distance) / 1000 : 0;
+          const speed = Number(part.average_speed) > 0 ? (Number(part.average_speed) * 3.6).toFixed(1) + ' km/h' : '--';
+          const elevation = Number.isFinite(Number(part.elevation_difference)) ? Math.round(Number(part.elevation_difference)) + ' m' : '--';
+          const cadenceValue = Number(part.average_cadence) > 0 ? Math.round(Number(part.average_cadence)) : '--';
+          return `<tr><td>${idx + 1}${distanceKm ? ` · ${distanceKm.toFixed(2)} km` : ''}</td><td>${stravaTime(part.moving_time || part.elapsed_time)}</td><td>${stravaPace(part.average_speed)}</td><td>--</td><td>${speed}</td><td>${elevation}</td><td>${part.average_heartrate ? Math.round(part.average_heartrate) + ' bpm' : '--'}</td><td>${cadenceValue}</td></tr>`;
+        }).join('') : '<tr><td colspan="8" style="color:#a9bdc8;">Aucun temps intermédiaire transmis pour cette sortie.</td></tr>';
       }
 
-      const curvesBox = document.getElementById('ad-curves-box');
-      if (curvesBox) {
-        const splits = Array.isArray(d.splitsMetric) ? d.splitsMetric : [];
-        curvesBox.innerHTML = splits.length >= 2
-          ? buildPaceSvgChart(splits)
-          : '<span style="color:#94a3b8;">Courbe disponible dès que plusieurs kilomètres sont enregistrés.</span>';
+      // Courbes multi-indicateurs à partir des flux Strava réellement disponibles.
+      const chartCanvas = document.getElementById('ad-activity-chart');
+      const chartEmpty = document.getElementById('ad-curves-empty');
+      const toggles = document.getElementById('ad-chart-toggles');
+      const averagesBox = document.getElementById('ad-chart-averages');
+      const streams = d.streams || {};
+      const streamData = key => Array.isArray(streams?.[key]?.data) ? streams[key].data : (Array.isArray(streams?.[key]) ? streams[key] : []);
+      const distanceStream = streamData('distance');
+      const labels = distanceStream.map(v => (Number(v) / 1000).toFixed(2));
+      const definitions = [
+        {key:'pace',source:'velocity_smooth',label:'Allure',axis:'yPace',color:'#38bdf8',convert:v=>Number(v)>0?1000/Number(v)/60:null,unit:'min/km'},
+        {key:'heartrate',source:'heartrate',label:'Fréquence cardiaque',axis:'yHr',color:'#fb7185',convert:v=>Number(v)>0?Number(v):null,unit:'bpm'},
+        {key:'cadence',source:'cadence',label:'Cadence',axis:'yCad',color:'#a78bfa',convert:v=>Number(v)>0?Number(v):null,unit:'tr/min'},
+        {key:'altitude',source:'altitude',label:'Altitude',axis:'yAlt',color:'#34d399',convert:v=>Number.isFinite(Number(v))?Number(v):null,unit:'m'},
+        {key:'temp',source:'temp',label:'Température',axis:'yTemp',color:'#fbbf24',convert:v=>Number.isFinite(Number(v))?Number(v):null,unit:'°C'}
+      ];
+      const available = definitions.map(def => ({...def, values:streamData(def.source)})).filter(def => def.values.length >= 2 && labels.length >= 2 && def.values.length === labels.length);
+      if (window.adDopamineActivityChart) { window.adDopamineActivityChart.destroy(); window.adDopamineActivityChart = null; }
+      if (chartCanvas && window.Chart && available.length) {
+        if (chartEmpty) chartEmpty.style.display = 'none';
+        const selected = () => Array.from(toggles?.querySelectorAll('input[data-stream]:checked') || []).map(el => el.dataset.stream);
+        const buildDatasets = () => available.filter(def => selected().includes(def.key)).map(def => ({
+          label:def.label, data:def.values.map(def.convert), yAxisID:def.axis, borderColor:def.color, backgroundColor:def.color,
+          pointRadius:0, borderWidth:2, tension:.22, spanGaps:true
+        }));
+        const axes = {};
+        available.forEach(def => { axes[def.axis] = {type:'linear',display:true,position:def.axis==='yPace'||def.axis==='yAlt'||def.axis==='yTemp'?'left':'right',grid:{drawOnChartArea:def.axis==='yPace'},ticks:{color:'#a9bdc8',maxTicksLimit:5},title:{display:true,text:def.unit,color:def.color}}; });
+        window.adDopamineActivityChart = new Chart(chartCanvas,{type:'line',data:{labels,datasets:buildDatasets()},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#d7e3e9',usePointStyle:true}}},scales:{x:{ticks:{color:'#a9bdc8',maxTicksLimit:8},title:{display:true,text:'Distance (km)',color:'#a9bdc8'}},...axes}}});
+        if (toggles) toggles.querySelectorAll('input[data-stream]:not(:disabled)').forEach(input => { input.onchange = () => { window.adDopamineActivityChart.data.datasets = buildDatasets(); window.adDopamineActivityChart.update(); }; });
+        if (averagesBox) averagesBox.innerHTML = available.map(def => { const vals=def.values.map(def.convert).filter(v=>v!==null&&Number.isFinite(v)); const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null; const value=avg===null?'--':(def.key==='pace'?`${Math.floor(avg)}:${String(Math.round((avg%1)*60)).padStart(2,'0')} /km`:`${avg.toFixed(1)} ${def.unit}`); return `<span class="ad-chart-average">${def.label} moyenne : <strong>${value}</strong></span>`; }).join('');
+      } else {
+        if (chartEmpty) { chartEmpty.style.display = 'grid'; chartEmpty.textContent = Array.isArray(d.splitsMetric) && d.splitsMetric.length >= 2 ? 'Flux détaillés non transmis. Les temps intermédiaires restent consultables dans le tableau ci-dessus.' : 'Aucune donnée de courbe détaillée disponible pour cette séance.'; }
+        if (averagesBox) averagesBox.innerHTML = '';
+        if (toggles) toggles.querySelectorAll('input[data-stream]').forEach(input => { if(input.dataset.stream!=='vap') input.checked = false; });
       }
 
-      const mapBox = document.getElementById('ad-map-box');
+const mapBox = document.getElementById('ad-map-box');
       if (mapBox) {
-        mapBox.innerHTML = typeof buildGpsSvgTrace === 'function' ? buildGpsSvgTrace(d, session) : '';
+        mapBox.innerHTML = buildGpsSvgTrace(d, session);
       }
 
       const coachTip = document.getElementById('ad-coach-tip');
@@ -4633,8 +4697,7 @@ function populateDopamineSheetDetails(session) {
         const buckets = Array.isArray(hrZoneBlock?.distribution_buckets) ? hrZoneBlock.distribution_buckets : [];
         const totalBucketSec = buckets.reduce((acc, b) => acc + (Number(b.time) || 0), 0);
         zonesList.innerHTML = buckets.length && totalBucketSec > 0
-          ? `
-            ${buckets.map((b, idx) => {
+          ? buckets.map((b, idx) => {
               const pct = Math.round(((Number(b.time) || 0) / totalBucketSec) * 100);
               return `
                 <div style="margin-bottom:10px;">
@@ -4645,55 +4708,23 @@ function populateDopamineSheetDetails(session) {
                   <div class="ad-bar-track"><div class="ad-bar-fill" style="width:${pct}%;"></div></div>
                 </div>
               `;
-            }).join('')}
-            <div style="margin-top:10px;overflow-x:auto;">
-              <table style="width:100%;border-collapse:collapse;font-size:0.78rem;color:#e2e8f0;">
-                <thead>
-                  <tr style="border-bottom:1px solid rgba(148,163,184,0.25);color:#94a3b8;text-align:left;">
-                    <th style="padding:6px;">Zone</th>
-                    <th style="padding:6px;">Plage BPM</th>
-                    <th style="padding:6px;">Temps</th>
-                    <th style="padding:6px;">%</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${buckets.map((b, idx) => {
-                    const sec = Number(b.time) || 0;
-                    const pct = ((sec / totalBucketSec) * 100).toFixed(1);
-                    return `
-                      <tr style="border-bottom:1px solid rgba(148,163,184,0.1);">
-                        <td style="padding:6px;"><strong>Z${idx + 1}</strong></td>
-                        <td style="padding:6px;">${b.min}–${b.max === -1 ? 'max' : b.max} bpm</td>
-                        <td style="padding:6px;">${stravaTime(sec)}</td>
-                        <td style="padding:6px;">${pct}%</td>
-                      </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          `
+            }).join('')
           : '<p style="color:#94a3b8;margin:0;">Zones cardiaques Strava non disponibles sur cette sortie (FC moy : ' + (d.averageHeartrate || session.averageBpm || '--') + ' bpm).</p>';
       }
-}
-const zonesMetrics = document.getElementById('ad-zones-metrics');
+
+      const zonesMetrics = document.getElementById('ad-zones-metrics');
       if (zonesMetrics) {
         zonesMetrics.innerHTML = `
           <div class="ad-grid-4">
-            <div class="ad-stat"><span>Effort relatif (Suffer)</span><strong>${d.sufferScore ?? '--'}</strong></div>
-            <div class="ad-stat"><span>Puissance pondérée</span><strong>${d.weightedAverageWatts ? `${d.weightedAverageWatts} W` : '--'}</strong></div>
-            <div class="ad-stat"><span>Énergie</span><strong>${d.kilojoules ? `${d.kilojoules} kJ` : '--'}</strong></div>
-            <div class="ad-stat"><span>Appareil</span><strong>${stravaSafeText(d.deviceName || '--')}</strong></div>
-          </div>
-          <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(15,23,42,0.5);border:1px solid rgba(148,163,184,0.16);font-size:0.78rem;color:#cbd5e1;line-height:1.5;">
-            <div><strong>Effort relatif :</strong> mesure l'intensité globale de la séance selon ton profil et ta charge d'effort.</div>
-            <div><strong>Puissance pondérée :</strong> estimation de l'effort moyen pondéré (surtout pertinente à vélo ou avec capteur dédié ; sans capteur dédié en course à pied, elle reste indicative ou non disponible).</div>
-            <div><strong>Énergie (kJ) :</strong> estimation de l'énergie mécanique dépensée pendant la sortie.</div>
+            <div class="ad-stat"><span>Effort relatif · Strava</span><strong>${d.sufferScore ?? '--'}</strong><small>Indice d’intensité globale estimé par Strava. Plus il est élevé, plus la séance a représenté une charge importante.</small></div>
+            <div class="ad-stat"><span>Puissance pondérée</span><strong>${d.weightedAverageWatts ? `${d.weightedAverageWatts} W` : '--'}</strong><small>Puissance qui tient compte des variations d’effort. Surtout pertinente avec un capteur vélo ; en course sans capteur dédié, elle peut ne pas être disponible.</small></div>
+            <div class="ad-stat"><span>Énergie mécanique</span><strong>${d.kilojoules ? `${d.kilojoules} kJ` : '--'}</strong><small>Travail mécanique estimé pendant l’activité. Ce n’est pas la même chose que les calories alimentaires.</small></div>
+            <div class="ad-stat"><span>Appareil</span><strong>${stravaSafeText(d.deviceName || '--')}</strong><small>Montre, compteur ou appareil transmis par la source.</small></div>
           </div>
         `;
-      } 
+      }
 
-   const effortsBody = document.getElementById('ad-efforts-body');
+      const effortsBody = document.getElementById('ad-efforts-body');
       if (effortsBody) {
         const efforts = Array.isArray(d.bestEfforts) ? d.bestEfforts : [];
         effortsBody.innerHTML = efforts.length
@@ -4720,20 +4751,15 @@ const zonesMetrics = document.getElementById('ad-zones-metrics');
             `).join('')
           : '<tr><td colspan="3" style="color:#94a3b8;">Aucun segment Strava traversé sur cette sortie.</td></tr>';
       }
-function stravaSafeText(value){return escapeHTML(value==null?'':String(value));}
+    }
+    function stravaSafeText(value){return escapeHTML(value==null?'':String(value));}
     function stravaTime(seconds){const n=Math.max(0,Math.round(Number(seconds)||0));const h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return h?`${h} h ${m} min ${s} s`:`${m} min ${s} s`;}
     function stravaPace(speed){return Number(speed)>0?`${Math.floor(1000/Number(speed)/60)}:${String(Math.floor(1000/Number(speed)%60)).padStart(2,'0')} /km`:'—';}
 
     function buildCoachZonesAdvice(session, d){
-      const currentId = String(typeof activeUserId !== 'undefined' && activeUserId ? activeUserId : '');
-      const ownerId = String(session?.user_id || session?.userId || session?.ownerId || '');
-      if (currentId && ownerId && currentId !== ownerId) {
-        return '';
-      }
-
       const actType=(session.activityType||session.workoutType||'').toString().trim();
       if(!actType){
-        return `<div class="strava-coach-box"><i class="fa-solid fa-robot" style="margin-right:6px;"></i><strong>Coach IA — Zones :</strong> Élément non renseigné : sélectionne un type d’activité (EF, Fractionné, Récupération ou autre entraînement) dans <em>Infos annexes</em> pour obtenir le conseil adapté.</div>`;
+        return `<div class="strava-coach-box"><strong>Coach IA — Zones :</strong> Élément non renseigné : sélectionne un type d’activité (EF, Fractionné, Récupération ou autre entraînement) dans <em>Aperçu & Saisie</em> pour obtenir le conseil adapté.</div>`;
       }
       const avgHr=Number(d.averageHeartrate||session.averageBpm||0);
       const maxHr=Number(appData?.profile?.maxHr||d.maxHeartrate||190);
@@ -4749,10 +4775,10 @@ function stravaSafeText(value){return escapeHTML(value==null?'':String(value));}
       } else if(lower.includes('recup')||lower.includes('récup')){
         advice=`Séance de récupération : garde un effort très contrôlé et une cadence fluide pour favoriser l’assimilation des charges précédentes.`;
       }
-      return `<div class="strava-coach-box"><i class="fa-solid fa-robot" style="margin-right:6px;"></i><strong>Coach IA — Zones (${stravaSafeText(actType)}) :</strong> ${stravaSafeText(advice)}</div>`;
+      return `<div class="strava-coach-box"><strong>Coach IA — Zones (${stravaSafeText(actType)}) :</strong> ${stravaSafeText(advice)}</div>`;
     }
 
-function buildPaceSvgChart(splits){
+    function buildPaceSvgChart(splits){
       if(!Array.isArray(splits)||splits.length<2) return '<p class="strava-muted">Courbe disponible dès que plusieurs kilomètres sont enregistrés.</p>';
       const paces=splits.map(s=>Number(s.average_speed)>0?(1000/Number(s.average_speed))/60:null).filter(v=>v!==null&&Number.isFinite(v));
       if(paces.length<2) return '<p class="strava-muted">Allure non disponible pour tracer la courbe.</p>';
@@ -4811,7 +4837,148 @@ function buildPaceSvgChart(splits){
     function openStravaDetailsPage(){
       const id=document.getElementById('edit-session-id')?.value;const session=appData.sessionsHistory.find(x=>String(x.id)===String(id));if(!session?.stravaActivityId){alert('Cette séance ne possède pas d’identifiant Strava.');return;}
       const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='block';
-      const content=
+      const content=document.getElementById('strava-activity-details-page-content');if(content)content.innerHTML='<p>Chargement des données détaillées Strava…</p>';
+      loadStravaActivityDetails(session).then(()=>{if(content){const box=document.getElementById('edit-session-strava-details-content');content.innerHTML=box?.innerHTML||'Détails indisponibles.';}}).catch(err=>{if(content)content.textContent='Détails indisponibles : '+err.message;});
+    }
+    function closeStravaDetailsPage(){const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='none';}
+    async function deleteEditedSession() {
+      const id=document.getElementById('edit-session-id')?.value;
+      const session=appData.sessionsHistory.find(item=>String(item.id)===String(id));
+      if(!session){alert('Cette séance est introuvable.');closeEditSession();return;}
+      if(!confirm('Supprimer définitivement cette séance ?'))return;
+      appData.sessionsHistory=appData.sessionsHistory.filter(item=>String(item.id)!==String(id));
+      let cloudDeleteError='';
+      try {
+        if(supabaseClient && activeUserId && Number.isFinite(Number(id)) && String(id).trim()!=='') {
+          const result=await supabaseClient.from('sessions').delete().eq('id',Number(id)).eq('user_id',String(activeUserId));
+          if(result.error) throw result.error;
+        }
+      } catch(error) { cloudDeleteError=error.message||String(error); console.error('Suppression Supabase de la séance impossible :',error); }
+      ensureXpBaseline();recalculateStatsFromHistory();recalculateXpFromHistory();checkTrophiesUnlock({strict:true});
+      if(typeof renderHistory==='function')renderHistory();if(typeof renderChart==='function')renderChart();if(typeof renderHomeCalendar==='function')renderHomeCalendar();if(typeof updateRaceCountdown==='function')updateRaceCountdown();
+      saveAppData();closeEditSession();
+      alert(cloudDeleteError?'Séance supprimée de l’historique local. Attention : la suppression de la ligne Supabase a échoué : '+cloudDeleteError:'Séance supprimée. Statistiques, XP et trophées vérifiables recalculés.');
+    }
+    function closeEditSession() { const modal = document.getElementById('edit-session-modal'); if (modal) modal.style.display = 'none'; }
+    function setDopamineSheetMode(mode) {
+      const sheet = document.getElementById('dopamine-session-sheet');
+      if (!sheet) return;
+      const inspect = mode === 'inspect';
+      sheet.dataset.sheetMode = inspect ? 'inspect' : 'edit';
+      const label = document.getElementById('ad-sheet-mode-label');
+      const toggle = document.getElementById('ad-sheet-mode-toggle');
+      if (label) label.innerHTML = inspect ? '<i class="fa-solid fa-eye"></i> Mode consultation' : '<i class="fa-solid fa-pen-to-square"></i> Mode modification';
+      if (toggle) toggle.textContent = inspect ? 'Modifier cette séance' : 'Passer en consultation';
+      sheet.querySelectorAll('input:not([type="hidden"]),textarea,select').forEach(el => {
+        if (el.id === 'ad-photo-input') return;
+        if (el.type === 'range' || el.tagName === 'SELECT') el.disabled = inspect;
+        else el.readOnly = inspect;
+      });
+      const save = document.getElementById('ad-save-btn');
+      const remove = document.getElementById('ad-delete-btn');
+      const addPhoto = document.getElementById('ad-add-photo-btn');
+      if (save) save.style.display = inspect ? 'none' : '';
+      if (remove) remove.style.display = inspect ? 'none' : '';
+      if (addPhoto) addPhoto.style.display = inspect ? 'none' : '';
+      sheet.querySelectorAll('[data-del-photo]').forEach(btn => btn.style.display = inspect ? 'none' : '');
+    }
+    function toggleDopamineSheetMode() {
+      const sheet = document.getElementById('dopamine-session-sheet');
+      setDopamineSheetMode(sheet?.dataset.sheetMode === 'inspect' ? 'edit' : 'inspect');
+    }
+    function inspectDopamineSession(id) {
+      openEditSession(id);
+      setDopamineSheetMode('inspect');
+    }
+
+    function saveEditedSession() {
+      const val=id=>document.getElementById('edit-session-'+id)?.value;
+      const session = appData.sessionsHistory.find(item => String(item.id) === String(val('id')));
+      if (!session) { alert('Cette activité est introuvable.'); closeEditSession(); return; }
+      const title=String(val('title')||'').trim(), date=val('date'), sport=val('sport');
+      const h=Number(val('hours')||0),m=Number(val('minutes')||0),sec=Number(val('seconds')||0),durationSeconds=h*3600+m*60+sec,durationMinutes=durationSeconds/60;
+      const distance=Number(val('distance')||0),elevation=Number(val('elevation')||0),bpm=Number(val('bpm')||0),rpe=Number(val('rpe')||5),calories=Number(val('calories')||0),watts=Number(val('watts')||0),cadence=Number(val('cadence')||0),averageSpeedKmh=Number(val('average-speed')||0),maxSpeedKmh=Number(val('max-speed')||0);
+      if(!title||!date||!['natation','velo','course','marche','hiit','autres','competition'].includes(sport)){alert('Vérifie le titre, la date et la discipline.');return;}
+      if(durationSeconds<=0||h>999||m>59||sec>59||distance<0||distance>1000||elevation<0||elevation>20000||bpm<0||bpm>250||!Number.isInteger(rpe)||rpe<1||rpe>10||calories<0||calories>50000||watts<0||watts>3000||cadence<0||cadence>300||averageSpeedKmh<0||averageSpeedKmh>200||maxSpeedKmh<0||maxSpeedKmh>200){alert('Vérifie la durée, la distance, le D+, le BPM, le RPE, les calories et les vitesses.');return;}
+      const previousSport=session.sport;
+      const isCompetition=sport==='competition';
+      Object.assign(session,{
+        title,date,sport,type:isCompetition?'competition':'activity',
+        startTime:String(val('start-time')||'').trim()||session.startTime||null,
+        activityType:String(val('activity-type')||'').trim()||session.activityType||null,
+        durationSeconds,duration:`${String(h).padStart(2,'0')} h ${String(m).padStart(2,'0')} min ${String(sec).padStart(2,'0')} s`,
+        distance:`${distance} km`,rawVal:['hiit','autres'].includes(sport)?durationMinutes:distance,
+        elevationM:Math.round(elevation),averageBpm:bpm,rpe,feeling:val('feeling')||getRPEFeeling(rpe),
+        comment:String(val('comment')||'').trim().slice(0,1500),calories:Math.round(calories),
+        source:val('source')||'manual',partners:String(val('partners')||'').split(',').map(x=>x.trim()).filter(Boolean),
+        watts:watts||null,averageWatts:watts||session.averageWatts||null,cadence:cadence||null,
+        averageCadence:cadence||session.averageCadence||null,averageSpeedKmh:averageSpeedKmh||null,
+        maxSpeedKmh:maxSpeedKmh||null,terrain:String(val('terrain')||'').trim()||null,
+        weather:String(val('weather')||'').trim()||null,waterPlace:val('water-place')||null,
+        waterCondition:val('water-condition')||null,swimWeather:val('swim-weather')||null,
+        format:String(val('format')||'').trim()||session.format||null,updatedAt:new Date().toISOString()
+      });      if(isCompetition){
+        const previousDetails=session.competitionDetails||{}, detailValues={...(previousDetails.details||{})};
+        ['swim','swim-distance','t1','bike','bike-distance','bike-elevation','t2','run1','run1-distance','run1-elevation','run','run-distance','run-elevation','other-duration','other-distance'].forEach(k=>{const el=document.getElementById('edit-session-comp-'+k);if(el){const n=Number(el.value);if(el.value.trim()===''||!Number.isFinite(n)||n===0)delete detailValues[k];else detailValues[k]=n;}});
+        const contextValues={};
+        ['water-place','water-condition','bike-terrain','run-terrain','weather-condition','place'].forEach(k=>{const el=document.getElementById('edit-session-comp-'+k);if(el&&el.value.trim())contextValues[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=el.value.trim();});
+        session.eventKind=document.getElementById('edit-session-comp-kind')?.value||session.eventKind||'triathlon';
+        session.is_competition=true;
+        session.competitionDetails={...previousDetails,...contextValues,kind:session.eventKind,format:session.format||previousDetails.format||'',details:detailValues,durationMinutes,durationSeconds,totalDistanceKm:distance,totalElevationM:Math.round(elevation),averageBpm:bpm,rpe,notes:session.comment};
+      } else {session.is_competition=false; delete session.competitionDetails; delete session.eventKind;}
+      session.xp=calculateSessionXp({sport:isCompetition?'competition':sport,isCompetition,durationMinutes,distanceKm:distance,elevationM:elevation,averageBpm:bpm});
+      updateSessionDerivedMetrics(session);
+      ensureXpBaseline(); recalculateStatsFromHistory(); recalculateXpFromHistory(); checkTrophiesUnlock({strict:true});
+      renderHistory(); if(typeof renderChart==='function')renderChart(); if(typeof renderHomeCalendar==='function')renderHomeCalendar(); if(typeof updateRaceCountdown==='function')updateRaceCountdown();
+      closeEditSession(); alert('Activité modifiée. Les statistiques, les XP et les trophées vérifiables ont été recalculés sur cet appareil.');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.activity-date-input').forEach(input => { if (!input.value) input.value = localDateISO(new Date()); }); calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); renderHomeCalendar(); showDayDetails(calendarSelectedDate); });
+
+    function filterHistory(filter, btn) {
+      historyFilter = filter;
+      document.querySelectorAll('.history-box .medal-tab').forEach(b => b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('history-list-container');
+      if (!container) return;
+      container.innerHTML = '';
+      const list = (historyFilter === 'all') ? appData.sessionsHistory : appData.sessionsHistory.filter(s => s.sport === historyFilter);
+      if (list.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-sub); font-size:0.75rem; text-align:center; padding:10px;">Aucune séance enregistrée.</p>';
+        return;
+      }
+      const escapeHTML = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+      list.forEach(s => {
+        updateSessionDerivedMetrics(s);
+        const feedback = [s.feeling ? `Ressenti : ${escapeHTML(s.feeling)}` : '', s.comment ? escapeHTML(s.comment) : ''].filter(Boolean).join(' — ');
+        const speedLine = Number.isFinite(Number(s.avg_speed)) && Number(s.avg_speed) > 0 ? `Vitesse moy. : ${Number(s.avg_speed).toFixed(2).replace('.', ',')} km/h` : '';
+        const vapLine = s.sport === 'course' ? 'VAP : nécessite un tracé GPX' : '';
+        const stravaMetrics = [
+          Number(s.averageSpeedKmh)>0 ? `Vitesse Strava : ${Number(s.averageSpeedKmh).toFixed(2)} km/h` : '',
+          Number(s.maxSpeedKmh)>0 ? `Max : ${Number(s.maxSpeedKmh).toFixed(2)} km/h` : '',
+          Number(s.averageWatts || s.watts)>0 ? `${Math.round(Number(s.averageWatts || s.watts))} W` : '',
+          Number(s.averageCadence || s.cadence)>0 ? `${Math.round(Number(s.averageCadence || s.cadence))} tr/min` : '',
+          Number(s.calories)>0 ? `${Math.round(Number(s.calories))} kcal` : '',
+          s.workoutType!=null ? `Type : ${s.workoutType}` : '',
+          s.stravaDetails?.splitsMetric?.length ? `${s.stravaDetails.splitsMetric.length} splits` : '',
+          s.stravaDetails?.laps?.length ? `${s.stravaDetails.laps.length} tours` : '',
+          s.stravaDetails?.segmentEfforts?.length ? `${s.stravaDetails.segmentEfforts.length} segments` : ''
+        ].filter(Boolean).join(' · ');
+        const metricLine = [speedLine, stravaMetrics, vapLine].filter(Boolean).join(' · ');
+        container.innerHTML += `
+          <div class="history-card">
+            <div style="min-width:0;flex:1;"><strong>${escapeHTML(s.title)}</strong><div style="font-size:0.65rem; color:var(--text-sub);">${escapeHTML(s.date)} • ${escapeHTML(s.duration)}</div>${metricLine ? `<div style="font-size:0.68rem;color:var(--bike-orange);margin-top:4px;">${escapeHTML(metricLine)}</div>` : ''}${feedback ? `<div style="font-size:0.72rem;color:var(--text-sub);margin-top:5px;overflow-wrap:anywhere;">${feedback}</div>` : ''}</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="text-align:right;"><strong style="color:var(--bike-orange);">${s.distance}</strong><div style="font-size:0.65rem; color:var(--xp-gold);">+${s.xp} XP</div></div>
+              <button type="button" class="medal-tab" title="Inspecter cette activité" aria-label="Inspecter cette activité" onclick="inspectDopamineSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-eye"></i></button><button type="button" class="medal-tab" title="Modifier cette activité" aria-label="Modifier cette activité" onclick="openEditSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-delete-session" onclick="deleteSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>`;
+      });
+    }
 
     function setCalendarMode(mode) {
       calendarMode = mode;
@@ -5287,7 +5454,7 @@ async function refreshFriendHub(){
       const labels = { course:'Course à pied', velo:'Vélo', natation:'Natation', marche:'Marche', hiit:'HIIT', autres:'Autre', competition:'Compétition' };
       return labels[String(sport || '').toLowerCase()] || String(sport || 'Sport');
     }
- function dopamineEnsureShell() {
+    function dopamineEnsureShell() {
       if (document.getElementById('dopamine-feed-overlay')) return;
       const style = document.createElement('style');
       style.id = 'dopamine-feed-style';
@@ -5345,34 +5512,8 @@ async function refreshFriendHub(){
         ]);
         if (postResult.error) throw new Error('Impossible de charger feed_posts : ' + postResult.error.message);
         if (sessionResult.error && !/permission|policy|rls/i.test(sessionResult.error.message || '')) console.warn('Chargement des séances pour le formulaire :',sessionResult.error.message);
-
-        const rawSessions = Array.isArray(sessionResult.data) ? sessionResult.data : [];
-        const seenSessionKeys = new Set();
-        const uniqueSessions = rawSessions.filter(s => {
-          const key = s?.id != null ? `id_${String(s.id)}` : `${String(s?.date || '')}|${String(s?.sport || '')}|${String(s?.title || '')}|${String(s?.duration || '')}`;
-          if (seenSessionKeys.has(key)) return false;
-          seenSessionKeys.add(key);
-          return true;
-        });
-        dopamineFeedState.sessions = uniqueSessions;
-
-        const validUserSessionIds = new Set([
-          ...uniqueSessions.map(s => String(s?.id ?? '')).filter(Boolean),
-          ...((Array.isArray(appData?.sessionsHistory) ? appData.sessionsHistory : []).map(s => String(s?.id ?? '')).filter(Boolean))
-        ]);
-
-        const rawPosts = Array.isArray(postResult.data) ? postResult.data : [];
-        const seenPostKeys = new Set();
-        const posts = rawPosts.filter(p => {
-          if (p?.user_id === user.id && p?.session_id != null && String(p.session_id).trim() !== '') {
-            if (!validUserSessionIds.has(String(p.session_id))) return false;
-          }
-          const key = p?.id != null ? `post_${String(p.id)}` : `${String(p?.user_id || '')}|${String(p?.session_id || '')}|${String(p?.created_at || '')}`;
-          if (seenPostKeys.has(key)) return false;
-          seenPostKeys.add(key);
-          return true;
-        });
-
+        dopamineFeedState.sessions = sessionResult.data || [];
+        const posts = postResult.data || [];
         const authorIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
         let profiles = [], acceptedFriendIds = new Set();
         if (authorIds.length) {
@@ -5420,19 +5561,11 @@ async function refreshFriendHub(){
         console.error('Fil Dopamine :',err);
         content.innerHTML = `<div class="df-error">${dopamineEscape(err.message || 'Une erreur est survenue.')}</div><p class="df-muted">Si le message mentionne les droits d’accès, vérifie les politiques RLS des tables feed_posts, feed_likes, feed_comments, profiles et friendships dans Supabase.</p><button class="df-btn" type="button" onclick="refreshDopamineFeed()">Réessayer</button>`;
       } finally { dopamineFeedState.loading = false; }
-    }    }
+    }
     function renderDopamineFeed() {
       const content = document.getElementById('dopamine-feed-content');
       if (!content) return;
-      const rawSessions = dopamineFeedState.sessions || [];
-      const seenSessionOpts = new Set();
-      const sessions = rawSessions.filter(s => {
-        const key = s?.id != null ? `id_${String(s.id)}` : `${String(s?.date || '')}|${String(s?.sport || '')}|${String(s?.title || '')}|${String(s?.duration || '')}`;
-        if (seenSessionOpts.has(key)) return false;
-        seenSessionOpts.add(key);
-        return true;
-      });
-  
+      const sessions = dopamineFeedState.sessions || [];
       const options = sessions.map(s => `<option value="${dopamineEscape(s.id)}">${dopamineEscape(dopamineSportLabel(s.sport))} — ${dopamineEscape(s.title || 'Séance')} · ${dopamineEscape(s.date || '')}</option>`).join('');
       const composer = `<form class="df-composer" onsubmit="publishDopaminePost(event)"><strong><i class="fa-solid fa-plus-circle" style="color:var(--bike-orange)"></i> Partager une séance</strong><select id="df-session-select" required><option value="">Choisir une séance enregistrée…</option>${options}</select><textarea id="df-post-message" maxlength="1000" placeholder="Ajoute un message (facultatif)…"></textarea><button class="df-btn primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Publier</button><div class="df-muted" style="margin-top:6px">Seules tes séances déjà enregistrées dans Supabase sont proposées.</div></form>`;
       const cards = dopamineFeedState.posts.map(post => {
@@ -6650,6 +6783,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   </style>
 
+  <div class="ad-mode-toolbar">
+    <span id="ad-sheet-mode-label"><i class="fa-solid fa-pen-to-square"></i> Mode modification</span>
+    <button type="button" id="ad-sheet-mode-toggle" class="ad-mode-toggle" onclick="toggleDopamineSheetMode()">Passer en consultation</button>
+  </div>
   <!-- 1. Onglets au-dessus du nom de la sortie -->
   <div class="ad-tabs" role="tablist">
     <button type="button" class="ad-tab is-active" data-tab="apercu">Aperçu & Saisie</button>
@@ -6672,47 +6809,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <!-- ONGLET 1 : APERÇU & SAISIE -->
   <section class="ad-panel is-active" data-panel="apercu">
     <div class="ad-card">
-      <h3>Synthèse du flux</h3>
-      <div class="ad-grid-4" id="ad-summary-grid"></div>
-    </div>
-
-    <div class="ad-card">
-      <h3>Édition de la séance</h3>
-      <div class="ad-grid-2">
-        <div class="ad-field">
-          <label for="ad-rpe-input">Effort ressenti (RPE : <span id="ad-rpe-val">5</span>/10)</label>
-          <input id="ad-rpe-input" class="ad-range" type="range" min="1" max="10" value="5" />
-        </div>
-        <div class="ad-field">
-          <label for="ad-friend-select">Identifier un ami À LA DOPAMINE</label>
-          <select id="ad-friend-select" class="ad-select">
-            <option value="">+ Choisir un ami inscrit...</option>
-          </select>
-          <div class="ad-friend-add-row">
-            <input id="ad-friend-custom-input" class="ad-input-sm" type="text" placeholder="Pseudo À LA DOPAMINE ou e-mail Strava..." />
-            <button type="button" id="ad-friend-add-btn" class="ad-tab" style="white-space:nowrap;">+ Lier</button>
-          </div>
-          <div id="ad-friends-list" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"></div>
-        </div>
-      </div>
-
-      <div class="ad-field">
-        <label for="ad-comment-input">Description / commentaire</label>
-        <textarea id="ad-comment-input" class="ad-textarea" rows="3" placeholder="Ajoute ton ressenti ou tes notes de séance..."></textarea>
-      </div>
-
-      <div style="margin-top:10px;">
-        <div id="ad-photos-card" style="display:none;margin-bottom:10px;">
-          <div style="font-size:0.85rem;color:#cbd5e1;margin-bottom:8px;">Photos de la séance (<span id="ad-photos-count">0</span>/3)</div>
-          <div id="ad-photos-grid" class="ad-grid-4"></div>
-        </div>
-        <input id="ad-photo-input" type="file" accept="image/*" multiple style="display:none;" />
-        <button type="button" id="ad-add-photo-btn" class="ad-tab">+ Ajouter une photo (3 max)</button>
-      </div>
-    </div>
-
-    <div class="ad-card">
-      <h3>Infos annexes (Stats & Trophées)</h3>
+      <h3><i class="fa-solid fa-sliders"></i> Infos annexes · contexte de la séance</h3>
       <div class="ad-grid-4">
         <div class="ad-stat">
           <span>Discipline</span>
@@ -6766,8 +6863,62 @@ document.addEventListener('DOMContentLoaded', () => {
             <option value="autre">Autre météo</option>
           </select>
         </div>
+
+        <div class="ad-stat">
+          <span>Type d’activité (Coach IA)</span>
+          <select id="ad-extra-activity-type" class="ad-select">
+            <option value="endurance fondamentale">Endurance fondamentale (EF)</option>
+            <option value="fractionné">Fractionné / VMA</option>
+            <option value="seuil">Seuil</option>
+            <option value="récupération">Récupération</option>
+            <option value="sortie longue">Sortie longue</option>
+            <option value="compétition">Compétition</option>
+            <option value="autre entraînement">Autre entraînement</option>
+          </select>
+        </div>
       </div>
     </div>
+    <div class="ad-card">
+      <h3><i class="fa-solid fa-chart-simple"></i> Informations sur la séance</h3>
+      <div class="ad-grid-4" id="ad-summary-grid"></div>
+    </div>
+
+    <div class="ad-card">
+      <h3>Édition de la séance</h3>
+      <div class="ad-grid-2">
+        <div class="ad-field">
+          <label for="ad-rpe-input">Effort ressenti (RPE : <span id="ad-rpe-val">5</span>/10)</label>
+          <input id="ad-rpe-input" class="ad-range" type="range" min="1" max="10" value="5" />
+        </div>
+        <div class="ad-field">
+          <label for="ad-friend-select">Identifier un ami À LA DOPAMINE</label>
+          <select id="ad-friend-select" class="ad-select">
+            <option value="">+ Choisir un ami inscrit...</option>
+          </select>
+          <div class="ad-friend-add-row">
+            <input id="ad-friend-custom-input" class="ad-input-sm" type="text" placeholder="Pseudo À LA DOPAMINE ou e-mail Strava..." />
+            <button type="button" id="ad-friend-add-btn" class="ad-tab" style="white-space:nowrap;">+ Lier</button>
+          </div>
+          <div id="ad-friends-list" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+
+      <div class="ad-field">
+        <label for="ad-comment-input">Description / commentaire</label>
+        <textarea id="ad-comment-input" class="ad-textarea" rows="3" placeholder="Ajoute ton ressenti ou tes notes de séance..."></textarea>
+      </div>
+
+      <div style="margin-top:10px;">
+        <div id="ad-photos-card" style="display:none;margin-bottom:10px;">
+          <div style="font-size:0.85rem;color:#cbd5e1;margin-bottom:8px;">Photos de la séance (<span id="ad-photos-count">0</span>/3)</div>
+          <div id="ad-photos-grid" class="ad-grid-4"></div>
+        </div>
+        <input id="ad-photo-input" type="file" accept="image/*" multiple style="display:none;" />
+        <button type="button" id="ad-add-photo-btn" class="ad-tab">+ Ajouter une photo (3 max)</button>
+      </div>
+    </div>
+
+
   </section>
 
   <!-- ONGLET 2 : ANALYSE ALLURE -->
@@ -6776,7 +6927,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="ad-card">
         <h3>Temps intermédiaires / Laps</h3>
         <table class="ad-table">
-          <thead><tr><th>#</th><th>Distance</th><th>Temps</th><th>Allure</th><th>BPM</th></tr></thead>
+          <thead><tr><th>KM / tour</th><th>Temps</th><th>Allure</th><th>VAP</th><th>Vitesse</th><th>D+</th><th>BPM</th><th>Cadence</th></tr></thead>
           <tbody id="ad-splits-body"></tbody>
         </table>
       </div>
@@ -6789,16 +6940,25 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     <div class="ad-card">
       <h3>Courbes d'évolution & moyennes</h3>
-      <div id="ad-curves-box" style="min-height:140px;display:grid;place-items:center;background:#0f141c;border-radius:10px;color:#94a3b8;padding:12px;">
-        Allure · VAP · Dénivelé · BPM
+      <p class="ad-chart-help">Active ou désactive les courbes pour lire l’évolution pendant la séance. Chaque indicateur conserve sa propre échelle.</p>
+      <div class="ad-chart-toggles" id="ad-chart-toggles">
+        <label><input type="checkbox" data-stream="pace" checked> Allure</label>
+        <label title="La VAP n’est pas fournie directement par le flux Strava standard."><input type="checkbox" data-stream="vap" disabled> VAP (non fournie)</label>
+        <label><input type="checkbox" data-stream="heartrate" checked> Fréquence cardiaque</label>
+        <label><input type="checkbox" data-stream="cadence"> Cadence</label>
+        <label><input type="checkbox" data-stream="altitude"> Dénivelé / altitude</label>
+        <label><input type="checkbox" data-stream="temp"> Température</label>
       </div>
+      <div id="ad-curves-box" class="ad-curves-canvas-wrap"><canvas id="ad-activity-chart" aria-label="Courbes de l’activité" role="img"></canvas><div id="ad-curves-empty" class="ad-chart-empty">Les courbes détaillées apparaîtront si les flux Strava sont disponibles.</div></div>
+      <div id="ad-chart-averages" class="ad-chart-averages"></div>
     </div>
   </section>
 
   <!-- ONGLET 3 : ZONES -->
   <section class="ad-panel" data-panel="zones">
     <div class="ad-card">
-      <h3>Conseil du Coach IA</h3>
+      <h3><i class="fa-solid fa-user-shield"></i> Conseil du Coach IA</h3>
+      <p class="ad-private-note">Conseil personnel visible uniquement dans ta fiche de séance.</p>
       <div id="ad-coach-tip" style="margin:0;color:#e2e8f0;"></div>
     </div>
     <div class="ad-grid-2">
@@ -7033,35 +7193,28 @@ const esc = (value) =>
 
   function profileMarkup(p, sessions) {
     const total = sessions.length;
-    const distance = sessions.reduce((s, x) => s + num(x.distance), 0);
-    const duration = sessions.reduce((s, x) => s + num(x.duration), 0);
+    const distance = sessions.reduce((sum, x) => sum + num(x.distance), 0);
+    const duration = sessions.reduce((sum, x) => sum + parseDurationMinutes(x.duration), 0);
     const sports = [...new Set(sessions.map((x) => x.sport).filter(Boolean))].join(', ');
-
     return `
-      <article style="padding:15px;border:1px solid var(--card-border);border-radius:13px;background:rgba(255,255,255,.025);">
-        <div style="display:flex;align-items:center;gap:12px;">
+      <article class="dopamine-profile-detail-card">
+        <div class="dopamine-profile-hero">
           ${athleteAvatar(p)}
-          <div>
-            <strong>${esc(athleteLabel(p))}</strong>
-            <div style="font-size:.78rem;color:var(--text-sub)">
-              ${esc(p.city || 'Ville non renseignée')} ${p.department ? '· ' + esc(p.department) : ''}
-            </div>
-            <div style="font-size:.75rem;color:var(--bike-orange)">
-              ${esc(p.level_sportif || 'Niveau non renseigné')}
-            </div>
+          <div style="min-width:0;">
+            <div style="font-size:.7rem;font-weight:900;letter-spacing:1px;color:#ffad70;text-transform:uppercase;">Profil sportif</div>
+            <h3 style="margin:4px 0;color:#fff;font-size:1.35rem;">${esc(athleteLabel(p))}</h3>
+            <div style="font-size:.82rem;color:#b5c5ce;">${esc(p.city || 'Ville non renseignée')}${p.department ? ' · ' + esc(p.department) : ''}</div>
+            <div style="font-size:.8rem;color:#ffad70;margin-top:4px;">${esc(p.level_sportif || 'Niveau non renseigné')}</div>
           </div>
         </div>
-        ${p.bio ? `<p style="font-size:.84rem;white-space:pre-wrap">${esc(p.bio)}</p>` : ''}
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-          <span class="df-stat">${total} séances accessibles</span>
-          <span class="df-stat">${distance.toFixed(1)} km</span>
-          <span class="df-stat">${Math.round(duration)} min</span>
+        ${p.bio ? `<p style="font-size:.88rem;white-space:pre-wrap;color:#d4e0e6;line-height:1.6;margin:15px 0 0;">${esc(p.bio)}</p>` : ''}
+        <div class="dopamine-profile-stats">
+          <div class="dopamine-profile-stat"><small><i class="fa-solid fa-calendar-check"></i> Séances accessibles</small><strong>${total}</strong></div>
+          <div class="dopamine-profile-stat"><small><i class="fa-solid fa-route"></i> Distance totale</small><strong>${distance.toFixed(1)} km</strong></div>
+          <div class="dopamine-profile-stat"><small><i class="fa-solid fa-clock"></i> Temps total</small><strong>${Math.round(duration)} min</strong></div>
         </div>
-        <div style="font-size:.75rem;color:var(--text-sub);margin-top:8px">
-          Sports : ${esc(sports || 'Non renseignés')}
-        </div>
-      </article>
-    `;
+        <div style="font-size:.8rem;color:#b5c5ce;margin-top:14px;"><strong style="color:#fff;">Disciplines :</strong> ${esc(sports || 'Non renseignées')}</div>
+      </article>`;
   }
 
   async function sessionsFor(userId) {
@@ -7087,7 +7240,7 @@ const esc = (value) =>
         out.innerHTML = profileCache
           .map(
             (p) =>
-              `<button type="button" data-athlete-id="${esc(p.id)}" class="df-btn" style="text-align:left" onclick="openDopamineAthleteProfile('${esc(p.id)}')">${esc(athleteLabel(p))} · ${esc(p.city || 'Ville inconnue')}</button>`
+              `<button type="button" data-athlete-id="${esc(p.id)}" class="dopamine-athlete-card" onclick="openDopamineAthleteProfile('${esc(p.id)}')">${athleteAvatar(p)}<span class="athlete-card-copy"><strong>${esc(athleteLabel(p))}</strong><small>${esc(p.city || 'Ville inconnue')}${p.department ? ' · ' + esc(p.department) : ''}</small></span></button>`
           )
           .join('');
       }
@@ -7096,8 +7249,9 @@ const esc = (value) =>
       const b = $('faceoff-athlete-b');
       [a, b].forEach((sel) => {
         if (sel) {
-          sel.innerHTML = profileCache
-            .map((p) => `<option value="${esc(p.id)}">${esc(athleteLabel(p))}</option>`)
+          const placeholder = sel.id === 'faceoff-athlete-a' ? 'Choisir le sportif A…' : 'Choisir le sportif B…';
+          sel.innerHTML = `<option value="">${placeholder}</option>` + profileCache
+            .map((p) => `<option value="${esc(p.id)}">${esc(athleteLabel(p))}${p.city ? ' · ' + esc(p.city) : ''}</option>`)
             .join('');
         }
       });
@@ -7126,7 +7280,7 @@ const esc = (value) =>
       ? matches
           .map(
             (p) =>
-              `<button type="button" class="df-btn" onclick="openDopamineAthleteProfile('${esc(p.id)}')">${esc(athleteLabel(p))} · ${esc(p.city || '')}</button>`
+              `<button type="button" class="dopamine-athlete-card" onclick="openDopamineAthleteProfile('${esc(p.id)}')">${athleteAvatar(p)}<span class="athlete-card-copy"><strong>${esc(athleteLabel(p))}</strong><small>${esc(p.city || 'Ville non renseignée')}</small></span></button>`
           )
           .join('')
       : '<p>Aucun profil correspondant.</p>';
@@ -7160,13 +7314,14 @@ const esc = (value) =>
 
   function parseDurationMinutes(v) {
     if (typeof v === 'number') return v;
-    const s = String(v || '');
+    const s = String(v || '').trim();
+    // Formats horaires importés (HH:MM:SS ou MM:SS).
+    const clock = s.match(/^(\d{1,3}):(\d{2})(?::(\d{2}))?$/);
+    if (clock) return Number(clock[1]) * (clock[3] !== undefined ? 60 : 1) + Number(clock[2]) + (Number(clock[3] || 0) / 60);
     const h = s.match(/(\d+)\s*h/i);
     const m = s.match(/(\d+)\s*(?:min|m)/i);
     const sec = s.match(/(\d+)\s*s/i);
-    if (h || m || sec) {
-      return num(h?.[1]) * 60 + num(m?.[1]) + num(sec?.[1]) / 60;
-    }
+    if (h || m || sec) return num(h?.[1]) * 60 + num(m?.[1]) + num(sec?.[1]) / 60;
     return num(s);
   }
 
@@ -7311,45 +7466,42 @@ const esc = (value) =>
   window.runDopamineFaceoff = async function () {
     const out = $('dopamine-faceoff-results');
     if (!out) return;
-
     try {
       const a = profileCache.find((p) => p.id === $('faceoff-athlete-a')?.value);
       const b = profileCache.find((p) => p.id === $('faceoff-athlete-b')?.value);
-      if (!a || !b) throw new Error('Choisis deux athlètes accessibles.');
-      if (a.id === b.id) throw new Error('Choisis deux athlètes différents.');
-
+      if (!a || !b) throw new Error('Choisis un sportif dans chaque colonne.');
+      if (a.id === b.id) throw new Error('Choisis deux sportifs différents pour comparer leurs résultats.');
+      out.innerHTML = '<div class="faceoff-intro"><i class="fa-solid fa-spinner fa-spin"></i> Comparaison des séances accessibles…</div>';
       const [sa, sb] = await Promise.all([sessionsFor(a.id), sessionsFor(b.id)]);
-      const summary = (s) => ({
-        count: s.length,
-        km: s.reduce((v, x) => v + num(x.distance), 0),
-        minutes: s.reduce((v, x) => v + parseDurationMinutes(x.duration), 0),
-        dplus: s.reduce((v, x) => v + num(x.elevation_m), 0)
+      const summary = (sessions) => ({
+        count: sessions.length,
+        km: sessions.reduce((v, x) => v + num(x.distance), 0),
+        minutes: sessions.reduce((v, x) => v + parseDurationMinutes(x.duration), 0),
+        dplus: sessions.reduce((v, x) => v + num(x.elevation_m), 0)
       });
-
-      const x = summary(sa);
-      const y = summary(sb);
-
+      const x = summary(sa), y = summary(sb);
+      const leader = (v1, v2) => v1 > v2 ? 'faceoff-leader' : '';
+      const athleteCard = (person, stats, other, side) => `
+        <article class="faceoff-athlete-card ${side === 'B' ? 'faceoff-b' : 'faceoff-a'}">
+          <div class="faceoff-athlete-head">
+            ${athleteAvatar(person)}
+            <div style="min-width:0;">
+              <div class="faceoff-athlete-label"><i class="fa-solid fa-medal"></i> SPORTIF ${side}</div>
+              <h3>${esc(athleteLabel(person))}</h3>
+              <div class="faceoff-location">${esc(person.city || 'Ville non renseignée')}${person.department ? ' · ' + esc(person.department) : ''}</div>
+            </div>
+          </div>
+          <div class="faceoff-stat"><span><i class="fa-solid fa-calendar-check"></i> Séances</span><strong class="${leader(stats.count,other.count)}">${stats.count}</strong></div>
+          <div class="faceoff-stat"><span><i class="fa-solid fa-route"></i> Distance totale</span><strong class="${leader(stats.km,other.km)}">${stats.km.toFixed(1)} km</strong></div>
+          <div class="faceoff-stat"><span><i class="fa-solid fa-clock"></i> Temps cumulé</span><strong class="${leader(stats.minutes,other.minutes)}">${Math.round(stats.minutes / 60)} h ${Math.round(stats.minutes % 60)} min</strong></div>
+          <div class="faceoff-stat"><span><i class="fa-solid fa-mountain"></i> Dénivelé positif</span><strong class="${leader(stats.dplus,other.dplus)}">${Math.round(stats.dplus).toLocaleString('fr-FR')} m</strong></div>
+        </article>`;
       out.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
-          <article class="main-dashboard-box">
-            <h3>${esc(athleteLabel(a))}</h3>
-            <p>${x.count} séances</p>
-            <p>${x.km.toFixed(1)} km</p>
-            <p>${Math.round(x.minutes)} min</p>
-            <p>${Math.round(x.dplus)} m D+</p>
-          </article>
-          <article class="main-dashboard-box">
-            <h3>${esc(athleteLabel(b))}</h3>
-            <p>${y.count} séances</p>
-            <p>${y.km.toFixed(1)} km</p>
-            <p>${Math.round(y.minutes)} min</p>
-            <p>${Math.round(y.dplus)} m D+</p>
-          </article>
-        </div>
-        <p style="font-size:.75rem;color:var(--text-sub)">Comparaison calculée uniquement sur les séances que Supabase autorise à lire. Les records par distance seront affinés avec des formats normalisés.</p>
-      `;
+        <div class="faceoff-intro"><i class="fa-solid fa-circle-info"></i> Les valeurs en vert signalent le total le plus élevé pour cet indicateur. La comparaison porte sur les séances accessibles par les règles de confidentialité.</div>
+        <div class="faceoff-compare-grid">${athleteCard(a,x,y,'A')}${athleteCard(b,y,x,'B')}</div>
+        <p class="faceoff-footnote">Cette comparaison présente des volumes cumulés, pas un jugement sur le niveau sportif. Pour comparer équitablement les performances, il faudra ensuite filtrer par discipline et par période.</p>`;
     } catch (e) {
-      out.textContent = 'Comparaison impossible : ' + e.message;
+      out.innerHTML = `<div class="faceoff-intro" style="border-left-color:#ef4444;"><i class="fa-solid fa-circle-exclamation"></i> ${esc(e.message || 'Comparaison impossible.')}</div>`;
     }
   };
 
@@ -7492,7 +7644,6 @@ const esc = (value) =>
     if ($('dopamine-fitness-cards')) renderDopamineFitness();
   });
 })();
-
 </script>
 
 <div id="strava-activity-details-page" style="display:none;position:fixed;inset:0;z-index:11000;background:rgba(4,10,16,.96);padding:16px;overflow:auto;">
