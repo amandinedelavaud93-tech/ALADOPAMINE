@@ -597,6 +597,7 @@
 
 </style>
 
+<style id="dopamine-feed-actions-style">.df-post{position:relative}.df-post-remove{position:absolute;right:12px;top:10px;width:28px;height:28px;border:0;border-radius:50%;background:rgba(255,255,255,.09);color:var(--text-sub);font-size:22px;line-height:1;cursor:pointer}.df-post-remove:hover{background:rgba(239,68,68,.18);color:#ef4444}.df-post-title:hover,.df-author:hover{text-decoration:underline!important}</style>
 </head>
 <body>
 
@@ -626,11 +627,9 @@
       <li><a id="nav-home" class="active" style="margin-left: 18px;" onclick="showPage('home')"><i class="fa-solid fa-house"></i> Accueil</a></li>
       <li><a id="nav-stats" onclick="showPage('stats')"><i class="fa-solid fa-chart-line"></i> Bilan</a></li>
       <li><a id="nav-trophies" onclick="showPage('trophies')"><i class="fa-solid fa-trophy"></i> Trophées</a></li>
-      <li><a id="nav-calendar" onclick="showPage('home'); document.getElementById('home-calendar').scrollIntoView({behavior:'smooth'});"><i class="fa-solid fa-calendar-days"></i> Mon calendrier</a></li>
+      <li><a id="nav-calendar" onclick="showPage('home'); setCalendarMode('week'); document.getElementById('home-calendar').scrollIntoView({behavior:'smooth'});"><i class="fa-solid fa-calendar-days"></i> Mon calendrier</a></li>
       <li><a id="nav-feed" onclick="showFeedComingSoon()"><i class="fa-solid fa-users"></i> Fil Dopamine</a></li>
-      <li><a id="nav-profiles" onclick="showPage('profiles')"><i class="fa-solid fa-user-group"></i> Profils</a></li>
-<li><a id="nav-faceoff" onclick="showPage('faceoff')"><i class="fa-solid fa-scale-balanced"></i> Face-à-Face</a></li>
-<li><a id="nav-gps" onclick="showPage('gps')"><i class="fa-solid fa-map-location-dot"></i> Cartes & Segments</a></li>
+      <li><a id="nav-gps" onclick="showPage('gps')"><i class="fa-solid fa-map-location-dot"></i> Cartes & Segments</a></li>
       <li><a id="nav-search-friends" onclick="openSearchFriendsModal()"><i class="fa-solid fa-magnifying-glass" style="color:var(--bike-orange);"></i><span id="requests-badge" style="display:none;background:var(--heart-red);color:white;border-radius:50%;padding:1px 5px;font-size:.6rem;margin-left:3px;">0</span></a></li>
     </ul>
 
@@ -753,8 +752,7 @@
         </div>
         <div class="calendar-controls">
           <button class="medal-tab" onclick="navigateCalendar(-1)" aria-label="Période précédente" title="Période précédente">‹</button>
-          <button class="medal-tab active" id="cal-mode-today" onclick="setCalendarMode('today')">Aujourd'hui</button>
-          <button class="medal-tab" id="cal-mode-week" onclick="setCalendarMode('week')">Semaine</button>
+          <button class="medal-tab active" id="cal-mode-week" onclick="setCalendarMode('week')">Semaine</button>
           <button class="medal-tab" id="cal-mode-month" onclick="setCalendarMode('month')">Mois</button>
           <button class="medal-tab" id="cal-mode-year" onclick="setCalendarMode('year')">Année</button>
           <button class="medal-tab" onclick="navigateCalendar(1)" aria-label="Période suivante" title="Période suivante">›</button>
@@ -1546,21 +1544,7 @@
   </div></section>
 </main>
 
-<!-- PAGE : FACE-À-FACE ET RECORDS -->
-<main id="view-faceoff" class="app-page hidden">
-  <section class="dashboard-layout"><div class="main-dashboard-box">
-    <div class="card-title-flex"><h2><i class="fa-solid fa-scale-balanced" style="color:var(--bike-orange)"></i> Face-à-Face</h2><button class="medal-tab" onclick="loadDopamineProfiles()">Actualiser les athlètes</button></div>
-    <p style="color:var(--text-sub);font-size:.82rem;">Compare les statistiques des profils publics ou de tes coéquipiers acceptés, selon les autorisations Supabase.</p>
-    <div class="faceoff-selectors">
-      <label class="faceoff-select-card faceoff-select-a"><span class="faceoff-select-title"><span class="faceoff-dot"></span> SPORTIF A · BLEU</span><select id="faceoff-athlete-a" aria-label="Choisir le premier sportif"><option value="">Choisir le premier sportif…</option></select></label>
-      <label class="faceoff-select-card faceoff-select-b"><span class="faceoff-select-title"><span class="faceoff-dot"></span> SPORTIF B · ORANGE</span><select id="faceoff-athlete-b" aria-label="Choisir le deuxième sportif"><option value="">Choisir le deuxième sportif…</option></select></label>
-    </div>
-    <button class="btn-pro faceoff-compare-button" onclick="runDopamineFaceoff()"><i class="fa-solid fa-scale-balanced"></i> Comparer les deux sportifs</button>
-    <div id="dopamine-faceoff-results" style="margin-top:15px;"></div>
-    <hr style="border-color:var(--card-border);margin:22px 0;">
-    <h3>Mes records personnels</h3><div id="dopamine-personal-records" style="margin-top:10px;"></div>
-  </div></section>
-</main>
+
 
 <!-- PAGE : CARTES GPS ET SEGMENTS -->
 <main id="view-gps" class="app-page hidden">
@@ -1979,7 +1963,7 @@
       });
     }
 
-    let calendarMode = 'today'; // aujourd'hui, semaine, mois ou année
+    let calendarMode = 'week'; // semaine, mois ou année
     let calendarDisplayDate = new Date();
     let calendarSelectedDate = localDateISO(new Date());
     let historyFilter = 'all';
@@ -2018,14 +2002,14 @@
       saveAppData();
     }
     function showPage(page) {
-      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'competition', 'stats', 'trophies', 'feed', 'profiles', 'faceoff', 'gps'];
+      const allowedPages = ['home', 'natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'competition', 'stats', 'trophies', 'feed', 'profiles', 'gps'];
       if (!allowedPages.includes(page)) return;
       document.querySelectorAll('.app-page').forEach(el => el.classList.add('hidden'));
       const target = document.getElementById(`view-${page}`);
       if (!target) { console.warn(`Page introuvable : view-${page}`); return; }
       target.classList.remove('hidden');
       document.querySelectorAll('.nav-menu a').forEach(el => el.classList.remove('active'));
-      const activeNav = document.getElementById(({home:'nav-home',stats:'nav-stats',trophies:'nav-trophies',feed:'nav-feed',profiles:'nav-profiles',faceoff:'nav-faceoff',gps:'nav-gps'})[page] || null);
+      const activeNav = document.getElementById(({home:'nav-home',stats:'nav-stats',trophies:'nav-trophies',feed:'nav-feed',profiles:null,gps:'nav-gps'})[page] || null);
       if (activeNav) activeNav.classList.add('active');
       document.querySelectorAll('.nav-discipline-btn').forEach(btn => btn.classList.toggle('active', (btn.getAttribute('onclick') || '').includes(`openCalc('${page}')`)));
       const submenu = document.getElementById('activity-submenu');
@@ -2970,9 +2954,12 @@ async function syncStravaActivities(tokenData) {
         } catch (_) {}
       }
 
-  let actRes = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
-    headers: { Authorization: `Bearer ${auth.access_token}` }
-  });
+  // Récupère les pages successives : Strava limite per_page à 200.
+  let activities = [];
+  for (let page = 1; page <= 20; page++) {
+    let actRes = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=200&page=${page}`, {
+      headers: { Authorization: `Bearer ${auth.access_token}` }
+    });
   if (actRes.status === 401 && auth.refresh_token) {
     try {
       const retryRefresh = await fetch('/api/strava/callback', {
@@ -2985,15 +2972,19 @@ async function syncStravaActivities(tokenData) {
         if (refreshed && refreshed.access_token) {
           auth = { ...auth, ...refreshed };
           localStorage.setItem(getStravaStorageKey(), JSON.stringify(auth));
-          actRes = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
+          actRes = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=200&page=${page}`, {
             headers: { Authorization: `Bearer ${auth.access_token}` }
           });
         }
       }
     } catch (_) {}
   }
-  if (!actRes.ok) throw new Error('Impossible de récupérer les activités Strava');
-    const activities = await actRes.json();
+    if (!actRes.ok) throw new Error('Impossible de récupérer les activités Strava (page ' + page + ')');
+    const pageActivities = await actRes.json();
+    if (!Array.isArray(pageActivities) || pageActivities.length === 0) break;
+    activities.push(...pageActivities);
+    if (pageActivities.length < 200) break;
+  }
 
     if (!Array.isArray(appData.sessionsHistory)) appData.sessionsHistory = [];
     let importedCount = 0;
@@ -4982,11 +4973,11 @@ const mapBox = document.getElementById('ad-map-box');
 
     function setCalendarMode(mode) {
       calendarMode = mode;
-      ['today','week','month','year'].forEach(name => { const button=document.getElementById(`cal-mode-${name}`); if(button) button.classList.toggle('active', mode === name); });
-      if (mode === 'today') { calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); }
+      ['week','month','year'].forEach(name => { const button=document.getElementById(`cal-mode-${name}`); if(button) button.classList.toggle('active', mode === name); });
+      if (mode === 'week') { const now = new Date(); calendarDisplayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); calendarSelectedDate = localDateISO(now); }
       else if (mode === 'year') { const now = new Date(); calendarDisplayDate = new Date(now.getFullYear(), now.getMonth(), 1); calendarSelectedDate = localDateISO(now); }
       renderHomeCalendar();
-      if (mode === 'today' || mode === 'year' || mode === 'month') showDayDetails(calendarSelectedDate);
+      if (mode === 'year' || mode === 'month' || mode === 'week') showDayDetails(calendarSelectedDate);
     }
 
     function getCalendarItemsForDate(dateStr) {
@@ -5167,7 +5158,7 @@ const mapBox = document.getElementById('ad-map-box');
       renderHomeCalendar();
       showDayDetails(calendarSelectedDate);
     }
-    function goCalendarToday() { calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); setCalendarMode('today'); }
+    function goCalendarToday() { setCalendarMode('week'); }
     function openPricingModal() { const el = document.getElementById('pricing-modal'); if (el) el.style.display = 'flex'; }
     function closePricingModal() { const el = document.getElementById('pricing-modal'); if (el) el.style.display = 'none'; }
 
@@ -5575,10 +5566,37 @@ async function refreshFriendHub(){
         const stats = [post.distance && `📏 ${post.distance}`,post.duration && `⏱ ${post.duration}`,Number(post.elevation_m)>0 && `↗ ${post.elevation_m} m D+`].filter(Boolean).map(x=>`<span class="df-stat">${dopamineEscape(x)}</span>`).join('');
         const photo = dopamineSafeUrl(post.photo_url);
         const comments = post.comments.map(c => { const cp=authorForDopamine(c.user_id); return `<div class="df-comment"><strong>${dopamineEscape(cp.username || 'Sportif')} :</strong> ${dopamineEscape(c.content)}</div>`; }).join('');
-        return `<article class="df-post"><div class="df-post-top">${avatar ? `<img class="df-avatar" src="${dopamineEscape(avatar)}" alt="">` : `<div class="df-avatar" style="display:grid;place-items:center"><i class="fa-solid fa-user"></i></div>`}<div><div class="df-author">${dopamineEscape(author.username || 'Sportif')}</div><div class="df-muted">${dopamineEscape(date)}</div></div></div><div class="df-post-title">${dopamineEscape(post.title || dopamineSportLabel(post.sport))}</div><div class="df-muted">${dopamineEscape(dopamineSportLabel(post.sport))}</div>${stats ? `<div class="df-stats">${stats}</div>` : ''}${post.comment ? `<div class="df-post-comment">${dopamineEscape(post.comment)}</div>` : ''}${photo ? `<img class="df-post-photo" src="${dopamineEscape(photo)}" alt="Photo de séance" loading="lazy">` : ''}<div class="df-post-actions"><button class="df-btn" type="button" onclick="toggleDopamineLike('${dopamineEscape(post.id)}')"><i class="fa-${liked?'solid':'regular'} fa-heart" style="color:${liked?'#ef4444':'inherit'}"></i> ${liked?'Je n’aime plus':'J’aime'} · ${post.likes.length}</button><span class="df-muted">${post.comments.length} commentaire(s)</span></div><div class="df-comments">${comments || '<div class="df-muted">Pas encore de commentaire.</div>'}<form class="df-comment-form" onsubmit="addDopamineComment(event,'${dopamineEscape(post.id)}')"><input maxlength="500" required placeholder="Écrire un commentaire…" aria-label="Écrire un commentaire"><button class="df-btn primary" type="submit">Envoyer</button></form></div></article>`;
+        const ownPost = post.user_id === dopamineFeedState.user?.id;
+        return `<article class="df-post"><button type="button" class="df-post-remove" title="Retirer cette publication du fil pour tout le monde" aria-label="Retirer cette publication du fil" style="${ownPost?'':'display:none;'}" onclick="deleteDopaminePost('${dopamineEscape(post.id)}')">×</button><div class="df-post-top">${avatar ? `<img class="df-avatar" src="${dopamineEscape(avatar)}" alt="">` : `<div class="df-avatar" style="display:grid;place-items:center"><i class="fa-solid fa-user"></i></div>`}<div><button type="button" class="df-author" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:800;cursor:pointer;text-align:left;" onclick="openDopamineAthleteProfileFromFeed('${dopamineEscape(post.user_id)}')">${dopamineEscape(author.username || 'Sportif')}</button><div class="df-muted">${dopamineEscape(date)}</div></div></div><button type="button" class="df-post-title" style="display:block;background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:800;text-align:left;cursor:pointer;" onclick="openDopamineSessionFromPost('${dopamineEscape(post.session_id)}')">${dopamineEscape(post.title || dopamineSportLabel(post.sport))}</button><div class="df-muted">${dopamineEscape(dopamineSportLabel(post.sport))}</div>${stats ? `<div class="df-stats">${stats}</div>` : ''}${post.comment ? `<div class="df-post-comment">${dopamineEscape(post.comment)}</div>` : ''}${photo ? `<img class="df-post-photo" src="${dopamineEscape(photo)}" alt="Photo de séance" loading="lazy">` : ''}<div class="df-post-actions"><button class="df-btn" type="button" onclick="toggleDopamineLike('${dopamineEscape(post.id)}')"><i class="fa-${liked?'solid':'regular'} fa-heart" style="color:${liked?'#ef4444':'inherit'}"></i> ${liked?'Je n’aime plus':'J’aime'} · ${post.likes.length}</button><span class="df-muted">${post.comments.length} commentaire(s)</span></div><div class="df-comments">${comments || '<div class="df-muted">Pas encore de commentaire.</div>'}<form class="df-comment-form" onsubmit="addDopamineComment(event,'${dopamineEscape(post.id)}')"><input maxlength="500" required placeholder="Écrire un commentaire…" aria-label="Écrire un commentaire"><button class="df-btn primary" type="submit">Envoyer</button></form></div></article>`;
       }).join('');
       content.innerHTML = composer + (cards || '<div class="df-empty"><i class="fa-regular fa-comment-dots" style="font-size:1.8rem"></i><p>Aucune publication visible pour le moment.</p><span class="df-muted">Publie une séance pour lancer le fil.</span></div>');
     }
+    async function deleteDopaminePost(postId) {
+      const post = dopamineFeedState.posts.find(p => String(p.id) === String(postId));
+      if (!post || post.user_id !== dopamineFeedState.user?.id) { alert('Seul l’auteur peut retirer cette publication.'); return; }
+      if (!confirm('Retirer cette publication du Fil Dopamine pour tout le monde ? La séance restera dans ton calendrier et ton historique.')) return;
+      try {
+        const { error } = await supabaseClient.from('feed_posts').delete().eq('id', postId).eq('user_id', dopamineFeedState.user.id);
+        if (error) throw error;
+        await refreshDopamineFeed();
+      } catch (err) {
+        alert('Retrait impossible. Vérifie la politique RLS DELETE de feed_posts : ' + (err.message || 'erreur Supabase'));
+      }
+    }
+    async function openDopamineAthleteProfileFromFeed(userId) {
+      if (!userId) return;
+      showPage('profiles');
+      try {
+        await window.loadDopamineProfiles();
+        await window.openDopamineAthleteProfile(userId);
+      } catch (err) { alert('Impossible de charger ce profil : ' + (err.message || 'erreur')); }
+    }
+    function openDopamineSessionFromPost(sessionId) {
+      const session = (appData.sessionsHistory || []).find(s => String(s.supabaseId || s.id) === String(sessionId) || String(s.id) === String(sessionId));
+      if (session) { openEditSession(session.id); return; }
+      alert('Cette séance est visible dans le fil, mais son détail local n’est pas chargé. Recharge tes séances depuis Supabase.');
+    }
+
     function authorForDopamine(userId) {
       const post = dopamineFeedState.posts.find(p => p.user_id === userId);
       if (post) return post.author;
