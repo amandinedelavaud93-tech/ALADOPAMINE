@@ -7890,6 +7890,18 @@ const esc = (value) =>
           background-color: #0f172a !important;
           color: #fb923c !important;
         }
+  /* Aperçus photo compacts et propres dans la fiche de séance */
+  #edit-session-modal img,
+  #dopamine-session-sheet img,
+  .ad-session-photos img,
+  .session-photos-preview img {
+    max-height: 150px !important;
+    width: auto !important;
+    max-width: 100% !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+  }
+</style>
       </style>
 <style>
 .strava-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}.strava-detail-metric{background:rgba(255,255,255,.045);border:1px solid var(--card-border);border-radius:9px;padding:10px;min-width:0}.strava-detail-metric small{display:block;color:var(--text-sub);font-size:.68rem}.strava-detail-metric strong{display:block;color:var(--text-main);font-size:.95rem;margin-top:4px;overflow-wrap:anywhere}.strava-detail-section{margin-top:16px;padding:12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:10px}.strava-detail-section h4{margin:0 0 10px;color:var(--text-main)}.strava-table-wrap{overflow-x:auto}.strava-detail-section table{border-collapse:collapse;width:100%;font-size:.78rem;white-space:nowrap}.strava-detail-section th,.strava-detail-section td{padding:7px 9px;border-bottom:1px solid var(--card-border);text-align:left}.strava-detail-section th{color:var(--text-sub)}
