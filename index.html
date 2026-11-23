@@ -4569,9 +4569,12 @@ function populateDopamineSheetDetails(session) {
           : '<span style="color:#94a3b8;">Courbe disponible dès que plusieurs kilomètres sont enregistrés.</span>';
       }
 
-const mapBox = document.getElementById('ad-map-box');
+      const mapBox = document.getElementById('ad-map-box');
       if (mapBox) {
-        mapBox.innerHTML = buildGpsSvgTrace(d, session);
+        const hasGps = Boolean(d.map?.summary_polyline || (Array.isArray(d.startLatlng) && d.startLatlng.length === 2));
+        mapBox.innerHTML = hasGps
+          ? `<div><strong>Tracé GPS synchronisé</strong><br><span style="font-size:0.82rem;color:#94a3b8;">Départ : ${d.startLatlng ? d.startLatlng.join(', ') : 'GPS actif'} · Dénivelé : ${d.totalElevationGain || 0} m</span></div>`
+          : '<span style="color:#94a3b8;">Activité sans trace GPS (intérieur ou saisie manuelle).</span>';
       }
 
       const coachTip = document.getElementById('ad-coach-tip');
