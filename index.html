@@ -5026,12 +5026,50 @@ const effortsBody = document.getElementById('ad-efforts-body');
         btn.addEventListener('click',()=>renderStravaActivityDetails(session,btn.getAttribute('data-strava-tab')));
       });
     }
-    function openStravaDetailsPage(){
-      const id=document.getElementById('edit-session-id')?.value;const session=appData.sessionsHistory.find(x=>String(x.id)===String(id));if(!session?.stravaActivityId){alert('Cette séance ne possède pas d’identifiant Strava.');return;}
-      const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='block';
-      const content=document.getElementById('strava-activity-details-page-content');if(content)content.innerHTML='<p>Chargement des données détaillées Strava…</p>';
-      loadStravaActivityDetails(session).then(()=>{if(content){const box=document.getElementById('edit-session-strava-details-content');content.innerHTML=box?.innerHTML||'Détails indisponibles.';}}).catch(err=>{if(content)content.textContent='Détails indisponibles : '+err.message;});
+function openStravaDetailsPage(){
+  const id=document.getElementById('edit-session-id')?.value;
+  const session=appData.sessionsHistory.find(x=>String(x.id)===String(id));
+  if(!session?.stravaActivityId){alert('Aucune donnée détaillée Strava associée à cette séance.');return;}
+  const page=document.getElementById('strava-activity-details-page');
+  const container=document.querySelector('.container');
+  const homeMain=document.getElementById('view-home');
+  if(page && container){
+    if(homeMain && homeMain.parentNode===container){
+      container.insertBefore(page,homeMain);
+    }else if(page.parentNode!==container){
+      container.prepend(page);
     }
+    Array.from(container.children).forEach(child=>{
+      if(child!==page){
+        child.dataset.prevDisplay=child.style.display;
+        child.style.display='none';
+      }
+    });
+    page.style.display='block';
+    page.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  const content=document.getElementById('strava-activity-details-page-content');
+  if(content)content.innerHTML='<p>Chargement des données détaillées Strava...</p>';
+  loadStravaActivityDetails(session).then(()=>{
+    if(content){
+      const box=document.getElementById('edit-session-strava-details-content');
+      content.innerHTML=box?box.innerHTML:'Détails indisponibles.';
+    }
+  });
+}
+function closeStravaDetailsPage(){
+  const page=document.getElementById('strava-activity-details-page');
+  const container=document.querySelector('.container');
+  if(page)page.style.display='none';
+  if(container){
+    Array.from(container.children).forEach(child=>{
+      if(child!==page && 'prevDisplay' in child.dataset){
+        child.style.display=child.dataset.prevDisplay;
+        delete child.dataset.prevDisplay;
+      }
+    });
+  }
+}
     function closeStravaDetailsPage(){const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='none';}
     async function deleteEditedSession() {
       const id=document.getElementById('edit-session-id')?.value;
@@ -7864,13 +7902,14 @@ const esc = (value) =>
   });
 })();
 </script>
-
-<div id="strava-activity-details-page" style="display:none;position:fixed;inset:0;z-index:11000;background:rgba(4,10,16,.96);padding:16px;overflow:auto;">
- <div style="max-width:1100px;margin:2vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><h2 style="margin:0;color:var(--text-main);">Détails complets de l’activité Strava</h2><button type="button" class="medal-tab" onclick="closeStravaDetailsPage()">Fermer ✕</button></div>
-  <p style="color:var(--text-sub);font-size:.82rem;">Toutes les informations réellement fournies par Strava sont affichées. Les champs absents ou non autorisés restent indiqués comme indisponibles.</p>
-  <div id="strava-activity-details-page-content">Chargement…</div>
- </div>
+<div id="strava-activity-details-page" style="display:none;margin:15px 0;background:var(--card-bg, #101923);border:1px solid var(--card-border);border-radius:14px;padding:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+          <h2 style="margin:0;color:var(--text-main);">Détails complets de l'activité</h2>
+          <button type="button" onclick="closeStravaDetailsPage()" style="background:rgba(255,255,255,0.08);color:var(--text-main);border:1px solid var(--card-border);border-radius:8px;padding:6px 12px;cursor:pointer;">Fermer / Retour</button>
+        </div>
+        <p style="color:var(--text-sub);font-size:.82rem;">Toutes les informations réellement fournies par Strava sont affichées. Les champs absents ou non autorisés restent indiqués.</p>
+        <div id="strava-activity-details-page-content">Chargement...</div>
+      </div>
 </div>
 <style>
         /* Fond bleu sur les champs non renseignés + texte orange bien lisible */
@@ -7890,18 +7929,18 @@ const esc = (value) =>
           background-color: #0f172a !important;
           color: #fb923c !important;
         }
-  /* Aperçus photo compacts et propres dans la fiche de séance */
-  #edit-session-modal img,
-  #dopamine-session-sheet img,
-  .ad-session-photos img,
-  .session-photos-preview img {
-    max-height: 150px !important;
-    width: auto !important;
-    max-width: 100% !important;
-    object-fit: cover !important;
-    border-radius: 8px !important;
-  }
-</style>
+/* Aperçu photo entier et compact dans la fiche de séance */
+      #edit-session-modal img,
+      #dopamine-session-sheet img,
+      .ad-session-photos img,
+      .session-photos-preview img {
+        max-height: 180px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        object-fit: contain !important;
+        background-color: rgba(15, 23, 42, 0.65) !important;
+        border-radius: 8px !important;
+      }
       </style>
 <style>
 .strava-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}.strava-detail-metric{background:rgba(255,255,255,.045);border:1px solid var(--card-border);border-radius:9px;padding:10px;min-width:0}.strava-detail-metric small{display:block;color:var(--text-sub);font-size:.68rem}.strava-detail-metric strong{display:block;color:var(--text-main);font-size:.95rem;margin-top:4px;overflow-wrap:anywhere}.strava-detail-section{margin-top:16px;padding:12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:10px}.strava-detail-section h4{margin:0 0 10px;color:var(--text-main)}.strava-table-wrap{overflow-x:auto}.strava-detail-section table{border-collapse:collapse;width:100%;font-size:.78rem;white-space:nowrap}.strava-detail-section th,.strava-detail-section td{padding:7px 9px;border-bottom:1px solid var(--card-border);text-align:left}.strava-detail-section th{color:var(--text-sub)}
