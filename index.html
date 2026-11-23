@@ -4569,12 +4569,9 @@ function populateDopamineSheetDetails(session) {
           : '<span style="color:#94a3b8;">Courbe disponible dès que plusieurs kilomètres sont enregistrés.</span>';
       }
 
-      const mapBox = document.getElementById('ad-map-box');
+const mapBox = document.getElementById('ad-map-box');
       if (mapBox) {
-        const hasGps = Boolean(d.map?.summary_polyline || (Array.isArray(d.startLatlng) && d.startLatlng.length === 2));
-        mapBox.innerHTML = hasGps
-          ? `<div><strong>Tracé GPS synchronisé</strong><br><span style="font-size:0.82rem;color:#94a3b8;">Départ : ${d.startLatlng ? d.startLatlng.join(', ') : 'GPS actif'} · Dénivelé : ${d.totalElevationGain || 0} m</span></div>`
-          : '<span style="color:#94a3b8;">Activité sans trace GPS (intérieur ou saisie manuelle).</span>';
+        mapBox.innerHTML = buildGpsSvgTrace(d, session);
       }
 
       const coachTip = document.getElementById('ad-coach-tip');
@@ -7485,6 +7482,277 @@ const esc = (value) =>
     if ($('dopamine-fitness-cards')) renderDopamineFitness();
   });
 })();
+// =========================================================================
+    // MISE À JOUR UX/UI FICHE SÉANCE, ANALYSE, COACH IA, DOUBLONS & FIL
+    // =========================================================================
+
+    function isCurrentUserSessionOwner(session) {
+      if (!session) return true;
+      const currentUser =
+        window.currentUser ||
+        window.authUser ||
+        (typeof appData !== 'undefined' && appData?.profile) ||
+        null;
+      const currentId = currentUser?.id || currentUser?.user_id || localStorage.getItem('dopamine_user_id') || '';
+      const currentEmail = (currentUser?.email || localStorage.getItem('dopamine_user_email') || '').toLowerCase();
+      const sessionOwnerId = session.user_id || session.userId || session.ownerId || '';
+      const sessionOwnerEmail = (session.user_email || session.ownerEmail || '').toLowerCase();
+
+      if (!sessionOwnerId && !sessionOwnerEmail) return true;
+      if (currentId && sessionOwnerId && String(currentId) === String(sessionOwnerId)) return true;
+      if (currentEmail && sessionOwnerEmail && currentEmail === sessionOwnerEmail) return true;
+      return false;
+    }
+
+    function enhanceDopamineSheetLayout(session) {
+      const sheet = document.getElementById('dopamine-session-sheet');
+      if (!sheet) return;
+
+      // 1. Renommer "Synthèse du flux" -> "Informations sur la séance" et placer "Infos annexes" avant
+      sheet.querySelectorAll('h3, h4, .section-title, strong, span, div').forEach((el) => {
+        if (el.children.length === 0 && el.textContent && el.textContent.trim() === 'Synthèse du flux') {
+          el.textContent = 'Informations sur la séance';
+        }
+      });
+
+      const infoCard = Array.from(sheet.querySelectorAll('div, section')).find((el) =>
+        el.textContent && el.textContent.includes('Informations sur la séance') && el.querySelectorAll('.ad-stat, [class*="stat"]').length >= 2
+      );
+      const annexesCard = Array.from(sheet.querySelectorAll('div, section')).find((el) =>
+        el.textContent && el.textContent.includes('Infos annexes') && el.querySelector('select')
+      );
+
+      if (infoCard && annexesCard && infoCard.parentElement === annexesCard.parentElement) {
+        if (infoCard.compareDocumentPosition(annexesCard) & Node.DOCUMENT_POSITION_FOLLOWING) {
+          infoCard.parentElement.insertBefore(annexesCard, infoCard);
+        }
+      }
+
+      // 2. Ajouter le sélecteur "Type d'activité (Coach IA)" dans Infos annexes s'il n'existe pas encore
+      if (annexesCard && !document.getElementById('ad-activity-type-select')) {
+        const typeWrap = document.createElement('div');
+        typeWrap.style.cssText = 'margin-top:10px;display:flex;flex-direction:column;gap:4px;';
+        typeWrap.innerHTML = `
+          <label for="ad-activity-type-select" style="font-size:0.78rem;color:#94a3b8;">Type d'activité (pour le Coach IA)</label>
+          <select id="ad-activity-type-select" style="padding:8px 10px;border-radius:8px;background:#0f172a;color:#f8fafc;border:1px solid rgba(148,163,184,0.25);">
+            <option value="">-- Choisir un type --</option>
+            <option value="Endurance fondamentale (EF)">Endurance fondamentale (EF)</option>
+            <option value="Fractionné">Fractionné</option>
+            <option value="Récupération">Récupération</option>
+            <option value="Autre entraînement">Autre entraînement</option>
+          </select>
+        `;
+        const selectEl = typeWrap.querySelector('select');
+        selectEl.value = session?.activityType || session?.workoutType || '';
+        selectEl.addEventListener('change', () => {
+          if (session) {
+            session.activityType = selectEl.value;
+            session.workoutType = selectEl.value;
+          }
+          const coachTip = document.getElementById('ad-coach-tip');
+          if (coachTip && typeof buildCoachZonesAdvice === 'function') {
+            coachTip.innerHTML = `<i class="fa-solid fa-robot" style="margin-right:6px;color:#38bdf8;"></i>` + buildCoachZonesAdvice(session, session?.stravaDetails || {});
+          }
+        });
+        annexesCard.appendChild(typeWrap);
+      }
+
+      // 3. Explication claire des termes techniques (Effort relatif, Puissance pondérée, Énergie)
+      const zonesMetrics = document.getElementById('ad-zones-metrics');
+      if (zonesMetrics && !document.getElementById('ad-metrics-glossary')) {
+        const glossary = document.createElement('div');
+        glossary.id = 'ad-metrics-glossary';
+        glossary.style.cssText = 'margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(15,23,42,0.5);border:1px solid rgba(148,163,184,0.16);font-size:0.78rem;color:#cbd5e1;line-height:1.5;';
+        glossary.innerHTML = `
+          <div><strong>Effort relatif :</strong> indique l'intensité globale de la séance selon ton profil et ta charge d'effort.</div>
+          <div><strong>Puissance pondérée :</strong> moyenne pondérée de l'effort (surtout pertinente à vélo ou avec capteur dédié ; en course à pied sans capteur dédié, elle reste indicative ou non applicable).</div>
+          <div><strong>Énergie (kJ) :</strong> estimation de l'énergie mécanique dépensée pendant la sortie.</div>
+        `;
+        zonesMetrics.appendChild(glossary);
+      }
+
+      // 4. Cases à cocher + légende sous "Courbes d'évolution & moyennes" (Allure, FC, Cadence, Pente)
+      const curvesBox = document.getElementById('ad-curves-box');
+      if (curvesBox && !document.getElementById('ad-curve-controls')) {
+        const controls = document.createElement('div');
+        controls.id = 'ad-curve-controls';
+        controls.style.cssText = 'margin-top:10px;padding-top:8px;border-top:1px solid rgba(148,163,184,0.15);display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:0.78rem;color:#cbd5e1;';
+        controls.innerHTML = `
+          <span style="color:#94a3b8;">Afficher :</span>
+          <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="ad-curve-toggle" data-metric="pace" checked> Allure</label>
+          <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="ad-curve-toggle" data-metric="hr"> Fréquence cardiaque</label>
+          <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="ad-curve-toggle" data-metric="cadence"> Cadence</label>
+          <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="ad-curve-toggle" data-metric="slope"> Pente (%)</label>
+        `;
+        curvesBox.parentElement.appendChild(controls);
+
+        controls.querySelectorAll('.ad-curve-toggle').forEach((chk) => {
+          chk.addEventListener('change', () => {
+            renderDopamineMultiSeriesChart(session);
+          });
+        });
+      }
+
+      // 5. Visibilité du Coach IA uniquement pour le propriétaire de la séance
+      const coachTip = document.getElementById('ad-coach-tip');
+      if (coachTip) {
+        const isOwner = isCurrentUserSessionOwner(session);
+        const coachContainer = coachTip.closest('[id*="coach"], .coach-box, .strava-coach-box') || coachTip;
+        if (!isOwner) {
+          coachContainer.style.display = 'none';
+        } else {
+          coachContainer.style.display = '';
+          const rawHtml = typeof buildCoachZonesAdvice === 'function'
+            ? buildCoachZonesAdvice(session, session?.stravaDetails || {})
+            : '';
+          coachTip.innerHTML = `<i class="fa-solid fa-robot" style="margin-right:6px;color:#38bdf8;"></i>` + rawHtml;
+        }
+      }
+
+      // 6. Tableau des zones cardiaques complémentaire
+      renderDopamineHrZonesTable(session);
+
+      // 7. Rendu multi-séries avec légende
+      renderDopamineMultiSeriesChart(session);
+    }
+
+    function renderDopamineHrZonesTable(session) {
+      const zonesList = document.getElementById('ad-zones-list');
+      if (!zonesList) return;
+      const d = session?.stravaDetails || {};
+      const hrZoneBlock = Array.isArray(d.zones) ? d.zones.find((z) => z.type === 'heartrate') : null;
+      const buckets = Array.isArray(hrZoneBlock?.distribution_buckets) ? hrZoneBlock.distribution_buckets : [];
+      if (!buckets.length) return;
+
+      const totalSec = buckets.reduce((acc, b) => acc + (Number(b.time) || 0), 0) || 1;
+      let tableBox = document.getElementById('ad-hr-zones-table-box');
+      if (!tableBox) {
+        tableBox = document.createElement('div');
+        tableBox.id = 'ad-hr-zones-table-box';
+        tableBox.style.cssText = 'margin-top:12px;overflow-x:auto;';
+        zonesList.parentElement.appendChild(tableBox);
+      }
+
+      tableBox.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:0.78rem;color:#e2e8f0;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(148,163,184,0.25);color:#94a3b8;text-align:left;">
+              <th style="padding:6px;">Zone</th>
+              <th style="padding:6px;">Plage BPM</th>
+              <th style="padding:6px;">Temps</th>
+              <th style="padding:6px;">%</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${buckets.map((b, i) => {
+              const sec = Number(b.time) || 0;
+              const pct = ((sec / totalSec) * 100).toFixed(1);
+              const minBpm = b.min ?? '--';
+              const maxBpm = b.max === -1 || b.max == null ? 'Max' : b.max;
+              const mins = Math.floor(sec / 60);
+              const remSec = String(sec % 60).padStart(2, '0');
+              return `
+                <tr style="border-bottom:1px solid rgba(148,163,184,0.1);">
+                  <td style="padding:6px;"><strong>Z${i + 1}</strong></td>
+                  <td style="padding:6px;">${minBpm} – ${maxBpm} bpm</td>
+                  <td style="padding:6px;">${mins}m ${remSec}s</td>
+                  <td style="padding:6px;">${pct}%</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderDopamineMultiSeriesChart(session) {
+      const curvesBox = document.getElementById('ad-curves-box');
+      if (!curvesBox) return;
+      const d = session?.stravaDetails || {};
+      const splits = Array.isArray(d.splitsMetric) && d.splitsMetric.length
+        ? d.splitsMetric
+        : (Array.isArray(d.laps) ? d.laps : []);
+
+      if (splits.length < 2) return;
+
+      const activeMetrics = Array.from(document.querySelectorAll('.ad-curve-toggle:checked')).map((el) => el.dataset.metric);
+      const paceSeries = splits.map((s) => {
+        const sp = Number(s.average_speed);
+        if (sp > 0) return Number((1000 / sp / 60).toFixed(2)); // min/km
+        const km = Number(s.distance) / 1000;
+        const sec = Number(s.moving_time || s.elapsed_time);
+        return km > 0 && sec > 0 ? Number((sec / 60 / km).toFixed(2)) : null;
+      });
+      const hrSeries = splits.map((s) => (Number(s.average_heartrate) > 0 ? Number(s.average_heartrate) : null));
+      const cadSeries = splits.map((s) => (Number(s.average_cadence) > 0 ? Number(s.average_cadence) : null));
+      const slopeSeries = splits.map((s) => {
+        const elev = Number(s.elevation_difference);
+        const dist = Number(s.distance);
+        return dist > 0 && Number.isFinite(elev) ? Number(((elev / dist) * 100).toFixed(1)) : null;
+      });
+
+      const seriesDefs = [
+        { key: 'pace', label: 'Allure (min/km)', color: '#38bdf8', data: paceSeries },
+        { key: 'hr', label: 'FC (bpm)', color: '#ef4444', data: hrSeries },
+        { key: 'cadence', label: 'Cadence', color: '#22c55e', data: cadSeries },
+        { key: 'slope', label: 'Pente (%)', color: '#f59e0b', data: slopeSeries }
+      ].filter((item) => activeMetrics.includes(item.key) && item.data.some((v) => v != null));
+
+      if (!seriesDefs.length) {
+        curvesBox.innerHTML = '<span style="color:#94a3b8;font-size:0.8rem;">Aucune donnée disponible pour les courbes cochées sur cette sortie.</span>';
+        return;
+      }
+
+      const w = 460;
+      const h = 150;
+      const padX = 28;
+      const padY = 18;
+
+      const polylinesHtml = seriesDefs.map((serie) => {
+        const validNums = serie.data.filter((v) => v != null);
+        const minV = Math.min(...validNums);
+        const maxV = Math.max(...validNums);
+        const spanV = Math.max(maxV - minV, 0.1);
+
+        const pts = serie.data.map((val, idx) => {
+          if (val == null) return null;
+          const x = padX + (idx / Math.max(splits.length - 1, 1)) * (w - padX * 2);
+          const norm = (val - minV) / spanV;
+          // Pour l'allure en min/km, plus bas = plus rapide = plus haut sur le graphe
+          const y = serie.key === 'pace'
+            ? padY + norm * (h - padY * 2)
+            : (h - padY) - norm * (h - padY * 2);
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).filter(Boolean).join(' ');
+
+        return `<polyline fill="none" stroke="${serie.color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${pts}" />`;
+      }).join('');
+
+      const legendHtml = seriesDefs.map((s) =>
+        `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:10px;"><span style="width:10px;height:10px;border-radius:50%;background:${s.color};display:inline-block;"></span>${s.label}</span>`
+      ).join('');
+
+      curvesBox.innerHTML = `
+        <div style="width:100%;">
+          <div style="font-size:0.76rem;color:#cbd5e1;margin-bottom:6px;">${legendHtml}</div>
+          <svg viewBox="0 0 ${w} ${h}" style="width:100%;max-height:160px;background:rgba(15,23,42,0.55);border:1px solid rgba(148,163,184,0.2);border-radius:10px;display:block;">
+            <line x1="${padX}" y1="${h - padY}" x2="${w - padX}" y2="${h - padY}" stroke="rgba(148,163,184,0.3)" stroke-width="1" />
+            ${polylinesHtml}
+          </svg>
+          <div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">Lecture : chaque point correspond à un kilomètre / tour de la sortie.</div>
+        </div>
+      `;
+    }
+
+    // Hook automatique après populateDopamineSheetDetails si présent
+    if (typeof window.populateDopamineSheetDetails === 'function') {
+      const origPopulate = window.populateDopamineSheetDetails;
+      window.populateDopamineSheetDetails = function(session) {
+        const res = origPopulate.apply(this, arguments);
+        setTimeout(() => enhanceDopamineSheetLayout(session), 20);
+        return res;
+      };
+    }
 </script>
 
 <div id="strava-activity-details-page" style="display:none;position:fixed;inset:0;z-index:11000;background:rgba(4,10,16,.96);padding:16px;overflow:auto;">
