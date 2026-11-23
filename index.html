@@ -4715,33 +4715,123 @@ const mapBox = document.getElementById('ad-map-box');
         `;
       }
 
-      const effortsBody = document.getElementById('ad-efforts-body');
+const effortsBody = document.getElementById('ad-efforts-body');
       if (effortsBody) {
-        const efforts = Array.isArray(d.bestEfforts) ? d.bestEfforts : [];
-        effortsBody.innerHTML = efforts.length
-          ? efforts.map((ef) => `
-              <tr>
-                <td>${stravaSafeText(ef.name || '--')}</td>
-                <td>${stravaTime(ef.elapsed_time || ef.moving_time)}</td>
-                <td>${ef.distance && ef.elapsed_time ? stravaPace(Number(ef.distance) / Number(ef.elapsed_time)) : '--'}</td>
-              </tr>
-            `).join('')
-          : '<tr><td colspan="3" style="color:#94a3b8;">Aucun meilleur effort enregistré sur cette sortie.</td></tr>';
+        try {
+          const efforts = Array.isArray(d.bestEfforts) ? d.bestEfforts : [];
+          effortsBody.innerHTML = efforts.length
+            ? efforts.map((ef) => `
+                <tr>
+                  <td>${stravaSafeText(ef.name || '--')}</td>
+                  <td>${stravaTime(ef.elapsed_time || ef.moving_time)}</td>
+                  <td>${ef.distance && ef.elapsed_time ? stravaPace(Number(ef.distance) / Number(ef.elapsed_time)) : '--'}</td>
+                </tr>
+              `).join('')
+            : '<tr><td colspan="3" style="color:#94a3b8;">Aucun meilleur effort enregistré sur cette sortie.</td></tr>';
+        } catch (effortsErr) {
+          console.warn('Meilleurs efforts indisponibles :', effortsErr);
+          effortsBody.innerHTML = '<tr><td colspan="3" style="color:#94a3b8;">Aucun meilleur effort enregistré sur cette sortie.</td></tr>';
+        }
       }
 
       const segmentsBody = document.getElementById('ad-segments-body');
       if (segmentsBody) {
-        const segs = Array.isArray(d.segmentEfforts) ? d.segmentEfforts : [];
-        segmentsBody.innerHTML = segs.length
-          ? segs.map((sg) => `
-              <tr>
-                <td>${stravaSafeText(sg.name || '--')}</td>
-                <td>${stravaTime(sg.elapsed_time || sg.moving_time)}</td>
-                <td>${sg.distance ? `${(Number(sg.distance) / 1000).toFixed(2)} km` : '--'}</td>
-              </tr>
-            `).join('')
-          : '<tr><td colspan="3" style="color:#94a3b8;">Aucun segment Strava traversé sur cette sortie.</td></tr>';
+        try {
+          const segs = Array.isArray(d.segmentEfforts) ? d.segmentEfforts : [];
+          segmentsBody.innerHTML = segs.length
+            ? segs.map((sg) => `
+                <tr>
+                  <td>${stravaSafeText(sg.name || sg.segment?.name || '--')}</td>
+                  <td>${stravaTime(sg.elapsed_time || sg.moving_time)}</td>
+                  <td>${sg.distance ? `${(Number(sg.distance) / 1000).toFixed(2)} km` : '--'}</td>
+                </tr>
+              `).join('')
+            : '<tr><td colspan="3" style="color:#94a3b8;">Aucun segment Strava traversé sur cette sortie.</td></tr>';
+        } catch (segErr) {
+          console.warn('Segments indisponibles :', segErr);
+          segmentsBody.innerHTML = '<tr><td colspan="3" style="color:#94a3b8;">Aucun segment Strava traversé sur cette sortie.</td></tr>';
+        }
       }
+    }function decodeStravaPolyline(encoded) {
+      if (!encoded || typeof encoded !== 'string') return [];
+      const points = [];
+      let index = 0, lat = 0, lng = 0;
+      while (index < encoded.length) {
+        let shift = 0, result = 0, byte = null;
+        do {
+          byte = encoded.charCodeAt(index++) - 63;
+          result |= (byte & 0x1f) << shift;
+          shift += 5;
+        } while (byte >= 0x20 && index < encoded.length);
+        lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+        shift = 0;
+        result = 0;
+        do {
+          byte = encoded.charCodeAt(index++) - 63;
+          result |= (byte & 0x1f) << shift;
+          shift += 5;
+        } while (byte >= 0x20 && index < encoded.length);
+        lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+        points.push([lat * 1e-5, lng * 1e-5]);
+      }
+      return points;
+    }
+
+    function buildGpsSvgTrace(d = {}, session = {}) {
+      let coords = [];
+      if (Array.isArray(d.streams?.latlng?.data) && d.streams.latlng.data.length >= 2) {
+        coords = d.streams.latlng.data;
+      } else if (Array.isArray(d.streams)) {
+        const latlngStream = d.streams.find((s) => s && s.type === 'latlng' && Array.isArray(s.data));
+        if (latlngStream && latlngStream.data.length >= 2) coords = latlngStream.data;
+      }
+
+      if (coords.length < 2) {
+        const poly = d.map?.polyline || d.map?.summary_polyline || session.routePolyline || session.polyline || '';
+        coords = decodeStravaPolyline(poly);
+      }
+
+      const valid = coords.filter((pt) => Array.isArray(pt) && pt.length >= 2 && Number.isFinite(Number(pt[0])) && Number.isFinite(Number(pt[1])));
+      if (valid.length < 2) {
+        return '<p style="color:#94a3b8;margin:0;">Tracé GPS non disponible pour cette sortie.</p>';
+      }
+
+      const lats = valid.map((p) => Number(p[0]));
+      const lngs = valid.map((p) => Number(p[1]));
+      const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+      const midLatRad = ((minLat + maxLat) / 2) * (Math.PI / 180);
+      const cosLat = Math.max(0.2, Math.cos(midLatRad));
+
+      const spanX = Math.max(1e-6, (maxLng - minLng) * cosLat);
+      const spanY = Math.max(1e-6, maxLat - minLat);
+      const w = 640, h = 220, pad = 22;
+      const scale = Math.min((w - pad * 2) / spanX, (h - pad * 2) / spanY);
+      const offsetX = (w - spanX * scale) / 2;
+      const offsetY = (h - spanY * scale) / 2;
+
+      const svgPts = valid.map(([lat, lng]) => {
+        const x = offsetX + (Number(lng) - minLng) * cosLat * scale;
+        const y = h - (offsetY + (Number(lat) - minLat) * scale);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      });
+
+      const startPt = svgPts[0].split(',');
+      const endPt = svgPts[svgPts.length - 1].split(',');
+
+      return `
+        <svg viewBox="0 0 ${w} ${h}" class="strava-svg-chart" style="width:100%;height:220px;background:rgba(15,23,42,0.55);border-radius:12px;" role="img" aria-label="Tracé GPS de la sortie">
+          <polyline fill="none" stroke="rgba(56,189,248,0.22)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" points="${svgPts.join(' ')}" />
+          <polyline fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${svgPts.join(' ')}" />
+          <circle cx="${startPt[0]}" cy="${startPt[1]}" r="5" fill="#22c55e" stroke="#0f172a" stroke-width="2" />
+          <circle cx="${endPt[0]}" cy="${endPt[1]}" r="5" fill="#ef4444" stroke="#0f172a" stroke-width="2" />
+        </svg>
+        <div style="margin-top:6px;font-size:0.8rem;color:#94a3b8;">
+          <span style="color:#22c55e;">●</span> Départ · <span style="color:#ef4444;">●</span> Arrivée (${valid.length.toLocaleString('fr-FR')} pts)
+        </div>
+      `;
     }
     function stravaSafeText(value){return escapeHTML(value==null?'':String(value));}
     function stravaTime(seconds){const n=Math.max(0,Math.round(Number(seconds)||0));const h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return h?`${h} h ${m} min ${s} s`:`${m} min ${s} s`;}
