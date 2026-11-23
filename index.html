@@ -4248,9 +4248,18 @@ function refreshEditSessionFriendSuggestions() {
       set('water-place',session.waterPlace||''); set('water-condition',session.waterCondition||''); set('swim-weather',session.swimWeather||'');
       set('partners',partners); set('comment',session.comment||session.competitionDetails?.notes||'');
       document.getElementById('edit-session-modal').style.display='block'; updateEditSessionFields(); refreshEditSessionFriendSuggestions();
+const resolvedStravaId = session.stravaActivityId || session.strava_id || session.externalId || (String(session.source || '').toLowerCase() === 'strava' && session.stravaDetails?.raw?.id ? session.stravaDetails.raw.id : null);
+      if (resolvedStravaId && !session.stravaActivityId) session.stravaActivityId = resolvedStravaId;
       const detailBox=document.getElementById('edit-session-strava-details');
-      if(detailBox){detailBox.style.display=(session.stravaActivityId?'block':'none');if(session.stravaActivityId){document.getElementById('edit-session-strava-details-content').textContent='Chargement des détails Strava…';loadStravaActivityDetails(session).catch(err=>{document.getElementById('edit-session-strava-details-content').textContent='Détails indisponibles : '+err.message;});}}
-const sheet = document.getElementById('dopamine-session-sheet');
+      if(detailBox){detailBox.style.display=(resolvedStravaId?'block':'none');}
+      if(resolvedStravaId){
+        const detContent = document.getElementById('edit-session-strava-details-content');
+        if (detContent) detContent.textContent='Chargement des détails Strava…';
+        loadStravaActivityDetails(session).catch(err=>{
+          console.warn('Chargement détails Strava :', err);
+          if (detContent) detContent.textContent='Détails indisponibles : '+err.message;
+        });
+      }const sheet = document.getElementById('dopamine-session-sheet');
       if (sheet) {
         setDopamineSheetMode('edit');
         try {
@@ -4554,9 +4563,16 @@ const sheet = document.getElementById('dopamine-session-sheet');
       }
     }
 
-    async function loadStravaActivityDetails(session) {
-      if(!session?.stravaActivityId) return;
-      if(session.stravaDetailsLoaded){renderStravaActivityDetails(session);return;}
+async function loadStravaActivityDetails(session) {
+      const activityId = session?.stravaActivityId || session?.strava_id || session?.externalId;
+      if(!activityId) return;
+      session.stravaActivityId = activityId;
+      const hasFullDetails = session.stravaDetailsLoaded && session.stravaDetails && (Array.isArray(session.stravaDetails.splitsMetric) || session.stravaDetails.streams || session.stravaDetails.zones);
+      if(hasFullDetails){
+        renderStravaActivityDetails(session);
+        if(typeof populateDopamineSheetDetails==='function') populateDopamineSheetDetails(session);
+        return;
+      }
       const storageKey=getStravaStorageKey();
       let auth=JSON.parse(localStorage.getItem(storageKey)||'null');
       if(!auth?.access_token) throw new Error('Reconnecte Strava pour charger les détails.');
