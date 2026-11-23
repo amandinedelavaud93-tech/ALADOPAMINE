@@ -7795,7 +7795,7 @@ const esc = (value) =>
  </div>
 </div>
 <style>
-        /* Fond bleu sur les champs non renseignés (disparaît dès qu'ils sont remplis) */
+        /* Fond bleu sur les champs non renseignés + texte orange bien lisible */
         .ad-field-missing,
         select.ad-field-missing,
         input.ad-field-missing,
@@ -7803,7 +7803,14 @@ const esc = (value) =>
           background-color: rgba(56, 189, 248, 0.22) !important;
           border-color: #38bdf8 !important;
           box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35) !important;
-          color: #e0f2fe !important;
+          color: #fb923c !important;
+          font-weight: 600 !important;
+        }
+
+        .ad-field-missing option,
+        select.ad-field-missing option {
+          background-color: #0f172a !important;
+          color: #fb923c !important;
         }
       </style>
 <style>
