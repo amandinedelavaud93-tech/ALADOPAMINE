@@ -4227,6 +4227,16 @@ function refreshEditSessionFriendSuggestions() {
       });
     }
 
+    function syncMissingFieldHighlights(root = document) {
+      const emptyTokens = ['', 'non renseigné', 'non renseigné / autre', 'autre', 'autre entraînement', 'autre terrain', '--'];
+      const targets = root.querySelectorAll('#ad-extra-terrain, #ad-extra-weather, #ad-extra-activity-type, #ad-comment-input');
+      targets.forEach((el) => {
+        if (!el) return;
+        const rawVal = String(el.value ?? '').trim().toLowerCase();
+        const isMissing = !rawVal || emptyTokens.includes(rawVal);
+        el.classList.toggle('ad-field-missing', isMissing);
+      });
+    }
     function openEditSession(id) {
       const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
       if (!session) { alert('Cette activité est introuvable.'); return; }
@@ -4478,6 +4488,13 @@ const resolvedStravaId = session.stravaActivityId || session.strava_id || sessio
               if (advice) advice.innerHTML = buildCoachZonesAdvice(session, session.stravaDetails || {});
             };
           }
+          const bindMissingHighlight = (el) => {
+            if (!el) return;
+            el.addEventListener('change', () => syncMissingFieldHighlights(sheet));
+            el.addEventListener('input', () => syncMissingFieldHighlights(sheet));
+          };
+          [extraTerrain, extraWeather, extraActivityType, adComment].forEach(bindMissingHighlight);
+          syncMissingFieldHighlights(sheet);
 
           // Masquer les anciens blocs en doublon
           const oldFormGrid = document.querySelector('#edit-session-modal .edit-session-dialog > div[style*="grid-template-columns"]');
@@ -7777,6 +7794,18 @@ const esc = (value) =>
   <div id="strava-activity-details-page-content">Chargement…</div>
  </div>
 </div>
+<style>
+        /* Fond bleu sur les champs non renseignés (disparaît dès qu'ils sont remplis) */
+        .ad-field-missing,
+        select.ad-field-missing,
+        input.ad-field-missing,
+        textarea.ad-field-missing {
+          background-color: rgba(56, 189, 248, 0.22) !important;
+          border-color: #38bdf8 !important;
+          box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35) !important;
+          color: #e0f2fe !important;
+        }
+      </style>
 <style>
 .strava-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}.strava-detail-metric{background:rgba(255,255,255,.045);border:1px solid var(--card-border);border-radius:9px;padding:10px;min-width:0}.strava-detail-metric small{display:block;color:var(--text-sub);font-size:.68rem}.strava-detail-metric strong{display:block;color:var(--text-main);font-size:.95rem;margin-top:4px;overflow-wrap:anywhere}.strava-detail-section{margin-top:16px;padding:12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:10px}.strava-detail-section h4{margin:0 0 10px;color:var(--text-main)}.strava-table-wrap{overflow-x:auto}.strava-detail-section table{border-collapse:collapse;width:100%;font-size:.78rem;white-space:nowrap}.strava-detail-section th,.strava-detail-section td{padding:7px 9px;border-bottom:1px solid var(--card-border);text-align:left}.strava-detail-section th{color:var(--text-sub)}
 </style>
