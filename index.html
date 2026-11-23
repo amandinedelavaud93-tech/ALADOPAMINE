@@ -5426,23 +5426,30 @@ function closeStravaDetailsPage(){
       const prettyDate = new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
       const addButtons = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">${[['natation','Natation'],['velo','Vélo'],['course','Course'],['marche','Marche'],['autres','Autres sports']].map(([key,label])=>`<button type="button" class="btn-add-plan" onclick="openCalendarActivity('${key}','${dateStr}')">+ ${label}</button>`).join('')}<button type="button" class="btn-add-plan" onclick="openCalendarCompetition('${dateStr}')">+ Compétition</button><button type="button" class="btn-add-plan" onclick="openPlanModal();document.getElementById('plan-date').value='${dateStr}'">+ Planifier</button></div>`;
       if (panel) {
-        const rows = sessions.map(item => {
-          const title = escapeHTML(String(item.title || 'Séance'));
-          const sport = escapeHTML(String(item.sport || '').toUpperCase());
-          const time = escapeHTML(String(item.time || 'Heure non renseignée'));
-          const duration = escapeHTML(String(item.duration || (item.durationMinutes ? `${item.durationMinutes} min` : '')));
-          const distance = escapeHTML(String(item.distance || '')); 
-          const detail = escapeHTML(String(item.description || item.planGoal || item.comment || ''));
-          const isCompleted = item.calendarStatus === 'completed';
-          const isPastPlanned = !isCompleted && String(item.date || '') < localDateISO(new Date());
-          const status = isCompleted ? 'Séance réalisée' : isPastPlanned ? 'Séance prévue — date passée, à mettre à jour' : 'Séance à venir';
-          const badge = item.type === 'competition' || item.sport === 'competition' ? ' · 🏁 Compétition' : '';
-          const edit = isCompleted && item.id != null ? `<button type="button" onclick="openEditSession('${String(item.id).replace(/'/g, '')}')" title="Modifier l’activité">Modifier</button>` : '';
-          return `<div class="calendar-detail-row"><div style="min-width:0;flex:1;"><strong>${time} · ${title}</strong><small>${sport}${badge} · ${status}${duration ? `<br>Durée : ${duration}` : ''}${distance ? `<br>Distance : ${distance}` : ''}${detail ? `<br>${detail}` : ''}</small></div><span style="width:9px;height:9px;border-radius:50%;background:${calendarSportColor(item)};flex:none;margin-top:5px;"></span>${edit}</div>`;
-        }).join('');
-        panel.innerHTML = `<strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">${sessions.length ? `${sessions.length} activité(s) ce jour` : 'Aucune activité enregistrée pour cette journée.'}</small>${rows}${addButtons}`;
-      }
-    }
+       const rows = sessions.map(item => {
+      const title = escapeHTML(String(item.title || 'Séance'));
+      const sport = escapeHTML(String(item.sport || '').toUpperCase());
+      const rawDateStr = String(item.date || item.startDate || item.startedAt || '');
+      const isoTimeMatch = rawDateStr.match(/T(\d{2}:\d{2})/);
+      const rawTime = String(item.time || item.startTime || item.heure || (isoTimeMatch ? isoTimeMatch[1] : '') || '').trim();
+      const time = escapeHTML(rawTime || 'Heure non renseignée');
+      const duration = escapeHTML(String(item.duration || (item.durationMinutes ? `${item.durationMinutes} min` : '')));
+      const distance = escapeHTML(String(item.distance || ''));
+      const detail = escapeHTML(String(item.description || item.planGoal || item.comment || ''));
+      const isCompleted = item.calendarStatus === 'completed';
+      const isPastPlanned = !isCompleted && String(item.date || '') < localDateISO(new Date());
+      const status = isCompleted ? 'Séance réalisée' : isPastPlanned ? 'Séance prévue - date passée, à mettre à jour' : 'Séance à venir';
+      const badge = item.type === 'competition' || item.sport === 'competition' ? ' · 🏁 Compétition' : '';
+      const safeId = escapeHTML(String(item.id ?? ''));
+      const edit = isCompleted && item.id != null ? `<button type="button" onclick="openEditSession('${String(item.id).replace(/'/g, "\\'")}')" title="Modifier l'activité">Modifier</button>` : '';
+      const photoList = Array.isArray(item.photos) ? item.photos : (Array.isArray(item.images) ? item.images : (item.photo ? [item.photo] : []));
+      const firstPhotoRaw = photoList.find(p => typeof p === 'string' && p.trim()) || (photoList[0]?.url || photoList[0]?.src || '');
+      const safePhotoUrl = firstPhotoRaw && /^(https?:\/\/|data:image\/|blob:)/i.test(firstPhotoRaw) ? escapeHTML(firstPhotoRaw) : '';
+      const photoHtml = safePhotoUrl ? `<div style="flex-shrink:0;display:flex;align-items:center;"><img src="${safePhotoUrl}" alt="${title}" style="max-height:92px;max-width:136px;width:auto;object-fit:contain;border-radius:8px;background:rgba(15,23,42,0.65);border:1px solid var(--card-border);"></div>` : '';
+      const openViewCall = `if(typeof openEditSession==='function'){openEditSession('${String(item.id).replace(/'/g, "\\'")}');setTimeout(function(){if(typeof setDopamineSheetMode==='function')setDopamineSheetMode('inspect');},40);}`;
+      return `<div class="calendar-detail-row" data-session-id="${safeId}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;"><div style="min-width:0;flex:1;"><strong>${time} · <span onclick="${openViewCall}" style="cursor:pointer;text-decoration:underline;color:var(--text-main);" title="Voir l'intégralité de la séance">${title}</span></strong><small>${sport}${badge} · ${status}${duration ? `<br>Durée : ${duration}` : ''}${distance ? ` · Distance : ${distance}` : ''}${detail ? `<br>${detail}` : ''}</small></div>${photoHtml}${edit}</div>`;
+    }).join('');
+    panel.innerHTML = `<strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">${sessions.length} activité(s) ce jour</small>${rows}${addButtons}`;
 
     function openSearchFriendsModal() {
       showPage('home');
