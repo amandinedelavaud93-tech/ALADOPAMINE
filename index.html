@@ -4237,7 +4237,8 @@ function refreshEditSessionFriendSuggestions() {
         el.classList.toggle('ad-field-missing', isMissing);
       });
     }function syncTerrainOptionsBySport(sportValue, preferredValue = '', root = document) {
-      const select = root.getElementById('ad-extra-terrain');
+      const scope = root && typeof root.querySelector === 'function' ? root : document;
+      const select = scope.querySelector('#ad-extra-terrain') || document.getElementById('ad-extra-terrain');
       if (!select) return;
 
       const sp = String(sportValue || 'course').toLowerCase().trim();
