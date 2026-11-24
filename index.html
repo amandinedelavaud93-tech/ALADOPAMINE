@@ -5194,7 +5194,7 @@ function closeStravaDetailsPage(){
     });
   }
 }
-    function closeStravaDetailsPage(){const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='none';}
+function closeStravaDetailsPage(){const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='none';}
     async function deleteEditedSession() {
       const id=document.getElementById('edit-session-id')?.value;
       const session=appData.sessionsHistory.find(item=>String(item.id)===String(id));
@@ -5213,41 +5213,8 @@ function closeStravaDetailsPage(){
       saveAppData();closeEditSession();
       alert(cloudDeleteError?'Séance supprimée de l’historique local. Attention : la suppression de la ligne Supabase a échoué : '+cloudDeleteError:'Séance supprimée. Statistiques, XP et trophées vérifiables recalculés.');
     }
-    function closeEditSession() { const modal = document.getElementById('edit-session-modal'); if (modal) modal.style.display = 'none'; }
-function setDopamineSheetMode(mode) {
-  const sheet = document.getElementById('dopamine-session-sheet');
-  if (!sheet) return;
-  const inspect = mode === 'inspect';
-  sheet.dataset.sheetMode = inspect ? 'inspect' : 'edit';
-  const label = document.getElementById('ad-sheet-mode-label');
-  const toggle = document.getElementById('ad-sheet-mode-toggle');
-  if (label) label.innerHTML = inspect ? '<i class="fa-solid fa-eye"></i> Mode consultation' : '<i class="fa-solid fa-pen-to-square"></i> Mode modification';
-  if (toggle) toggle.textContent = inspect ? 'Modifier cette séance' : 'Passer en consultation';
-  sheet.querySelectorAll('input:not([type="hidden"]),textarea,select').forEach((el) => {
-    if (el.id === 'ad-photo-input') return;
-    if (el.type === 'range' || el.tagName === 'SELECT') el.disabled = inspect;
-    else el.readOnly = inspect;
-  });
-  const save = document.getElementById('ad-save-btn');
-  const remove = document.getElementById('ad-delete-btn');
-  const addPhoto = document.getElementById('ad-add-photo-btn');
-  if (save) save.style.display = inspect ? 'none' : '';
-  if (remove) remove.style.display = inspect ? 'none' : '';
-  if (addPhoto) addPhoto.style.display = inspect ? 'none' : '';
-  sheet.querySelectorAll('[data-del-photo]').forEach((btn) => { btn.style.display = inspect ? 'none' : ''; });
-}
 
-function toggleDopamineSheetMode() {
-  const sheet = document.getElementById('dopamine-session-sheet');
-  setDopamineSheetMode(sheet?.dataset.sheetMode === 'inspect' ? 'edit' : 'inspect');
-}
-
-function inspectDopamineSession(id) {
-  openEditSession(id);
-  setDopamineSheetMode('inspect');
-}
-
-    function saveEditedSession() {
+function saveEditedSession() {
       const val=id=>document.getElementById('edit-session-'+id)?.value;
       const session = appData.sessionsHistory.find(item => String(item.id) === String(val('id')));
       if (!session) { alert('Cette activité est introuvable.'); closeEditSession(); return; }
@@ -5298,7 +5265,7 @@ function inspectDopamineSession(id) {
       renderHistory();
     }
 
-    function renderHistory() {
+     function renderHistory() {
       const container = document.getElementById('history-list-container');
       if (!container) return;
       container.innerHTML = '';
@@ -5307,7 +5274,7 @@ function inspectDopamineSession(id) {
         container.innerHTML = '<p style="color:var(--text-sub); font-size:0.75rem; text-align:center; padding:10px;">Aucune séance enregistrée.</p>';
         return;
       }
-      const escapeHTML = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+    const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&'+'amp;','<':'&'+'lt;','>':'&'+'gt;','"':'&'+'quot;','\x27':'&'+'#39;'}[ch]));
       list.forEach(s => {
         updateSessionDerivedMetrics(s);
         const feedback = [s.feeling ? `Ressenti : ${escapeHTML(s.feeling)}` : '', s.comment ? escapeHTML(s.comment) : ''].filter(Boolean).join(' — ');
@@ -5325,17 +5292,19 @@ function inspectDopamineSession(id) {
           s.stravaDetails?.segmentEfforts?.length ? `${s.stravaDetails.segmentEfforts.length} segments` : ''
         ].filter(Boolean).join(' · ');
         const metricLine = [speedLine, stravaMetrics, vapLine].filter(Boolean).join(' · ');
+        const safeId = escapeHTML(s.id ?? '');
+        const escapedIdArg = String(s.id ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const safeTitle = escapeHTML(s.title || 'Séance');
         container.innerHTML += `
-          <div class="history-card">
-            <div style="min-width:0;flex:1;"><strong>${escapeHTML(s.title)}</strong><div style="font-size:0.65rem; color:var(--text-sub);">${escapeHTML(s.date)} • ${escapeHTML(s.duration)}</div>${metricLine ? `<div style="font-size:0.68rem;color:var(--bike-orange);margin-top:4px;">${escapeHTML(metricLine)}</div>` : ''}${feedback ? `<div style="font-size:0.72rem;color:var(--text-sub);margin-top:5px;overflow-wrap:anywhere;">${feedback}</div>` : ''}</div>
+          <div class="history-card" data-session-id="${safeId}">
+            <div style="min-width:0;flex:1;"><button type="button" onclick="event.stopPropagation(); if(typeof inspectDopamineSession==='function'){inspectDopamineSession('${escapedIdArg}');}else if(typeof openEditSession==='function'){openEditSession('${escapedIdArg}');}" style="background:none;border:none;padding:0;margin:0;font:inherit;font-weight:700;color:var(--text-main);cursor:pointer;text-align:left;text-decoration:underline;" title="Consulter cette activité">${safeTitle}</button><div style="font-size:0.65rem; color:var(--text-sub);">${escapeHTML(s.date)} • ${escapeHTML(s.duration)}</div>${metricLine ? `<div style="font-size:0.68rem;color:var(--bike-orange);margin-top:4px;">${escapeHTML(metricLine)}</div>` : ''}${feedback ? `<div style="font-size:0.72rem;color:var(--text-sub);margin-top:5px;overflow-wrap:anywhere;">${feedback}</div>` : ''}</div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <div style="text-align:right;"><strong style="color:var(--bike-orange);">${s.distance}</strong><div style="font-size:0.65rem; color:var(--xp-gold);">+${s.xp} XP</div></div>
-              <button type="button" class="medal-tab" title="Inspecter cette activité" aria-label="Inspecter cette activité" onclick="inspectDopamineSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-eye"></i></button><button type="button" class="medal-tab" title="Modifier cette activité" aria-label="Modifier cette activité" onclick="openEditSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-delete-session" onclick="deleteSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-trash"></i></button>
+              <div style="text-align:right;"><strong style="color:var(--bike-orange);">${escapeHTML(s.distance)}</strong><div style="font-size:0.65rem; color:var(--xp-gold);">+${escapeHTML(s.xp)} XP</div></div>
+              <button type="button" class="medal-tab" title="Modifier cette activité" aria-label="Modifier cette activité" onclick="event.stopPropagation(); openEditSession('${escapedIdArg}')"><i class="fa-solid fa-pen"></i></button><button type="button" class="btn-delete-session" onclick="event.stopPropagation(); deleteSession('${escapedIdArg}')"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>`;
       });
     }
-
     function setCalendarMode(mode) {
       calendarMode = mode;
       ['week','month','year'].forEach(name => { const button=document.getElementById(`cal-mode-${name}`); if(button) button.classList.toggle('active', mode === name); });
@@ -5363,11 +5332,12 @@ function inspectDopamineSession(id) {
       const grid = document.getElementById('calendar-days-grid-home');
       const label = document.getElementById('calendar-current-label');
       if (!grid) return;
-      
+
       const today = new Date();
       const displayDate = new Date(calendarDisplayDate);
       grid.innerHTML = '';
 
+     const escapeAttr = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&'+'amp;','<':'&'+'lt;','>':'&'+'gt;','"':'&'+'quot;','\x27':'&'+'#39;'}[ch]));
       const sportPriority = { natation: 1, velo: 2, course: 3, marche: 4, hiit: 5, autres: 6, competition: 7, duathlon: 8, triathlon: 9, trail: 10 };
 
       if (calendarMode === 'today') {
@@ -5399,7 +5369,7 @@ function inspectDopamineSession(id) {
           let dotsHtml = '';
           daySessions.forEach(s => {
             const color = calendarSportColor(s);
-            dotsHtml += `<div class="dot-sport" style="background:${color};" title="${s.title} (${s.time || ''})"></div>`;
+            dotsHtml += `<div class="dot-sport" style="background:${color};" title="${escapeAttr(`${s.title} (${s.time || ''})`)}"></div>`;
           });
 
           grid.innerHTML += `
@@ -5416,16 +5386,16 @@ function inspectDopamineSession(id) {
         const month = displayDate.getMonth();
         const firstDayOfMonth = new Date(year, month, 1);
         const lastDayOfMonth = new Date(year, month + 1, 0);
-        
+
         if(label) label.innerText = firstDayOfMonth.toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
 
         // Jours de la semaine en entête
         const daysShort = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-        daysShort.forEach(day => { grid.innerHTML += `<div class=\"calendar-weekday-heading\">${day}</div>`; });
-        
+        daysShort.forEach(day => { grid.innerHTML += `<div class="calendar-weekday-heading">${day}</div>`; });
+
         // Décalage premier jour
         let startDay = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
-        
+
         for (let i = 0; i < startDay; i++) {
           grid.innerHTML += `<div class="cal-day-cell-mini" style="opacity:0.2; min-height:45px;"></div>`;
         }
@@ -5439,7 +5409,7 @@ function inspectDopamineSession(id) {
           let dotsHtml = '';
           daySessions.forEach(s => {
             const color = calendarSportColor(s);
-            dotsHtml += `<div class="dot-sport" style="background:${color}; width:4px; height:4px;" title="${s.title}"></div>`;
+            dotsHtml += `<div class="dot-sport" style="background:${color}; width:4px; height:4px;" title="${escapeAttr(s.title)}"></div>`;
           });
 
           grid.innerHTML += `
@@ -5461,7 +5431,7 @@ function inspectDopamineSession(id) {
           const monthBox = document.createElement('div');
           const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
           monthBox.id = isCurrentMonth ? 'calendar-current-month' : `calendar-month-${month}`;
-          monthBox.style.cssText = `border:1px solid ${isCurrentMonth?'var(--bike-orange)':'var(--card-border)'};border-radius:10px;padding:8px;min-width:0;background:${isCurrentMonth?'rgba(255,107,0,.09)':'rgba(255,255,255,.015)'};`; 
+          monthBox.style.cssText = `border:1px solid ${isCurrentMonth?'var(--bike-orange)':'var(--card-border)'};border-radius:10px;padding:8px;min-width:0;background:${isCurrentMonth?'rgba(255,107,0,.09)':'rgba(255,255,255,.015)'};`;
           const monthTitle = document.createElement('div');
           monthTitle.textContent = firstDay.toLocaleDateString('fr-FR',{month:'long'});
           monthTitle.style.cssText = 'font-weight:800;text-transform:capitalize;font-size:.78rem;margin-bottom:6px;color:var(--text-main);';
@@ -5492,7 +5462,6 @@ function inspectDopamineSession(id) {
       }
       updateRaceCountdown();
     }
-
     // Un seul gestionnaire pour toutes les vues : chaque case de jour est sélectionnable,
     // qu'elle contienne une séance passée, prévue ou aucune activité.
     document.addEventListener('click', event => {
@@ -5599,7 +5568,7 @@ function inspectDopamineSession(id) {
         formatGroup.style.display = 'none';
       }
     }
-    
+
 function escapeFriendText(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
@@ -6900,8 +6869,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 <div id="edit-session-modal" style="display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.82);padding:12px;overflow:auto;">
  <div class="edit-session-dialog" style="max-width:760px;margin:3vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;"><h3 style="margin:0;color:var(--text-main);"><i class="fa-solid fa-pen-to-square" style="color:var(--xp-gold);"></i> Modifier l’activité</h3><button type="button" onclick="closeEditSession()" aria-label="Fermer" style="background:transparent;border:0;color:var(--text-main);font-size:1.5rem;">&times;</button></div>
-  <input type="hidden" id="edit-session-id">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;"><h3 id="edit-session-modal-title" style="margin:0;color:var(--text-main);"><i class="fa-solid fa-pen-to-square" style="color:var(--bike-orange);margin-right:8px;"></i>Modifier l'activité</h3>  <input type="hidden" id="edit-session-id">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;">
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-title">Nom de l’activité</label><input id="edit-session-title" type="text" maxlength="120" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-sport">Discipline</label><select id="edit-session-sport" style="width:100%;" onchange="updateEditSessionFields()"><option value="natation">Natation</option><option value="velo">Vélo</option><option value="course">Course à pied</option><option value="marche">Marche / randonnée</option><option value="hiit">HIIT</option><option value="autres">Autres sports</option><option value="competition">Compétition</option></select></div>
