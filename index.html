@@ -4442,40 +4442,50 @@ function refreshEditSessionFriendSuggestions() {
     }
 function positionModalBelowRibbon(modalEl) {
       if (!modalEl) return;
-      const headerEl = document.querySelector('header, nav, .top-nav, .navbar, .topbar, .app-header, [class*="ribbon"]');
-      const ribbonHeight = headerEl ? Math.ceil(headerEl.getBoundingClientRect().height) : 72;
-      const topOffset = Math.max(84, ribbonHeight + 16);
+      const ribbonEl = document.querySelector('header, nav, .top-nav, .navbar, .topbar, .app-header, [class*="ribbon"]');
+      const ribbonBottom = ribbonEl ? Math.ceil(ribbonEl.getBoundingClientRect().bottom) : 84;
+      const topOffset = Math.max(84, ribbonBottom + 12);
+
       modalEl.style.setProperty('--dopamine-sheet-top', `${topOffset}px`);
       modalEl.style.paddingTop = `${topOffset}px`;
       modalEl.style.alignItems = 'flex-start';
       modalEl.style.overflowY = 'auto';
-      const dialogEl = modalEl.querySelector('.edit-session-dialog');
-      if (dialogEl) {
-        dialogEl.style.marginTop = '0';
-        dialogEl.style.maxHeight = `calc(100vh - ${topOffset + 24}px)`;
-        dialogEl.style.overflowY = 'auto';
+
+      const sheetOrDialog = modalEl.querySelector('#dopamine-session-sheet, .edit-session-dialog') || modalEl.firstElementChild;
+      if (sheetOrDialog) {
+        sheetOrDialog.style.marginTop = '0';
+        sheetOrDialog.style.maxHeight = `calc(100vh - ${topOffset + 16}px)`;
+        sheetOrDialog.style.overflowY = 'auto';
       }
     }
-
-    function setDopamineSheetMode(mode) {
+function setDopamineSheetMode(mode) {
       const isInspect = mode === 'inspect';
       const modalEl = document.getElementById('edit-session-modal');
       const titleEl = document.getElementById('edit-session-modal-title');
       const modeBadge = document.getElementById('dopamine-sheet-mode-badge');
       const toggleBtn = document.getElementById('dopamine-sheet-toggle-btn');
-      const saveBtn = document.querySelector('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"]');
+      const legacyForm = document.getElementById('edit-session-form');
+      const sheetEl = document.getElementById('dopamine-session-sheet');
 
       if (modalEl) {
         modalEl.dataset.sheetMode = isInspect ? 'inspect' : 'edit';
         modalEl.classList.toggle('dopamine-inspect-mode', isInspect);
-        if (isInspect) {
-          positionModalBelowRibbon(modalEl);
-        } else {
-          modalEl.style.removeProperty('--dopamine-sheet-top');
-          modalEl.style.paddingTop = '';
-          modalEl.style.alignItems = '';
-          modalEl.style.overflowY = '';
-        }
+        positionModalBelowRibbon(modalEl);
+      }
+
+      if (legacyForm) {
+        legacyForm.style.display = isInspect ? 'none' : '';
+      }
+
+      if (sheetEl) {
+        sheetEl.style.width = '100%';
+        sheetEl.style.maxWidth = '860px';
+        sheetEl.style.margin = '0 auto';
+        const sheetFields = sheetEl.querySelectorAll('input, select, textarea, button[data-remove-friend], #ad-friend-add-btn');
+        sheetFields.forEach(field => {
+          if (field.type === 'hidden') return;
+          field.disabled = isInspect;
+        });
       }
 
       if (titleEl) {
@@ -4496,11 +4506,53 @@ function positionModalBelowRibbon(modalEl) {
         field.disabled = isInspect;
       });
 
-const actionButtons = document.querySelectorAll('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"], #ad-save-btn, #ad-delete-btn');
-  actionButtons.forEach(btn => {
-    btn.style.display = isInspect ? 'none' : '';
-  });
-}
+      const actionButtons = document.querySelectorAll('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"], #ad-save-btn, #ad-delete-btn');
+      actionButtons.forEach(btn => {
+        btn.style.display = isInspect ? 'none' : '';
+      });
+    }
+
+    function toggleDopamineSheetMode() {
+      const modalEl = document.getElementById('edit-session-modal');
+      const currentMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
+      setDopamineSheetMode(currentMode === 'inspect' ? 'edit' : 'inspect');
+    }
+
+    function inspectDopamineSession(sessionId) {
+      const modalEl = document.getElementById('edit-session-modal');
+      if (modalEl) modalEl.dataset.sheetMode = 'inspect';
+      if (typeof openEditSession === 'function') {
+        openEditSession(sessionId);
+      }
+      if (typeof setDopamineSheetMode === 'function') {
+        setDopamineSheetMode('inspect');
+      }
+    }
+
+    function closeEditSession() {
+      const modalEl = document.getElementById('edit-session-modal');
+      const legacyForm = document.getElementById('edit-session-form');
+      if (legacyForm) {
+        legacyForm.style.display = '';
+      }
+      if (modalEl) {
+        modalEl.classList.remove('open', 'active', 'show', 'dopamine-inspect-mode');
+        modalEl.style.display = 'none';
+        modalEl.style.removeProperty('--dopamine-sheet-top');
+        modalEl.style.paddingTop = '';
+        modalEl.style.alignItems = '';
+        modalEl.style.overflowY = '';
+        delete modalEl.dataset.sheetMode;
+      }
+      const formFields = document.querySelectorAll('#edit-session-form input, #edit-session-form select, #edit-session-form textarea, #dopamine-session-sheet input, #dopamine-session-sheet select, #dopamine-session-sheet textarea');
+      formFields.forEach(field => {
+        field.disabled = false;
+      });
+      const actionButtons = document.querySelectorAll('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"], #ad-save-btn, #ad-delete-btn');
+      actionButtons.forEach(btn => {
+        btn.style.display = '';
+      });
+    }
 function toggleDopamineSheetMode() {
       const modalEl = document.getElementById('edit-session-modal');
       const currentMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
@@ -4570,98 +4622,87 @@ loadStravaActivityDetails(session).catch(err => {
           if (detContent) detContent.textContent = 'Détails indisponibles : ' + err.message;
         });
       }
-const modalEl = document.getElementById('edit-session-modal');
-      const sheetEl = document.getElementById('dopamine-session-sheet');
-      const requestedMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
-      if (typeof setDopamineSheetMode === 'function') {
-        setDopamineSheetMode(requestedMode);
-      }
-      if (modalEl && typeof positionModalBelowRibbon === 'function') {
-        positionModalBelowRibbon(modalEl);
-      }
-      if (sheetEl && requestedMode === 'inspect') {
-        sheetEl.querySelectorAll('input, select, textarea, button[data-remove-friend], #ad-friend-add-btn').forEach((el) => {
-          if (el.type !== 'hidden') el.disabled = true;
-        });
-      }
+ const modalEl = document.getElementById('edit-session-modal');
+      const sheet = document.getElementById('dopamine-session-sheet');
       const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
       const updateSheetSport = (sp) => {
         if (!sheet) return;
         sheet.dataset.sport = sportMap[sp] || sp || 'run';
         syncTerrainOptionsBySport(sp, document.getElementById('ad-extra-terrain')?.value || session.terrain || '', sheet);
       };
-          // Titre, Date & Heure Strava/locale
-          const adTitle = document.getElementById('ad-session-title');
-          const adDate = document.getElementById('ad-session-date');
-          const adTime = document.getElementById('ad-session-time');
-          if (adTitle) {
-            adTitle.value = session.title || session.name || '';
-            adTitle.oninput = () => {
-              const el = document.getElementById('edit-session-title');
-              if (el) el.value = adTitle.value;
+
+      // Titre, Date & Heure Strava/locale
+      const adTitle = document.getElementById('ad-session-title');
+      const adDate = document.getElementById('ad-session-date');
+      const adTime = document.getElementById('ad-session-time');
+      if (adTitle) {
+        adTitle.value = session.title || session.name || '';
+        adTitle.oninput = () => {
+          const el = document.getElementById('edit-session-title');
+          if (el) el.value = adTitle.value;
+        };
+      }
+
+      if (adDate) adDate.textContent = session.date || '--';
+      const rawStart = session.startDateLocal || session.stravaDetails?.startDateLocal || session.start_date_local || session.startTime || '';
+      const parsedTime = typeof rawStart === 'string' && rawStart.includes('T')
+        ? rawStart.split('T')[1].slice(0, 5)
+        : (session.time || '--:--');
+      if (adTime) adTime.textContent = parsedTime;
+
+      // RPE & Commentaire
+      const adRpe = document.getElementById('ad-rpe-input');
+      const adRpeVal = document.getElementById('ad-rpe-val');
+      const adComment = document.getElementById('ad-comment-input');
+
+      if (adRpe) {
+        adRpe.value = Number(session.rpe ?? 5);
+        if (adRpeVal) adRpeVal.textContent = adRpe.value;
+        adRpe.oninput = () => {
+          if (adRpeVal) adRpeVal.textContent = adRpe.value;
+          const el = document.getElementById('edit-session-rpe');
+          if (el) el.value = adRpe.value;
+        };
+      }
+
+      if (adComment) {
+        adComment.value = session.comment || session.description || '';
+        adComment.oninput = () => {
+          const el = document.getElementById('edit-session-comment');
+          if (el) el.value = adComment.value;
+        };
+      }
+
+      // Amis À LA DOPAMINE (liste + ajout pseudo ou e-mail Strava)
+      const friendSelect = document.getElementById('ad-friend-select');
+      const friendCustomInput = document.getElementById('ad-friend-custom-input');
+      const friendAddBtn = document.getElementById('ad-friend-add-btn');
+      const friendsListBox = document.getElementById('ad-friends-list');
+
+      let selectedFriends = Array.isArray(session.partners)
+        ? session.partners.map((p) => (typeof p === 'string' ? p : (p.username || p.name || p.email || ''))).filter(Boolean)
+        : [];
+
+      const syncFriends = () => {
+        session.partners = [...selectedFriends];
+        const hiddenPartners = document.getElementById('edit-session-partners');
+        if (hiddenPartners) hiddenPartners.value = selectedFriends.join(', ');
+        if (friendsListBox) {
+          friendsListBox.innerHTML = selectedFriends.map((f, idx) => `
+            <span class="ad-friend-chip">
+              👤 ${escapeHTML(f)}
+              <button type="button" data-remove-friend="${idx}" title="Retirer">×</button>
+            </span>
+          `).join('');
+          friendsListBox.querySelectorAll('[data-remove-friend]').forEach((btn) => {
+            btn.onclick = () => {
+              const i = Number(btn.dataset.removeFriend);
+              selectedFriends.splice(i, 1);
+              syncFriends();
             };
-          }
-
-          if (adDate) adDate.textContent = session.date || '--';
-          const rawStart = session.startDateLocal || session.stravaDetails?.startDateLocal || session.start_date_local || session.startTime || '';
-          const parsedTime = typeof rawStart === 'string' && rawStart.includes('T')
-            ? rawStart.split('T')[1].slice(0, 5)
-            : (session.time || '--:--');
-          if (adTime) adTime.textContent = parsedTime;
-
-          // RPE & Commentaire
-          const adRpe = document.getElementById('ad-rpe-input');
-          const adRpeVal = document.getElementById('ad-rpe-val');
-          const adComment = document.getElementById('ad-comment-input');
-
-          if (adRpe) {
-            adRpe.value = Number(session.rpe ?? 5);
-            if (adRpeVal) adRpeVal.textContent = adRpe.value;
-            adRpe.oninput = () => {
-              if (adRpeVal) adRpeVal.textContent = adRpe.value;
-              const el = document.getElementById('edit-session-rpe');
-              if (el) el.value = adRpe.value;
-            };
-          }
-
-          if (adComment) {
-            adComment.value = session.comment || session.description || '';
-            adComment.oninput = () => {
-              const el = document.getElementById('edit-session-comment');
-              if (el) el.value = adComment.value;
-            };
-          }
-
-          // Amis À LA DOPAMINE (liste + ajout pseudo ou e-mail Strava)
-          const friendSelect = document.getElementById('ad-friend-select');
-          const friendCustomInput = document.getElementById('ad-friend-custom-input');
-          const friendAddBtn = document.getElementById('ad-friend-add-btn');
-          const friendsListBox = document.getElementById('ad-friends-list');
-
-          let selectedFriends = Array.isArray(session.partners)
-            ? session.partners.map((p) => (typeof p === 'string' ? p : (p.username || p.name || p.email || ''))).filter(Boolean)
-            : [];
-
-          const syncFriends = () => {
-            session.partners = [...selectedFriends];
-            const hiddenPartners = document.getElementById('edit-session-partners');
-            if (hiddenPartners) hiddenPartners.value = selectedFriends.join(', ');
-            if (friendsListBox) {
-              friendsListBox.innerHTML = selectedFriends.map((f, idx) => `
-                <span class="ad-friend-chip">
-                  👤 ${escapeHTML(f)}
-                  <button type="button" data-remove-friend="${idx}" title="Retirer">×</button>
-                </span>
-              `).join('');
-              friendsListBox.querySelectorAll('[data-remove-friend]').forEach((btn) => {
-                btn.onclick = () => {
-                  const i = Number(btn.dataset.removeFriend);
-                  selectedFriends.splice(i, 1);
-                  syncFriends();
-                };
-              });
-            }
-          };
+          });
+        }
+      };
 
           if (friendSelect) {
             const knownFriends = Array.isArray(appData?.friends) ? appData.friends : [];
