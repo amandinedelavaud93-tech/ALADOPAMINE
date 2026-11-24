@@ -4440,15 +4440,21 @@ function refreshEditSessionFriendSuggestions() {
         syncMissingFieldHighlights(root);
       }
     }
-    function positionModalBelowRibbon(modalEl) {
+function positionModalBelowRibbon(modalEl) {
       if (!modalEl) return;
       const headerEl = document.querySelector('header, nav, .top-nav, .navbar, .topbar, .app-header, [class*="ribbon"]');
       const ribbonHeight = headerEl ? Math.ceil(headerEl.getBoundingClientRect().height) : 72;
-      const topOffset = Math.max(76, ribbonHeight + 12);
+      const topOffset = Math.max(84, ribbonHeight + 16);
       modalEl.style.setProperty('--dopamine-sheet-top', `${topOffset}px`);
       modalEl.style.paddingTop = `${topOffset}px`;
       modalEl.style.alignItems = 'flex-start';
       modalEl.style.overflowY = 'auto';
+      const dialogEl = modalEl.querySelector('.edit-session-dialog');
+      if (dialogEl) {
+        dialogEl.style.marginTop = '0';
+        dialogEl.style.maxHeight = `calc(100vh - ${topOffset + 24}px)`;
+        dialogEl.style.overflowY = 'auto';
+      }
     }
 
     function setDopamineSheetMode(mode) {
@@ -4490,11 +4496,16 @@ function refreshEditSessionFriendSuggestions() {
         field.disabled = isInspect;
       });
 
-      if (saveBtn) {
-        saveBtn.style.display = isInspect ? 'none' : '';
-      }
+const actionButtons = document.querySelectorAll('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"], #ad-save-btn, #ad-delete-btn');
+  actionButtons.forEach(btn => {
+    btn.style.display = isInspect ? 'none' : '';
+  });
+}
+function toggleDopamineSheetMode() {
+      const modalEl = document.getElementById('edit-session-modal');
+      const currentMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
+      setDopamineSheetMode(currentMode === 'inspect' ? 'edit' : 'inspect');
     }
-
     function inspectDopamineSession(sessionId) {
       if (typeof openEditSession === 'function') {
         openEditSession(sessionId);
