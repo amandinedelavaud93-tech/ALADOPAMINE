@@ -4506,11 +4506,15 @@ function toggleDopamineSheetMode() {
       const currentMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
       setDopamineSheetMode(currentMode === 'inspect' ? 'edit' : 'inspect');
     }
-    function inspectDopamineSession(sessionId) {
+function inspectDopamineSession(sessionId) {
+      const modalEl = document.getElementById('edit-session-modal');
+      if (modalEl) modalEl.dataset.sheetMode = 'inspect';
       if (typeof openEditSession === 'function') {
         openEditSession(sessionId);
       }
-      setDopamineSheetMode('inspect');
+      if (typeof setDopamineSheetMode === 'function') {
+        setDopamineSheetMode('inspect');
+      }
     }
 
     function closeEditSession() {
@@ -4566,9 +4570,19 @@ loadStravaActivityDetails(session).catch(err => {
           if (detContent) detContent.textContent = 'Détails indisponibles : ' + err.message;
         });
       }
-      const sheet = document.getElementById('dopamine-session-sheet');
-      if (sheet && typeof setDopamineSheetMode === 'function') {
-        setDopamineSheetMode('edit');
+const modalEl = document.getElementById('edit-session-modal');
+      const sheetEl = document.getElementById('dopamine-session-sheet');
+      const requestedMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
+      if (typeof setDopamineSheetMode === 'function') {
+        setDopamineSheetMode(requestedMode);
+      }
+      if (modalEl && typeof positionModalBelowRibbon === 'function') {
+        positionModalBelowRibbon(modalEl);
+      }
+      if (sheetEl && requestedMode === 'inspect') {
+        sheetEl.querySelectorAll('input, select, textarea, button[data-remove-friend], #ad-friend-add-btn').forEach((el) => {
+          if (el.type !== 'hidden') el.disabled = true;
+        });
       }
       const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
       const updateSheetSport = (sp) => {
