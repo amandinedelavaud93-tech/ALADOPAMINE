@@ -4440,6 +4440,88 @@ function refreshEditSessionFriendSuggestions() {
         syncMissingFieldHighlights(root);
       }
     }
+    function positionModalBelowRibbon(modalEl) {
+      if (!modalEl) return;
+      const headerEl = document.querySelector('header, nav, .top-nav, .navbar, .topbar, .app-header, [class*="ribbon"]');
+      const ribbonHeight = headerEl ? Math.ceil(headerEl.getBoundingClientRect().height) : 72;
+      const topOffset = Math.max(76, ribbonHeight + 12);
+      modalEl.style.setProperty('--dopamine-sheet-top', `${topOffset}px`);
+      modalEl.style.paddingTop = `${topOffset}px`;
+      modalEl.style.alignItems = 'flex-start';
+      modalEl.style.overflowY = 'auto';
+    }
+
+    function setDopamineSheetMode(mode) {
+      const isInspect = mode === 'inspect';
+      const modalEl = document.getElementById('edit-session-modal');
+      const titleEl = document.getElementById('edit-session-modal-title');
+      const modeBadge = document.getElementById('dopamine-sheet-mode-badge');
+      const toggleBtn = document.getElementById('dopamine-sheet-toggle-btn');
+      const saveBtn = document.querySelector('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"]');
+
+      if (modalEl) {
+        modalEl.dataset.sheetMode = isInspect ? 'inspect' : 'edit';
+        modalEl.classList.toggle('dopamine-inspect-mode', isInspect);
+        if (isInspect) {
+          positionModalBelowRibbon(modalEl);
+        } else {
+          modalEl.style.removeProperty('--dopamine-sheet-top');
+          modalEl.style.paddingTop = '';
+          modalEl.style.alignItems = '';
+          modalEl.style.overflowY = '';
+        }
+      }
+
+      if (titleEl) {
+        titleEl.textContent = isInspect ? "Consulter l'activité" : "Modifier l'activité";
+      }
+
+      if (modeBadge) {
+        modeBadge.textContent = isInspect ? 'Mode consultation' : 'Mode modification';
+      }
+
+      if (toggleBtn) {
+        toggleBtn.textContent = isInspect ? 'Passer en modification' : 'Passer en consultation';
+      }
+
+      const formFields = document.querySelectorAll('#edit-session-form input, #edit-session-form select, #edit-session-form textarea');
+      formFields.forEach(field => {
+        if (field.type === 'hidden') return;
+        field.disabled = isInspect;
+      });
+
+      if (saveBtn) {
+        saveBtn.style.display = isInspect ? 'none' : '';
+      }
+    }
+
+    function inspectDopamineSession(sessionId) {
+      if (typeof openEditSession === 'function') {
+        openEditSession(sessionId);
+      }
+      setDopamineSheetMode('inspect');
+    }
+
+    function closeEditSession() {
+      const modalEl = document.getElementById('edit-session-modal');
+      if (modalEl) {
+        modalEl.classList.remove('open', 'active', 'show', 'dopamine-inspect-mode');
+        modalEl.style.display = 'none';
+        modalEl.style.removeProperty('--dopamine-sheet-top');
+        modalEl.style.paddingTop = '';
+        modalEl.style.alignItems = '';
+        modalEl.style.overflowY = '';
+        delete modalEl.dataset.sheetMode;
+      }
+      const formFields = document.querySelectorAll('#edit-session-form input, #edit-session-form select, #edit-session-form textarea');
+      formFields.forEach(field => {
+        field.disabled = false;
+      });
+      const saveBtn = document.querySelector('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"]');
+      if (saveBtn) {
+        saveBtn.style.display = '';
+      }
+    }
     function openEditSession(id) {
       const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
       if (!session) { alert('Cette activité est introuvable.'); return; }
@@ -4471,11 +4553,12 @@ const resolvedStravaId = session.stravaActivityId || session.strava_id || sessio
         loadStravaActivityDetails(session).catch(err=>{
           console.warn('Chargement détails Strava :', err);
           if (detContent) detContent.textContent='Détails indisponibles : '+err.message;
+});
+loadStravaActivityDetails(session).catch(err=>{
+          console.warn('Chargement détails Strava :', err);
+          if (detContent) detContent.textContent='Détails indisponibles : '+err.message;
         });
-         }const sheet = document.getElementById('dopamine-session-sheet');
-          if (sheet) {
-        setDopamineSheetMode('edit');
-        try {
+      }
 const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
           const updateSheetSport = (sp) => {
             sheet.dataset.sport = sportMap[sp] || sp || 'run';
@@ -4773,13 +4856,9 @@ const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk'
             };
           }
 
-          // Remplir immédiatement les 4 onglets si les détails Strava sont déjà en mémoire
-          if (typeof populateDopamineSheetDetails === 'function') {
-            populateDopamineSheetDetails(session);
-          }
-        } catch (err) {
-          console.error('Affichage fiche séance :', err);
-        }
+// Remplir immédiatement les 4 onglets si les détails Strava sont déjà en mémoire
+      if (typeof populateDopamineSheetDetails === 'function') {
+        populateDopamineSheetDetails(session);
       }
     }
 
