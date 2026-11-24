@@ -4550,21 +4550,21 @@ const resolvedStravaId = session.stravaActivityId || session.strava_id || sessio
       if(resolvedStravaId){
         const detContent = document.getElementById('edit-session-strava-details-content');
         if (detContent) detContent.textContent='Chargement des détails Strava…';
-        loadStravaActivityDetails(session).catch(err=>{
+loadStravaActivityDetails(session).catch(err => {
           console.warn('Chargement détails Strava :', err);
-          if (detContent) detContent.textContent='Détails indisponibles : '+err.message;
-});
-loadStravaActivityDetails(session).catch(err=>{
-          console.warn('Chargement détails Strava :', err);
-          if (detContent) detContent.textContent='Détails indisponibles : '+err.message;
+          if (detContent) detContent.textContent = 'Détails indisponibles : ' + err.message;
         });
       }
-const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
-          const updateSheetSport = (sp) => {
-            sheet.dataset.sport = sportMap[sp] || sp || 'run';
-            syncTerrainOptionsBySport(sp, document.getElementById('ad-extra-terrain')?.value || session.terrain || '', sheet);
-          };
-          updateSheetSport(session.sport);
+      const sheet = document.getElementById('dopamine-session-sheet');
+      if (sheet && typeof setDopamineSheetMode === 'function') {
+        setDopamineSheetMode('edit');
+      }
+      const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
+      const updateSheetSport = (sp) => {
+        if (!sheet) return;
+        sheet.dataset.sport = sportMap[sp] || sp || 'run';
+        syncTerrainOptionsBySport(sp, document.getElementById('ad-extra-terrain')?.value || session.terrain || '', sheet);
+      };
           // Titre, Date & Heure Strava/locale
           const adTitle = document.getElementById('ad-session-title');
           const adDate = document.getElementById('ad-session-date');
