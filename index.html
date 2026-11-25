@@ -4535,7 +4535,6 @@ function positionModalBelowRibbon(modalEl) {
         dialog.style.boxSizing = 'border-box';
     }
 }
-
 function setDopamineSheetMode(mode) {
     const isInspect = mode === 'inspect';
     const isMobile = window.innerWidth <= 768;
@@ -4611,67 +4610,12 @@ function setDopamineSheetMode(mode) {
             : 'Passer en consultation';
     }
 }
-const dialogWrap = document.querySelector('.edit-session-dialog > div');
-      const leftGridCol = dialogWrap
-        ? [...dialogWrap.children].find(el =>
-            el.tagName === 'DIV' &&
-            el.id !== 'dopamine-session-sheet' &&
-            !el.contains(sheetEl) &&
-            getComputedStyle(el).display === 'grid'
-          )
-        : null;
-      if (leftGridCol) {
-        leftGridCol.style.setProperty('display', isInspect ? 'none' : 'grid', 'important');
-      }const isMobileViewport = window.innerWidth <= 768;
-      if (dialogWrap) {
-        dialogWrap.style.flexDirection = isMobileViewport ? 'column' : '';
-        dialogWrap.style.gap = isMobileViewport ? '12px' : '';
-      }
-      if (sheetEl) {
-        sheetEl.style.width = '100%';
-        sheetEl.style.maxWidth = isMobileViewport ? '100%' : '860px';
-        sheetEl.style.margin = isMobileViewport ? '0' : '0 auto';
-        sheetEl.style.boxSizing = 'border-box';
-      }
-      if (sheetEl) {
-        sheetEl.style.width = '100%';
-        sheetEl.style.maxWidth = '860px';
-        sheetEl.style.margin = '0 auto';
-        const sheetFields = sheetEl.querySelectorAll('input, select, textarea, button[data-remove-friend], #ad-friend-add-btn');
-        sheetFields.forEach(field => {
-          if (field.type === 'hidden') return;
-          field.disabled = isInspect;
-        });
-      }
 
-      if (titleEl) {
-        titleEl.textContent = isInspect ? "Consulter l'activité" : "Modifier l'activité";
-      }
-
-      if (modeBadge) {
-        modeBadge.textContent = isInspect ? 'Mode consultation' : 'Mode modification';
-      }
-
-      if (toggleBtn) {
-        toggleBtn.textContent = isInspect ? 'Passer en modification' : 'Passer en consultation';
-      }
-
-      const formFields = document.querySelectorAll('#edit-session-form input, #edit-session-form select, #edit-session-form textarea');
-      formFields.forEach(field => {
-        if (field.type === 'hidden') return;
-        field.disabled = isInspect;
-      });
-
-      const actionButtons = document.querySelectorAll('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"], #ad-save-btn, #ad-delete-btn');
-      actionButtons.forEach(btn => {
-        btn.style.display = isInspect ? 'none' : '';
-      });
-
-    function toggleDopamineSheetMode() {
-      const modalEl = document.getElementById('edit-session-modal');
-      const currentMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
-      setDopamineSheetMode(currentMode === 'inspect' ? 'edit' : 'inspect');
-    }
+function toggleDopamineSheetMode() {
+    const modalEl = document.getElementById('edit-session-modal');
+    const currentMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
+    setDopamineSheetMode(currentMode === 'inspect' ? 'edit' : 'inspect');
+}
 
 function inspectDopamineSession(sessionId) {
     const session = appData.sessionsHistory.find(
@@ -4696,7 +4640,6 @@ function inspectDopamineSession(sessionId) {
         setDopamineSheetMode('inspect');
     });
 }
-
     function closeEditSession() {
       const modalEl = document.getElementById('edit-session-modal');
       const legacyForm = document.getElementById('edit-session-form');
