@@ -4563,16 +4563,21 @@ function setDopamineSheetMode(mode) {
         dialogWrap.style.maxWidth = isMobile ? '100%' : '900px';
         dialogWrap.style.margin = '0 auto';
         dialogWrap.style.display = 'flex';
-        dialogWrap.style.flexDirection = 'column';
+        dialogWrap.style.flexDirection = isMobile ? 'column' : '';
         dialogWrap.style.gap = '12px';
         dialogWrap.style.boxSizing = 'border-box';
+    }
+
+    const leftContainer = modalEl.querySelector('.edit-session-dialog > div');
+    if (leftContainer && leftContainer !== sheetEl && !leftContainer.contains(sheetEl)) {
+        leftContainer.style.display = isInspect ? 'none' : '';
     }
 
     if (sheetEl) {
         sheetEl.style.display = '';
         sheetEl.style.width = '100%';
-        sheetEl.style.maxWidth = '100%';
-        sheetEl.style.margin = '0';
+        sheetEl.style.maxWidth = isMobile ? '100%' : '860px';
+        sheetEl.style.margin = isMobile ? '0' : '0 auto';
         sheetEl.style.boxSizing = 'border-box';
     }
 
@@ -4609,36 +4614,6 @@ function setDopamineSheetMode(mode) {
             ? 'Passer en modification'
             : 'Passer en consultation';
     }
-}
-
-function toggleDopamineSheetMode() {
-    const modalEl = document.getElementById('edit-session-modal');
-    const currentMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
-    setDopamineSheetMode(currentMode === 'inspect' ? 'edit' : 'inspect');
-}
-
-function inspectDopamineSession(sessionId) {
-    const session = appData.sessionsHistory.find(
-        item => String(item.id) === String(sessionId)
-    );
-
-    if (!session) {
-        alert("Cette activité est introuvable.");
-        return;
-    }
-
-    openEditSession(sessionId);
-
-    const modalEl = document.getElementById('edit-session-modal');
-
-    if (modalEl) {
-        modalEl.style.display = 'block';
-        modalEl.classList.add('open');
-    }
-
-    requestAnimationFrame(() => {
-        setDopamineSheetMode('inspect');
-    });
 }
     function closeEditSession() {
       const modalEl = document.getElementById('edit-session-modal');
