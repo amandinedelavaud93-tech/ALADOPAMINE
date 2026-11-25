@@ -4568,10 +4568,12 @@ function setDopamineSheetMode(mode) {
         dialogWrap.style.boxSizing = 'border-box';
     }
 
-    const leftContainer = modalEl.querySelector('.edit-session-dialog > div');
-    if (leftContainer && leftContainer !== sheetEl && !leftContainer.contains(sheetEl)) {
-        leftContainer.style.display = isInspect ? 'none' : '';
-    }
+const leftPanel = modalEl.querySelector(
+    '#edit-session-form .session-form-left, #edit-session-form .edit-session-left, #edit-session-form > div:first-child'
+);
+if (leftPanel && sheetEl && !leftPanel.contains(sheetEl)) {
+    leftPanel.style.display = isInspect ? 'none' : '';
+}
 
     if (sheetEl) {
         sheetEl.style.display = '';
