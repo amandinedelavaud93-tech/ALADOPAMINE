@@ -8275,3 +8275,234 @@ const esc = (value) =>
 <style>
 .strava-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}.strava-detail-metric{background:rgba(255,255,255,.045);border:1px solid var(--card-border);border-radius:9px;padding:10px;min-width:0}.strava-detail-metric small{display:block;color:var(--text-sub);font-size:.68rem}.strava-detail-metric strong{display:block;color:var(--text-main);font-size:.95rem;margin-top:4px;overflow-wrap:anywhere}.strava-detail-section{margin-top:16px;padding:12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:10px}.strava-detail-section h4{margin:0 0 10px;color:var(--text-main)}.strava-table-wrap{overflow-x:auto}.strava-detail-section table{border-collapse:collapse;width:100%;font-size:.78rem;white-space:nowrap}.strava-detail-section th,.strava-detail-section td{padding:7px 9px;border-bottom:1px solid var(--card-border);text-align:left}.strava-detail-section th{color:var(--text-sub)}
 </style>
+
+<!-- Correctif fiche activité : affichage intégré au site, en fenêtre superposée -->
+<style id="dopamine-session-sheet-layout-fix">
+#edit-session-modal{
+  position:fixed!important;inset:0!important;z-index:10050!important;
+  display:none;justify-content:center;align-items:flex-start;
+  padding:var(--dopamine-sheet-top,96px) 14px 18px!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  box-sizing:border-box;background:rgba(3,8,14,.78)!important;
+  backdrop-filter:blur(3px);
+}
+#edit-session-modal .edit-session-dialog{
+  width:min(920px,100%)!important;max-width:920px!important;
+  margin:0 auto 18px!important;padding:16px!important;
+  max-height:calc(100vh - var(--dopamine-sheet-top,96px) - 18px)!important;
+  overflow-y:auto!important;overscroll-behavior:contain;
+  box-sizing:border-box;
+}
+#dopamine-session-sheet{width:100%!important;max-width:100%!important;margin:0 auto!important;box-sizing:border-box}
+#edit-session-modal.dopamine-inspect-mode .edit-session-dialog{border-top:3px solid var(--bike-orange,#ff6b00)}
+#edit-session-modal.dopamine-inspect-mode .ad-footer,
+#edit-session-modal.dopamine-inspect-mode #ad-add-photo-btn,
+#edit-session-modal.dopamine-inspect-mode [data-del-photo]{display:none!important}
+@media(max-width:768px){
+  #edit-session-modal{padding-left:8px!important;padding-right:8px!important;padding-bottom:8px!important}
+  #edit-session-modal .edit-session-dialog{
+    width:100%!important;max-width:100%!important;padding:11px!important;
+    border-radius:13px!important;max-height:calc(100dvh - var(--dopamine-sheet-top,90px) - 8px)!important;
+  }
+  #dopamine-session-sheet{padding:12px!important;border-radius:10px!important}
+}
+</style>
+<script id="dopamine-session-and-strava-fixes">
+(function(){
+  'use strict';
+
+  window.getStravaStorageKey = function(){
+    return 'a_la_dopamine_strava_auth_v1';
+  };
+
+  window.positionModalBelowRibbon = function(modalEl){
+    if(!modalEl) return;
+    const candidates = Array.from(document.querySelectorAll(
+      '#main-header,.main-header,.app-header,.topbar,.navbar,header,nav'
+    )).filter(el=>{
+      const r=el.getBoundingClientRect();
+      const st=getComputedStyle(el);
+      return st.display!=='none' && st.visibility!=='hidden' && r.height>0 && r.top<120;
+    });
+    const bottom = candidates.reduce((max,el)=>Math.max(max,el.getBoundingClientRect().bottom),0);
+    const top = Math.max(82,Math.ceil(bottom)+10);
+    modalEl.style.setProperty('--dopamine-sheet-top',top+'px');
+    modalEl.style.display='flex';
+    modalEl.style.alignItems='flex-start';
+    modalEl.style.justifyContent='center';
+    const dialog=modalEl.querySelector('.edit-session-dialog');
+    if(dialog){
+      dialog.style.margin='0 auto 16px';
+      dialog.style.maxHeight=`calc(100dvh - ${top+18}px)`;
+      dialog.style.overflowY='auto';
+      dialog.style.width='min(920px, 100%)';
+    }
+  };
+
+  window.setDopamineSheetMode = function(mode){
+    const inspect=mode==='inspect';
+    const modal=document.getElementById('edit-session-modal');
+    const dialog=modal?.querySelector('.edit-session-dialog');
+    const sheet=document.getElementById('dopamine-session-sheet');
+    const title=document.getElementById('edit-session-modal-title');
+    const badge=document.getElementById('dopamine-sheet-mode-badge');
+    const toggle=document.getElementById('dopamine-sheet-toggle-btn');
+    if(!modal || !dialog) return;
+
+    modal.dataset.sheetMode=inspect?'inspect':'edit';
+    modal.classList.toggle('dopamine-inspect-mode',inspect);
+    window.positionModalBelowRibbon(modal);
+
+    // La fiche reste dans la modale du site : on masque seulement l'ancien formulaire doublon.
+    Array.from(dialog.children).forEach(child=>{
+      const isHeader=child===dialog.firstElementChild;
+      const isSheet=child.id==='dopamine-session-sheet' || child.contains(sheet);
+      if(inspect && !isHeader && !isSheet) child.style.setProperty('display','none','important');
+      else if(!inspect && child.dataset.dopamineHiddenByInspect==='1'){
+        child.style.removeProperty('display');
+        delete child.dataset.dopamineHiddenByInspect;
+      }
+      if(inspect && !isHeader && !isSheet) child.dataset.dopamineHiddenByInspect='1';
+    });
+
+    const legacy=document.getElementById('edit-session-form');
+    if(legacy) legacy.style.display=inspect?'none':'';
+    if(sheet){
+      sheet.dataset.sheetMode=inspect?'inspect':'edit';
+      sheet.style.display='block';
+      sheet.style.width='100%';
+      sheet.style.maxWidth='100%';
+      sheet.querySelectorAll('input,select,textarea').forEach(el=>{
+        if(el.type==='hidden') return;
+        el.disabled=inspect;
+        if(el.matches('input[type="checkbox"],input[type="radio"]')) el.style.pointerEvents=inspect?'none':'';
+      });
+      sheet.querySelectorAll('button').forEach(btn=>{
+        const keep=btn.id==='dopamine-sheet-toggle-btn' || btn.classList.contains('ad-mode-toggle');
+        if(inspect && !keep) btn.style.display='none';
+        else if(!inspect) btn.style.removeProperty('display');
+      });
+    }
+    document.querySelectorAll('#edit-session-form input,#edit-session-form select,#edit-session-form textarea').forEach(el=>{
+      if(el.type!=='hidden') el.disabled=inspect;
+    });
+    document.querySelectorAll('#ad-save-btn,#ad-delete-btn,#edit-session-form button[type="submit"],#edit-session-modal button[type="submit"]').forEach(btn=>{
+      btn.style.display=inspect?'none':'';
+    });
+    if(title) title.textContent=inspect?"Consulter l'activité":"Modifier l'activité";
+    if(badge) badge.textContent=inspect?'Mode consultation':'Mode modification';
+    if(toggle) toggle.textContent=inspect?'Passer en modification':'Passer en consultation';
+  };
+
+  window.inspectDopamineSession = function(sessionId){
+    if(typeof window.openEditSession!=='function'){
+      console.error('openEditSession est introuvable.');
+      return;
+    }
+    // L'ouverture remplit la fiche avec les données de la séance ; on applique ensuite le mode lecture.
+    window.openEditSession(sessionId);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>window.setDopamineSheetMode('inspect')));
+  };
+
+  window.toggleDopamineSheetMode = function(){
+    const modal=document.getElementById('edit-session-modal');
+    window.setDopamineSheetMode(modal?.dataset?.sheetMode==='inspect'?'edit':'inspect');
+  };
+
+  window.closeEditSession = function(){
+    const modal=document.getElementById('edit-session-modal');
+    if(!modal) return;
+    modal.style.display='none';
+    modal.classList.remove('open','active','show','dopamine-inspect-mode');
+    modal.style.removeProperty('--dopamine-sheet-top');
+    delete modal.dataset.sheetMode;
+    const legacy=document.getElementById('edit-session-form');
+    if(legacy) legacy.style.display='';
+    document.querySelectorAll('#edit-session-form input,#edit-session-form select,#edit-session-form textarea,#dopamine-session-sheet input,#dopamine-session-sheet select,#dopamine-session-sheet textarea').forEach(el=>{
+      el.disabled=false;
+    });
+    document.querySelectorAll('#ad-save-btn,#ad-delete-btn,#edit-session-form button[type="submit"],#edit-session-modal button[type="submit"]').forEach(btn=>{
+      btn.style.removeProperty('display');
+    });
+    modal.querySelectorAll('[data-dopamine-hidden-by-inspect="1"]').forEach(el=>{
+      el.style.removeProperty('display');
+      delete el.dataset.dopamineHiddenByInspect;
+    });
+  };
+
+  window.beginPlatformConnection = function(platformName){
+    if(String(platformName).toLowerCase()!=='strava'){
+      if(typeof window.simulateApiSync==='function' && window.simulateApiSync!==window.beginPlatformConnection){
+        alert(platformName+' : la connexion automatique n’est pas encore configurée.');
+      } else {
+        alert(platformName+' : la connexion automatique n’est pas encore configurée.');
+      }
+      return;
+    }
+    const clientId=String(window.STRAVA_CLIENT_ID || '299273');
+    const redirectUri=String(window.STRAVA_REDIRECT_URI || window.location.origin);
+    if(!clientId || !redirectUri){
+      alert('Configuration Strava incomplète : vérifie le Client ID et l’URL de rappel.');
+      return;
+    }
+    const stateBytes=new Uint8Array(24);
+    if(!window.crypto?.getRandomValues){
+      alert('Ce navigateur ne permet pas de sécuriser la connexion Strava. Mets ton navigateur à jour.');
+      return;
+    }
+    window.crypto.getRandomValues(stateBytes);
+    const state=Array.from(stateBytes,b=>b.toString(16).padStart(2,'0')).join('');
+    sessionStorage.setItem('ad_strava_oauth_state',state);
+    const params=new URLSearchParams({
+      client_id:clientId,
+      response_type:'code',
+      redirect_uri:redirectUri,
+      approval_prompt:'auto',
+      scope:'read,activity:read_all',
+      state
+    });
+    window.location.assign('https://www.strava.com/oauth/authorize?'+params.toString());
+  };
+
+  window.handleStravaOAuthCallback = async function(){
+    const params=new URLSearchParams(window.location.search);
+    const oauthError=params.get('error');
+    if(oauthError){
+      alert('Connexion Strava refusée ou impossible : '+oauthError);
+      window.history.replaceState({},document.title,window.location.pathname);
+      return;
+    }
+    const code=params.get('code');
+    if(!code) return;
+    const receivedState=params.get('state')||'';
+    const expectedState=sessionStorage.getItem('ad_strava_oauth_state')||'';
+    if(!expectedState || !receivedState || receivedState!==expectedState){
+      alert('Connexion Strava interrompue : vérification de sécurité invalide. Relance la connexion.');
+      window.history.replaceState({},document.title,window.location.pathname);
+      sessionStorage.removeItem('ad_strava_oauth_state');
+      return;
+    }
+    try{
+      const response=await fetch('/api/strava/callback?code='+encodeURIComponent(code),{method:'GET',headers:{'Accept':'application/json'}});
+      const tokenData=await response.json();
+      if(!response.ok || !tokenData?.access_token) throw new Error(tokenData?.error||'Le serveur n’a pas retourné de jeton Strava.');
+      localStorage.setItem(window.getStravaStorageKey(),JSON.stringify(tokenData));
+      sessionStorage.removeItem('ad_strava_oauth_state');
+      window.history.replaceState({},document.title,window.location.pathname);
+      if(typeof window.syncStravaActivities==='function') await window.syncStravaActivities(tokenData);
+      else alert('Strava est connecté, mais la fonction de synchronisation est introuvable.');
+    }catch(err){
+      console.error('Erreur OAuth Strava :',err);
+      alert('Connexion Strava impossible : '+(err.message||err));
+    }
+  };
+
+  // Le bouton d'ouverture de la fiche doit rester utilisable au clavier et sur mobile.
+  document.addEventListener('DOMContentLoaded',()=>{
+    const modal=document.getElementById('edit-session-modal');
+    if(modal){
+      modal.addEventListener('click',ev=>{ if(ev.target===modal) window.closeEditSession(); });
+    }
+  });
+})();
+</script>
