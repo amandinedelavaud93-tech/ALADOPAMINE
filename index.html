@@ -4581,13 +4581,22 @@ const gridCandidates = modalEl.querySelectorAll('.edit-session-dialog div');
         targetLeftGrid.style.display = isInspect ? 'none' : 'grid';
     }
 
-    if (sheetEl) {
-        sheetEl.style.display = '';
-        sheetEl.style.width = '100%';
-        sheetEl.style.maxWidth = isMobile ? '100%' : '860px';
-        sheetEl.style.margin = isMobile ? '0' : '0 auto';
-        sheetEl.style.boxSizing = 'border-box';
+if (sheetEl) {
+        sheetEl.style.marginTop = '0';
+        sheetEl.style.transform = 'none';
+        sheetEl.scrollIntoView({ block: 'nearest' });
     }
+
+    const modalDialog = modalEl.querySelector('.edit-session-dialog');
+    if (modalDialog) {
+        modalDialog.style.marginTop = '0';
+        modalDialog.style.maxHeight = 'calc(100vh - 90px)';
+        modalDialog.style.overflowY = 'auto';
+    }
+
+    modalEl.style.alignItems = 'flex-start';
+    modalEl.style.paddingTop = '80px';
+    modalEl.style.overflowY = 'auto';
 
     const fields = modalEl.querySelectorAll(
         'input:not([type="hidden"]), select, textarea'
