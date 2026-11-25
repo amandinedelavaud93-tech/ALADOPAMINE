@@ -1,115 +1,131 @@
+// /api/strava/callback.js
+const pendingAuthSessions = new Map();
+
+function getBaseUrl(req) {
+  if (process.env.STRAVA_APP_URL) {
+    return process.env.STRAVA_APP_URL.replace(/\/+$/, '');
+  }
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  return `${proto}://${host}`;
+}
+
 export default async function handler(req, res) {
-  try {
-    const clientId = process.env.STRAVA_CLIENT_ID;
-    const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+  const clientId = process.env.STRAVA_CLIENT_ID || '299273';
+  const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+  const baseUrl = getBaseUrl(req);
 
-    if (!clientId || !clientSecret) {
-      return res.status(500).json({
-        ok: false,
-        error: 'Missing STRAVA_CLIENT_ID or STRAVA_CLIENT_SECRET in environment variables'
-      });
-    }
+  if (!clientSecret) {
+    return res.status(500).json({ error: 'STRAVA_CLIENT_SECRET manquant côté serveur' });
+  }
 
-    const body = typeof req.body === 'string'
-      ? JSON.parse(req.body || '{}')
-      : (req.body || {});
+  // 1. Renouvellement de token (appelé par le front sans exposer le secret)
+  if (req.method === 'POST') {
+    try {
+      const { refresh_token } = req.body || {};
+      if (!refresh_token) {
+        return res.status(400).json({ error: 'refresh_token manquant' });
+      }
 
-    if (req.method === 'POST' && body.refresh_token) {
-      const refreshResponse = await fetch('https://www.strava.com/oauth/token', {
+      const tokenRes = await fetch('https://www.strava.com/oauth/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           client_id: clientId,
           client_secret: clientSecret,
           grant_type: 'refresh_token',
-          refresh_token: body.refresh_token
+          refresh_token
         })
       });
 
-      const refreshRaw = await refreshResponse.text();
-      let refreshData;
-      try {
-        refreshData = JSON.parse(refreshRaw);
-      } catch {
-        return res.status(502).json({
-          ok: false,
-          error: `Non-JSON response from Strava token endpoint: ${refreshRaw.slice(0, 300)}`
-        });
+      const tokenData = await tokenRes.json();
+      if (!tokenRes.ok) {
+        return res.status(tokenRes.status).json({ error: 'Erreur refresh Strava', details: tokenData });
       }
 
-      return res.status(refreshResponse.status).json(refreshData);
+      // On renvoie uniquement les informations nécessaires (éviter d'exposer le refresh_token si géré côté serveur)
+      return res.status(200).json({
+        ok: true,
+        access_token: tokenData.access_token,
+        expires_at: tokenData.expires_at
+      });
+    } catch (err) {
+      console.error('Strava POST error:', err);
+      return res.status(500).json({ error: 'Erreur interne renouvellement Strava' });
     }
+  }
 
-    const { code, error, state } = req.query || {};
+  // 2. Récupération ponctuelle d'une session OAuth validée par le front
+  if (req.method === 'GET' && req.query.session_ref) {
+    const ref = String(req.query.session_ref);
+    const entry = pendingAuthSessions.get(ref);
+    if (!entry || Date.now() > entry.expiresAt) {
+      pendingAuthSessions.delete(ref);
+      return res.status(404).json({ error: 'Session OAuth expirée ou introuvable' });
+    }
+    pendingAuthSessions.delete(ref);
+    return res.status(200).json({
+      ok: true,
+      athlete: entry.athlete,
+      expires_at: entry.expires_at
+    });
+  }
+
+  // 3. Callback OAuth GET depuis Strava
+  if (req.method === 'GET') {
+    const { code, error, state } = req.query;
+    const stateParam = state ? `&state=${encodeURIComponent(String(state))}` : '';
 
     if (error) {
-      return res.status(400).json({
-        ok: false,
-        error: `Strava authorization error: ${error}`
-      });
+      return res.redirect(302, `${baseUrl}/?strava_error=${encodeURIComponent(String(error))}${stateParam}`);
     }
 
     if (!code) {
-      return res.status(400).json({
-        ok: false,
-        error: 'Missing authorization code from Strava'
-      });
+      return res.redirect(302, `${baseUrl}/?strava_error=missing_code${stateParam}`);
     }
 
-    const tokenResponse = await fetch('https://www.strava.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code,
-        grant_type: 'authorization_code'
-      })
-    });
-
-    const rawText = await tokenResponse.text();
-    let tokenData;
     try {
-      tokenData = JSON.parse(rawText);
-    } catch {
-      return res.status(502).json({
-        ok: false,
-        error: `Non-JSON response from Strava token endpoint: ${rawText.slice(0, 300)}`
+      const tokenRes = await fetch('https://www.strava.com/oauth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: clientId,
+          client_secret: clientSecret,
+          code: String(code),
+          grant_type: 'authorization_code'
+        })
       });
-    }
 
-    if (!tokenResponse.ok) {
-      return res.status(tokenResponse.status).json({
-        ok: false,
-        error: tokenData?.message || 'Strava token exchange failed',
-        details: tokenData
+      const tokenData = await tokenRes.json();
+      if (!tokenRes.ok || !tokenData.access_token) {
+        console.error('Strava token exchange failed:', tokenData);
+        return res.redirect(302, `${baseUrl}/?strava_error=token_exchange_failed${stateParam}`);
+      }
+
+      const sessionRef = `${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+      pendingAuthSessions.set(sessionRef, {
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_at: tokenData.expires_at,
+        athlete: tokenData.athlete
+          ? {
+              id: tokenData.athlete.id,
+              firstname: tokenData.athlete.firstname,
+              lastname: tokenData.athlete.lastname
+            }
+          : null,
+        expiresAt: Date.now() + 2 * 60 * 1000
       });
-    }
 
-    const redirectBase = process.env.STRAVA_REDIRECT_APP_URL || 'https://dopamine-teal.vercel.app/';
-    const redirectUrl = new URL(redirectBase);
-    redirectUrl.searchParams.set('strava_connected', '1');
-    if (state) {
-      redirectUrl.searchParams.set('state', String(state));
+      return res.redirect(
+        302,
+        `${baseUrl}/?strava_connected=1&strava_auth_ref=${encodeURIComponent(sessionRef)}${stateParam}`
+      );
+    } catch (err) {
+      console.error('Strava callback error:', err);
+      return res.redirect(302, `${baseUrl}/?strava_error=server_error${stateParam}`);
     }
-    if (tokenData.access_token) {
-      redirectUrl.searchParams.set('strava_access_token', tokenData.access_token);
-    }
-    if (tokenData.refresh_token) {
-      redirectUrl.searchParams.set('strava_refresh_token', tokenData.refresh_token);
-    }
-    if (tokenData.expires_at) {
-      redirectUrl.searchParams.set('strava_expires_at', String(tokenData.expires_at));
-    }
-    if (tokenData.athlete?.id) {
-      redirectUrl.searchParams.set('strava_athlete_id', String(tokenData.athlete.id));
-    }
-
-    return res.redirect(302, redirectUrl.toString());
-  } catch (err) {
-    return res.status(500).json({
-      ok: false,
-      error: err?.message || 'Internal server error in Strava callback'
-    });
   }
+
+  return res.status(405).json({ error: 'Méthode non autorisée' });
 }
