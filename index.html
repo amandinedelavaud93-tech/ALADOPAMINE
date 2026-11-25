@@ -2318,9 +2318,9 @@ Progression prévue avec semaines allégées et affûtage lorsque la durée le p
       const time = document.getElementById('plan-time').value || '08:00';
       const sport = document.getElementById('plan-sport').value;
       const type = document.getElementById('plan-type').value;
-      const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(new Date(`${date}T12:00:00`).getTime());
-      const validTime = /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
-      const validSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres', 'triathlon', 'duathlon', 'trail'];
+      const validDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(date) && !Number.isNaN(new Date(`${date}T12:00:00`).getTime());
+      const validTime = /^([01]\\d|2[0-3]):[0-5]\\d$/.test(time);
+      const validSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'triathlon', 'duathlon', 'trail'];
       const validTypes = ['competition', 'entrainement'];
 
       if (!validDate) { alert("Veuillez choisir une date valide."); return; }
@@ -2630,7 +2630,9 @@ async function saveUserProfile() {
             visibility: val('user-profile-visibility') || 'private'
         });
 
-        u.favoriteSports = Array.from(document.querySelectorAll('input[name="favorite-sport"]:checked, input[name="favorite_sports"]:checked, input[name*="sport"]:checked'))            .filter(v => v && v !== 'on' && v !== 'true');
+        u.favoriteSports = Array.from(document.querySelectorAll('input[name="favorite sport"]:checked, input[name="favorite_sports"]:checked, input[name*="sport"]:checked'))
+            .map(el => el.value)
+            .filter(v => v && v !== 'on' && v !== 'true');
         u.privacy = {
             age: !!document.getElementById('privacy-show-age')?.checked,
             weight: !!document.getElementById('privacy-show-weight')?.checked,
@@ -2850,7 +2852,7 @@ function setupProfileCityAutocomplete() {
 
 // Intégration Strava OAuth 2.0 + Import automatique multi-utilisateurs
 const STRAVA_CLIENT_ID = '299273';
-const STRAVA_REDIRECT_URI = `${window.location.origin}/api/strava/callback`;
+const STRAVA_REDIRECT_URI = window.location.origin;
 
 const platformIntegrationStatus = {
   Strava: { status: 'configuree', method: 'OAuth 2.0 / API Strava' },
@@ -2859,137 +2861,75 @@ const platformIntegrationStatus = {
   Zwift: { status: 'non_configuree', method: 'API ou autorisation partenaire à confirmer' }
 };
 
+function mapStravaSportType(stravaType) {
+  const t = String(stravaType || '').toLowerCase();
+  if (t.includes('swim')) return 'natation';
+  if (t.includes('ride') || t.includes('cycl') || t.includes('bike')) return 'velo';
+  if (t.includes('run') || t.includes('trail')) return 'course';
+  if (t.includes('walk') || t.includes('hike')) return 'marche';
+  if (t.includes('hiit') || t.includes('crossfit') || t.includes('workout')) return 'hiit';
+  return 'autres';
+}
+
 function getStravaStorageKey() {
-  const userId =
-    (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.email)) ||
-    (typeof appData !== 'undefined' && appData && (appData.userId || appData.athleteId)) ||
-    'default';
-  return `aladopamine_strava_auth_${userId}`;
+  return `dopamine_strava_auth_${activeUserId || 'guest'}`;
 }
 
 function beginPlatformConnection(platformName) {
   if (platformName !== 'Strava') {
-    alert(`La connexion ${platformName} n'est pas encore active.`);
+    const details = platformIntegrationStatus[platformName];
+    if (!details) {
+      alert("Cette plateforme n'est pas encore configurée.");
+      return;
+    }
+    alert(`Connexion ${platformName} non activée pour le moment.\n\nÉtape suivante : configurer l'application développeur officielle.`);
     return;
   }
 
-  const savedRaw = localStorage.getItem(getStravaStorageKey());
-  if (savedRaw) {
-    try {
-      const savedAuth = JSON.parse(savedRaw);
-      if (savedAuth && (savedAuth.access_token || savedAuth.connected)) {
-        if (typeof syncStravaActivities === 'function') {
-          syncStravaActivities(savedAuth);
-          return;
-        }
-      }
-    } catch (e) {
-      localStorage.removeItem(getStravaStorageKey());
-    }
+  const savedAuth = JSON.parse(localStorage.getItem(getStravaStorageKey()) || 'null');
+  if (savedAuth && savedAuth.access_token) {
+    syncStravaActivities(savedAuth);
+    return;
   }
 
-  const oauthState = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-  sessionStorage.setItem('aladopamine_strava_state', oauthState);
-
   const scope = 'read,activity:read_all';
-  const authUrl =
-    `https://www.strava.com/oauth/authorize` +
-    `?client_id=${encodeURIComponent(STRAVA_CLIENT_ID)}` +
-    `&response_type=code` +
-    `&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}` +
-    `&approval_prompt=auto` +
-    `&scope=${encodeURIComponent(scope)}` +
-    `&state=${encodeURIComponent(oauthState)}`;
-
+  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}&approval_prompt=auto&scope=${scope}`;
   window.location.href = authUrl;
 }
 
 async function handleStravaOAuthCallback() {
-  const url = new URL(window.location.href);
-  const params = url.searchParams;
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const error = urlParams.get('error');
 
-  const oauthError = params.get('error');
-  const stravaError = params.get('strava_error');
-  const connectedFlag = params.get('strava_connected');
-  const sessionTokenRef = params.get('strava_auth_ref');
-  const returnedState = params.get('state');
-
-  if (!oauthError && !stravaError && !connectedFlag && !sessionTokenRef) {
+  if (error) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    alert('Autorisation Strava annulée ou refusée.');
     return;
   }
+  if (!code) return;
 
-  ['error', 'strava_error', 'strava_connected', 'strava_auth_ref', 'state', 'code', 'scope'].forEach((k) =>
-    params.delete(k)
-  );
-  const cleanUrl = `${url.pathname}${params.toString() ? `?${params.toString()}` : ''}${url.hash}`;
-  window.history.replaceState({}, document.title, cleanUrl);
+  window.history.replaceState({}, document.title, window.location.pathname);
 
-  if (oauthError || stravaError) {
-    console.error('Erreur autorisation Strava :', oauthError || stravaError);
-    alert(`Connexion Strava annulée ou refusée (${oauthError || stravaError}).`);
-    return;
-  }
-
-  const expectedState = sessionStorage.getItem('aladopamine_strava_state');
-  sessionStorage.removeItem('aladopamine_strava_state');
-  if (expectedState && returnedState && expectedState !== returnedState) {
-    console.error('State OAuth invalide');
-    alert('Session de connexion Strava invalide. Veuillez réessayer.');
-    return;
-  }
-
-  if (sessionTokenRef) {
-    try {
-      const resp = await fetch(`/api/strava/callback?session_ref=${encodeURIComponent(sessionTokenRef)}`, {
-        method: 'GET',
-        credentials: 'same-origin'
-      });
-      if (!resp.ok) {
-        throw new Error(`HTTP ${resp.status}`);
-      }
-      const data = await resp.json();
-      if (data && data.ok) {
-        const authPayload = {
-          connected: true,
-          athlete: data.athlete || null,
-          expires_at: data.expires_at || null,
-          updated_at: Date.now()
-        };
-        localStorage.setItem(getStravaStorageKey(), JSON.stringify(authPayload));
-        if (typeof syncStravaActivities === 'function') {
-          await syncStravaActivities(authPayload);
-        }
-      }
-    } catch (err) {
-      console.error('Erreur récupération session Strava :', err);
-      alert('Impossible de finaliser la connexion Strava.');
+  try {
+    const response = await fetch('/api/strava/callback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const tokenData = await response.json();
+    if (!response.ok || !tokenData.access_token) {
+      throw new Error(tokenData.error || 'Échec échange de token Strava');
     }
-    return;
-  }
 
-  if (connectedFlag === '1') {
-    const authPayload = { connected: true, updated_at: Date.now() };
-    localStorage.setItem(getStravaStorageKey(), JSON.stringify(authPayload));
-    if (typeof syncStravaActivities === 'function') {
-      await syncStravaActivities(authPayload);
-    }
+    localStorage.setItem(getStravaStorageKey(), JSON.stringify(tokenData));
+    await syncStravaActivities(tokenData);
+  } catch (err) {
+    console.error('Erreur connexion Strava:', err);
+    alert('Erreur lors de la connexion Strava : ' + err.message);
   }
 }
 
-async function refreshStravaTokenViaServer(refreshToken) {
-  const resp = await fetch('/api/strava/callback', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken
-    })
-  });
-  if (!resp.ok) {
-    throw new Error(`Refresh Strava échoué (${resp.status})`);
-  }
-  return resp.json();
-}
 async function syncStravaActivities(tokenData) {
   try {
     let auth = tokenData || JSON.parse(localStorage.getItem(getStravaStorageKey()) || 'null');
@@ -3080,7 +3020,7 @@ async function syncStravaActivities(tokenData) {
       // durée OU distance concorde à 10 % (et si aucune autre métrique disponible ne contredit fortement la correspondance).
       const manualCandidates = appData.sessionsHistory.filter(s => {
         if (!s || s.source === 'strava' || s.stravaActivityId || String(s.date || '').slice(0, 10) !== dateStr || s.sport !== sport) return false;
-        const oldDuration = Number(s.durationSeconds) || Math.round((typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes(s) : 0) * 60);
+        const oldDuration = Number(s.durationSeconds) || Math.round((typeof getSessionDurationMinutesutes === 'function' ? getSessionDurationMinutes(s) : 0) * 60);
         const oldDistance = typeof getSessionDistanceKm === 'function' ? getSessionDistanceKm(s) : Number(s.distanceKm || s.distance || 0);
         const durationMatches = closeMetric(oldDuration, durationSeconds);
         const distanceMatches = closeMetric(oldDistance, distanceKm);
@@ -3284,57 +3224,23 @@ function resetActiveForm(sport) {
       updateAICoachAdvice();
     }
 
-async function deleteSession(id) {
-  const target = appData.sessionsHistory.find(s => String(s.id) === String(id) || String(s.supabaseId || '') === String(id));
-  if (!target) { alert("Cette séance est introuvable."); return; }
-  if (!confirm("Supprimer cette séance ? Les statistiques et l'XP seront automatiquement recalculées.")) return;
-
-  const targetLocalId = String(target.id);
-  const targetCloudId = target.supabaseId ?? target.id;
-  appData.sessionsHistory = appData.sessionsHistory.filter(s => String(s.id) !== targetLocalId);
-
-  let cloudError = '';
-  try {
-    if (supabaseClient && activeUserId && targetCloudId != null && String(targetCloudId).trim() !== '') {
-      const isNumeric = Number.isFinite(Number(targetCloudId)) && String(targetCloudId).trim() !== '';
-      const idFilter = isNumeric ? Number(targetCloudId) : String(targetCloudId);
-      const result = await supabaseClient
-        .from('sessions')
-        .delete()
-        .eq('id', idFilter)
-        .eq('user_id', String(activeUserId));
-      if (result.error) throw result.error;
-
+    async function deleteSession(id) {
+      const exists = appData.sessionsHistory.some(s => String(s.id) === String(id));
+      if (!exists) { alert("Cette séance est introuvable."); return; }
+      if (!confirm("Supprimer cette séance ? Les statistiques et l'XP seront automatiquement recalculées.")) return;
+      appData.sessionsHistory = appData.sessionsHistory.filter(s => String(s.id) !== String(id));
+      let cloudError='';
       try {
-        await supabaseClient
-          .from('feed_posts')
-          .delete()
-          .eq('user_id', String(activeUserId))
-          .eq('session_id', idFilter);
-      } catch (_) {}
+        if(supabaseClient && activeUserId && Number.isFinite(Number(id)) && String(id).trim()!=='') {
+          const result=await supabaseClient.from('sessions').delete().eq('id',Number(id)).eq('user_id',String(activeUserId));
+          if(result.error) throw result.error;
+        }
+      } catch(error) { cloudError=error.message||String(error); console.error('Suppression Supabase impossible :',error); }
+      recalculateStatsFromHistory(); checkTrophiesUnlock({strict:true}); renderHistory();
+      if (document.getElementById('view-stats') && !document.getElementById('view-stats').classList.contains('hidden')) renderChart();
+      if(typeof renderHomeCalendar==='function')renderHomeCalendar(); updateRaceCountdown(); saveAppData();
+      alert(cloudError ? 'Séance supprimée localement. Échec de la suppression Supabase : '+cloudError : 'Séance supprimée avec succès.');
     }
-  } catch (error) {
-    cloudError = error.message || String(error);
-    console.error('Suppression Supabase impossible :', error);
-  }
-
-  recalculateStatsFromHistory();
-  checkTrophiesUnlock({ strict: true });
-  renderHistory();
-  if (typeof updateSummaryUI === 'function') updateSummaryUI();
-  if (typeof renderTrophiesAndRanks === 'function') renderTrophiesAndRanks();
-  if (document.getElementById('view-stats') && !document.getElementById('view-stats').classList.contains('hidden')) renderChart();
-  if (typeof renderHomeCalendar === 'function') renderHomeCalendar();
-  updateRaceCountdown();
-  saveAppData();
-  if (typeof refreshDopamineFeed === 'function' && dopamineFeedState?.user) {
-    refreshDopamineFeed().catch(() => {});
-  }
-
-  alert(cloudError
-    ? 'Séance supprimée localement. Échec de la suppression Supabase : ' + cloudError
-    : 'Séance supprimée avec succès.');
-}
 
     function triggerAchievementPopup(title) {
       const popup = document.getElementById('achievement-popup');
@@ -3554,89 +3460,7 @@ function validerLimitesNatation() {
       parts.forEach(part => { const el=document.getElementById(`${sport}-${part}`); if(el) el.value='0'; });
       syncActivityDuration(sport);
     }
-function isSameCalendarDay(d1, d2) {
-      const a = String(d1 || '').slice(0, 10);
-      const b = String(d2 || '').slice(0, 10);
-      return Boolean(a && b && a === b);
-    }
 
-    function normalizeComparableSport(sport) {
-      const s = String(sport || '').toLowerCase().trim();
-      if (s === 'hiit' || s === 'autres' || s === 'autre') return 'autres_hiit';
-      return s;
-    }
-
-    function extractSessionDistanceKm(s) {
-      if (!s) return 0;
-      const sport = String(s.sport || '').toLowerCase();
-      if (typeof s.rawVal === 'number' && !['hiit', 'autres', 'autre'].includes(sport)) {
-        return Number(s.rawVal) || 0;
-      }
-      const m = String(s.distance || '').replace(',', '.').match(/([\d.]+)/);
-      return m ? (parseFloat(m[1]) || 0) : 0;
-    }
-
-    function extractSessionDurationMin(s) {
-      if (!s) return 0;
-      if (typeof s.durationSeconds === 'number' && s.durationSeconds > 0) {
-        return s.durationSeconds / 60;
-      }
-      const str = String(s.duration || '');
-      const h = parseInt((str.match(/(\d+)\s*h/i) || [])[1] || '0', 10);
-      const min = parseInt((str.match(/(\d+)\s*min/i) || [])[1] || '0', 10);
-      const sec = parseInt((str.match(/(\d+)\s*s/i) || [])[1] || '0', 10);
-      return h * 60 + min + sec / 60;
-    }
-
-    /**
-     * Recherche une séance existante correspondant à `candidate` :
-     * - même jour calendaire
-     * - même sport (ou même groupe hiit/autres)
-     * - distance proche (<= 5 % ou <= 0,3 km) ET durée proche (<= 10 % ou <= 5 min)
-     */
-    function findDuplicateSession(candidate, list = appData.sessionsHistory) {
-      if (!candidate || !Array.isArray(list)) return null;
-      const candSport = normalizeComparableSport(candidate.sport);
-      const d2 = extractSessionDistanceKm(candidate);
-      const t2 = extractSessionDurationMin(candidate);
-
-      return list.find(existing => {
-        if (!existing || String(existing.id) === String(candidate.id)) return false;
-        if (candidate.externalId && existing.externalId && String(candidate.externalId) === String(existing.externalId)) {
-          return true;
-        }
-        if (!isSameCalendarDay(existing.date, candidate.date)) return false;
-        if (normalizeComparableSport(existing.sport) !== candSport) return false;
-
-        const d1 = extractSessionDistanceKm(existing);
-        const t1 = extractSessionDurationMin(existing);
-
-        const distMatch = (d1 === 0 && d2 === 0) ||
-          (Math.abs(d1 - d2) <= Math.max(0.3, Math.max(d1, d2) * 0.05));
-        const timeMatch = (t1 === 0 && t2 === 0) ||
-          (Math.abs(t1 - t2) <= Math.max(5, Math.max(t1, t2) * 0.10));
-
-        return distMatch && timeMatch;
-      }) || null;
-    }
-
-    /**
-     * Fusionne une activité externe (ex. Strava) dans une séance manuelle existante
-     * tout en préservant les saisies manuelles utiles (commentaire, RPE, etc.).
-     */
-    function mergeExternalIntoManualSession(manualSession, externalSession) {
-      if (!manualSession || !externalSession) return manualSession;
-      return {
-        ...manualSession,
-        ...externalSession,
-        id: manualSession.id,
-        comment: manualSession.comment || externalSession.comment || '',
-        rpe: manualSession.rpe ?? externalSession.rpe ?? 5,
-        feeling: manualSession.feeling || externalSession.feeling,
-        source: externalSession.source || 'strava',
-        mergedFromManual: true
-      };
-    }
     function saveCurrentSession(sport) {
       const supportedSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres'];
       if (!supportedSports.includes(sport)) { alert("Le sport sélectionné n'est pas reconnu."); return; }
@@ -3698,13 +3522,6 @@ function isSameCalendarDay(d1, d2) {
         weather: document.getElementById(`${formSport}-weather`)?.value || null,
         calories: Math.round(time * 9), source: 'manual', partners: [], is_competition: false
       };
-      const duplicate = findDuplicateSession(session);
-      if (duplicate && duplicate.source && duplicate.source !== 'manual') {
-        const shouldAddAnyway = confirm(
-          `Une activité ${String(duplicate.source).toUpperCase()} similaire existe déjà le ${duplicate.date} (${duplicate.title || duplicate.sport} · ${duplicate.distance || ''}).\n\nClique sur OK pour ajouter quand même cette saisie manuelle, ou Annuler pour éviter le doublon.`
-        );
-        if (!shouldAddAnyway) return;
-      }
       updateSessionDerivedMetrics(session);
       appData.sessionsHistory.unshift(session);
       // Sauvegarde immédiate : cette étape manquait dans cette fonction.
@@ -4001,8 +3818,8 @@ function isSameCalendarDay(d1, d2) {
         if(/tapis de course|sur tapis|tapis roulant/.test(d)) candidates=rows.filter(s=>/tapis/.test(trophySessionHaystack(s)));
         // Un trophée explicitement lié à un terrain n'accepte jamais les séances sans terrain renseigné.
         if(/\btrail\b/.test(d) && !/montagne\s*\/\s*trail/.test(d)) candidates=rows.filter(s=>/trail|sentier|montagne/.test(trophySessionHaystack(s)));
-    const factor = t.category === 'natation' ? 1000 : 1;
-        return unitary ? candidates.some(s=>getSessionDistanceKm(s)>0 && (getSessionDistanceKm(s)*factor)>=threshold.value) : candidates.reduce((n,s)=>n+(getSessionDistanceKm(s)*factor),0)>0 && candidates.reduce((n,s)=>n+(getSessionDistanceKm(s)*factor),0)>=threshold.value;      }
+        return unitary ? candidates.some(s=>getSessionDistanceKm(s)>0 && getSessionDistanceKm(s)>=threshold.value) : candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>0 && candidates.reduce((n,s)=>n+getSessionDistanceKm(s),0)>=threshold.value;
+      }
       if(threshold.kind==='hours') {
         let candidates=rows;
         if(threshold.subtype!=='autres' && threshold.subtype!=='hiit') candidates=candidates.filter(s=>trophyMatchesSubtype(s,threshold.subtype));
@@ -4075,8 +3892,7 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       changed = checkCompetitionTrophies() || changed;
       // Secrets dont les conditions peuvent être vérifiées sans inventer de données absentes.
       const rows = appData.sessionsHistory || [];
-      const isComp = o => Boolean(o && (o.is_competition || o.type === 'competition' || o.competitionDetails || (typeof trophySportOf === 'function' && trophySportOf(o) === 'competition') || o.sport === 'competition'));
-  const secretRules = {
+ const secretRules = {
   // --- NATATION ---
 // --- NATATION ---
   'NTR-S01': s => s.sport === 'natation' && getSessionDistanceKm(s) >= 3,
@@ -4233,8 +4049,9 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
       .reduce((acc, x) => acc + (Number(getSessionDurationMinutes(x)) || 0), 0) >= 180;
   },
   'SPO-S05': s => s.sport === 'autres' && /escalade/i.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s) >= 150 && Number(s.rpe || 0) >= 8,
-  'SPO-S06': s => s.sport === 'autres' && /football|futsal/i.test(trophySessionHaystack(s)) && Number(s.bpm ?? s.averageBpm ?? 0) > 165 && Number(s.rpe || 0) >= 9,
-  'SPO-S07': s => (s?.sport === 'hiit' || s?.sport === 'autres' || (typeof trophySportOf === 'function' && trophySportOf(s) === 'hiit')) && /hiit/i.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s) >= 45 && Number(s?.rpe || 0) === 10 && /sans pause/i.test(trophySessionHaystack(s)),  'SPO-S08': s => s.sport === 'autres' && /equitation|équitation/i.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s) >= 120,
+  'SPO-S06': s => s.sport === 'autres' && /football|futsal/i.test(trophySessionHaystack(s)) && Number(s.bpm || 0) > 165 && Number(s.rpe || 0) >= 9,
+  'SPO-S07': s => s.sport === 'autres' && /hiit/i.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s) >= 45 && Number(s.rpe || 0) === 10 && /sans pause/i.test(trophySessionHaystack(s)),
+  'SPO-S08': s => s.sport === 'autres' && /equitation|équitation/i.test(trophySessionHaystack(s)) && getSessionDurationMinutes(s) >= 120,
   'SPO-S09': s => {
     if (s.sport !== 'autres' || !s.date) return false;
     const sStr = String(s.date).slice(0, 10);
@@ -4271,49 +4088,48 @@ return Number(s.duration_minutes) || (Number(s.hours || 0) * 60) + Number(s.minu
     }).length;
     return padelCount > 4;
   },
+
 // --- COMPÉTITIONS & GLOBAL ---
   'COM-S01': s => {
-    if (!isComp(s)) return false;
+    if (!(s?.is_competition || s?.type === 'competition')) return false;
     const year = new Date(`${String(s.date || '').slice(0, 10) || new Date().toISOString().slice(0, 10)}T12:00:00`).getFullYear();
     return (appData.sessionsHistory || []).filter(x => {
-      if (!isComp(x)) return false;
+      if (!(x?.is_competition || x?.type === 'competition')) return false;
       const xYear = new Date(`${String(x.date || '').slice(0, 10) || new Date().toISOString().slice(0, 10)}T12:00:00`).getFullYear();
       return xYear === year;
     }).length >= 3;
   },
-  'COM-S02': s => isComp(s) && /podium|victoire|1er/.test(trophySessionHaystack(s)),
-  'COM-S03': s => isComp(s) && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
-  'COM-S04': s => isComp(s) && new Set((appData.sessionsHistory || []).filter(x => isComp(x)).map(x => x.competitionDetails?.eventType || x.subType || x.sport)).size >= 3,
-  'COM-S05': s => isComp(s) && /\brecord\b|\brp\b|\bpb\b|personal best/i.test(trophySessionHaystack(s)),
+  'COM-S02': s => (s.is_competition || s.type === 'competition') && /podium|victoire|1er/.test(trophySessionHaystack(s)),
+  'COM-S03': s => (s.is_competition || s.type === 'competition') && /ironman|xxl|triathlon/.test(trophySessionHaystack(s)),
+  'COM-S04': s => (s.is_competition || s.type === 'competition') && new Set((appData.sessionsHistory || []).filter(x => x.is_competition || x.type === 'competition').map(x => x.competitionDetails?.eventType || x.subType || x.sport)).size >= 3,
+  'COM-S05': s => {
+    const isComp = Boolean(s?.is_competition || s?.type === 'competition' || s?.competitionDetails || (typeof trophySportOf === 'function' && trophySportOf(s) === 'competition') || s?.sport === 'competition');
+    return isComp && /\brecord\b|\brp\b|\bpb\b|personal best/i.test(trophySessionHaystack(s));
+  },
   'COM-S06': s => {
+    const isC = o => Boolean(o && (o.is_competition || o.type === 'competition' || o.competitionDetails || (typeof trophySportOf === 'function' && trophySportOf(o) === 'competition') || o.sport === 'competition'));
     const d1 = String(s?.date || '').slice(0, 10);
-    if (!isComp(s) || !/^\d{4}-\d{2}-\d{2}$/.test(d1)) return false;
+    if (!isC(s) || !/^\d{4}-\d{2}-\d{2}$/.test(d1)) return false;
     const t1 = new Date(`${d1}T12:00:00`).getTime();
     return (appData.sessionsHistory || []).some(x => {
-      if (!x || x === s || !isComp(x)) return false;
+      if (!x || x === s || !isC(x)) return false;
       const d2 = String(x?.date || '').slice(0, 10);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(d2)) return false;
       return Math.abs(t1 - new Date(`${d2}T12:00:00`).getTime()) < 8 * 86400000;
     });
   },
   'COM-S07': s => {
-    if (!isComp(s)) return false;
+    if (!(s?.is_competition || s?.type === 'competition')) return false;
     const rpe = Number(s?.rpe);
     return !Number.isNaN(rpe) && rpe > 0 && rpe <= 4;
   },
   'COM-S08': s => {
-    if (!isComp(s)) return false;
+    if (!(s?.is_competition || s?.type === 'competition')) return false;
     const rpe = Number(s?.rpe || 0);
     return rpe >= 10 && /fatigue|dur|difficile/.test(trophySessionHaystack(s));
   },
-  'COM-S09': s => {
-    if (!isComp(s) || !/triathlon|duathlon/i.test(trophySessionHaystack(s))) return false;
-    const t1Sec = (Number(s.competitionDetails?.t1 ?? 0) * 60) + Number(s.competitionDetails?.t1Seconds || 0);
-    const t2Sec = (Number(s.competitionDetails?.t2 ?? 0) * 60) + Number(s.competitionDetails?.t2Seconds || 0);
-    const totalTransitionsSec = t1Sec + t2Sec;
-    return totalTransitionsSec > 0 && totalTransitionsSec <= 180;
-  },
-  'COM-S10': s => isComp(s) && (appData.sessionsHistory || []).filter(x => isComp(x)).length >= 10
+  'COM-S09': s => (s.is_competition || s.type === 'competition') && /triathlon|duathlon/i.test(trophySessionHaystack(s)) && ((Number(s.competitionDetails?.t1Seconds || 0) + Number(s.competitionDetails?.t2Seconds || 0)) > 0 && (Number(s.competitionDetails?.t1Seconds || 0) + Number(s.competitionDetails?.t2Seconds || 0)) <= 180),
+  'COM-S10': s => (s.is_competition || s.type === 'competition') && (appData.sessionsHistory || []).filter(x => x.is_competition || x.type === 'competition').length >= 10
 };
 
 Object.entries(secretRules).forEach(([id, rule]) => {
@@ -4354,7 +4170,7 @@ Object.entries(secretRules).forEach(([id, rule]) => {
       else saveAppData();
       return changed;}
 
-    function getSessionDurationMinutes(session) {
+    function getSessionDurationMinutesutes(session) {
       if (Number(session?.durationSeconds) > 0) return Number(session.durationSeconds) / 60;
       const splitHours = Number(session?.durationH ?? session?.hours ?? 0) || 0;
       const splitMinutes = Number(session?.durationM ?? session?.minutes ?? 0) || 0;
@@ -4365,11 +4181,7 @@ Object.entries(secretRules).forEach(([id, rule]) => {
       const n = parseLocalizedNumber(text); return Number.isFinite(n) ? n : 0;
     }
     function getSessionDistanceKm(session) {
-if (session?.type === 'competition' || session?.competitionDetails) {
-  const compKm = parseLocalizedNumber(session?.competitionDetails?.totalDistanceKm ?? 0);
-  if (compKm > 0) return compKm;
-  return parseLocalizedNumber(session?.distance ?? session?.rawVal ?? session?.distanceKm ?? 0);
-}
+      if (session?.type === 'competition' || session?.competitionDetails) return parseLocalizedNumber(session?.competitionDetails?.totalDistanceKm ?? session?.distance ?? session?.rawVal ?? 0);
       const direct = session?.distance ?? session?.rawVal ?? session?.distanceKm;
       if (direct !== undefined && direct !== null && direct !== '') return parseLocalizedNumber(direct);
       const meters = parseLocalizedNumber(session?.distanceM ?? session?.distance_m ?? session?.meters ?? 0);
@@ -4379,7 +4191,7 @@ if (session?.type === 'competition' || session?.competitionDetails) {
     // La VAP fiable nécessite un profil altimétrique segment par segment (GPX), pas seulement le D+ total.
     function updateSessionDerivedMetrics(session) {
       const distanceKm = getSessionDistanceKm(session);
-      const durationMinutes = getSessionDurationMinutes(session);
+      const durationMinutes = getSessionDurationMinutesutes(session);
       session.avg_speed = distanceKm > 0 && durationMinutes > 0
         ? Number((distanceKm / (durationMinutes / 60)).toFixed(2)) : null;
       session.vap = null;
@@ -4502,161 +4314,6 @@ function refreshEditSessionFriendSuggestions() {
         syncMissingFieldHighlights(root);
       }
     }
-
-function positionModalBelowRibbon(modalEl) {
-    if (!modalEl) return;
-
-    const ribbon = document.querySelector(
-        'header, nav, .top-nav, .navbar, .topbar, .app-header'
-    );
-
-    const ribbonBottom = ribbon
-        ? Math.max(0, ribbon.getBoundingClientRect().bottom)
-        : 0;
-
-    const topOffset = Math.max(84, Math.ceil(ribbonBottom + 12));
-
-    modalEl.style.position = 'fixed';
-    modalEl.style.inset = '0';
-    modalEl.style.padding = `${topOffset}px 12px 16px`;
-    modalEl.style.display = 'block';
-    modalEl.style.overflowY = 'auto';
-    modalEl.style.boxSizing = 'border-box';
-
-    const dialog = modalEl.querySelector('.edit-session-dialog');
-
-    if (dialog) {
-        dialog.style.margin = '0 auto';
-        dialog.style.width = '100%';
-        dialog.style.maxWidth = '900px';
-        dialog.style.maxHeight =
-            `calc(100dvh - ${topOffset + 16}px)`;
-        dialog.style.overflowY = 'auto';
-        dialog.style.boxSizing = 'border-box';
-    }
-    const gridCandidates = modalEl.querySelectorAll('.edit-session-dialog div');
-    const targetLeftGrid = [...gridCandidates].find(el =>
-        !el.id &&
-        !el.className &&
-        getComputedStyle(el).display === 'grid' &&
-        el.children.length >= 10 &&
-        sheetEl &&
-        !el.contains(sheetEl)
-    );
-    if (targetLeftGrid) {
-        targetLeftGrid.style.display = isInspect ? 'none' : 'grid';
-    }
-}
-function setDopamineSheetMode(mode) {
-    const isInspect = mode === 'inspect';
-
-    const modalEl = document.getElementById('edit-session-modal');
-    const titleEl = document.getElementById('edit-session-modal-title');
-    const modeBadge = document.getElementById('dopamine-sheet-mode-badge');
-    const toggleBtn = document.getElementById('dopamine-sheet-toggle-btn');
-    const sheetEl = document.getElementById('dopamine-session-sheet');
-
-    if (!modalEl) return;
-
-    modalEl.dataset.sheetMode = isInspect ? 'inspect' : 'edit';
-    modalEl.classList.toggle('dopamine-inspect-mode', isInspect);
-
-    if (sheetEl) {
-        sheetEl.style.display = '';
-    }
-
-    const fields = modalEl.querySelectorAll(
-        'input:not([type="hidden"]), select, textarea'
-    );
-    fields.forEach(field => {
-        field.disabled = isInspect;
-    });
-
-    const actionButtons = modalEl.querySelectorAll(
-        'button[type="submit"], #ad-save-btn, #ad-delete-btn, [data-remove-friend], #ad-friend-add-btn'
-    );
-    actionButtons.forEach(btn => {
-        btn.style.display = isInspect ? 'none' : '';
-    });
-
-    if (titleEl) {
-        titleEl.textContent = isInspect
-            ? "Consulter l'activité"
-            : "Modifier l'activité";
-    }
-
-    if (modeBadge) {
-        modeBadge.textContent = isInspect
-            ? 'Mode consultation'
-            : 'Mode modification';
-    }
-
-    if (toggleBtn) {
-        toggleBtn.textContent = isInspect
-            ? 'Passer en modification'
-            : 'Passer en consultation';
-    }
-}
-    function closeEditSession() {
-      const modalEl = document.getElementById('edit-session-modal');
-      const legacyForm = document.getElementById('edit-session-form');
-      if (legacyForm) {
-        legacyForm.style.display = '';
-      }
-      if (modalEl) {
-        modalEl.classList.remove('open', 'active', 'show', 'dopamine-inspect-mode');
-        modalEl.style.display = 'none';
-        modalEl.style.removeProperty('--dopamine-sheet-top');
-        modalEl.style.paddingTop = '';
-        modalEl.style.alignItems = '';
-        modalEl.style.overflowY = '';
-        delete modalEl.dataset.sheetMode;
-      }
-      const formFields = document.querySelectorAll('#edit-session-form input, #edit-session-form select, #edit-session-form textarea, #dopamine-session-sheet input, #dopamine-session-sheet select, #dopamine-session-sheet textarea');
-      formFields.forEach(field => {
-        field.disabled = false;
-      });
-      const actionButtons = document.querySelectorAll('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"], #ad-save-btn, #ad-delete-btn');
-      actionButtons.forEach(btn => {
-        btn.style.display = '';
-      });
-    }
-function toggleDopamineSheetMode() {
-      const modalEl = document.getElementById('edit-session-modal');
-      const currentMode = modalEl?.dataset?.sheetMode === 'inspect' ? 'inspect' : 'edit';
-      setDopamineSheetMode(currentMode === 'inspect' ? 'edit' : 'inspect');
-    }
-function inspectDopamineSession(sessionId) {
-      const modalEl = document.getElementById('edit-session-modal');
-      if (modalEl) modalEl.dataset.sheetMode = 'inspect';
-      if (typeof openEditSession === 'function') {
-        openEditSession(sessionId);
-      }
-      if (typeof setDopamineSheetMode === 'function') {
-        setDopamineSheetMode('inspect');
-      }
-    }
-
-    function closeEditSession() {
-      const modalEl = document.getElementById('edit-session-modal');
-      if (modalEl) {
-        modalEl.classList.remove('open', 'active', 'show', 'dopamine-inspect-mode');
-        modalEl.style.display = 'none';
-        modalEl.style.removeProperty('--dopamine-sheet-top');
-        modalEl.style.paddingTop = '';
-        modalEl.style.alignItems = '';
-        modalEl.style.overflowY = '';
-        delete modalEl.dataset.sheetMode;
-      }
-      const formFields = document.querySelectorAll('#edit-session-form input, #edit-session-form select, #edit-session-form textarea');
-      formFields.forEach(field => {
-        field.disabled = false;
-      });
-      const saveBtn = document.querySelector('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"]');
-      if (saveBtn) {
-        saveBtn.style.display = '';
-      }
-    }
     function openEditSession(id) {
       const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
       if (!session) { alert('Cette activité est introuvable.'); return; }
@@ -4685,92 +4342,93 @@ const resolvedStravaId = session.stravaActivityId || session.strava_id || sessio
       if(resolvedStravaId){
         const detContent = document.getElementById('edit-session-strava-details-content');
         if (detContent) detContent.textContent='Chargement des détails Strava…';
-loadStravaActivityDetails(session).catch(err => {
+        loadStravaActivityDetails(session).catch(err=>{
           console.warn('Chargement détails Strava :', err);
-          if (detContent) detContent.textContent = 'Détails indisponibles : ' + err.message;
+          if (detContent) detContent.textContent='Détails indisponibles : '+err.message;
         });
-      }
- const modalEl = document.getElementById('edit-session-modal');
-      const sheet = document.getElementById('dopamine-session-sheet');
-      const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
-      const updateSheetSport = (sp) => {
-        if (!sheet) return;
-        sheet.dataset.sport = sportMap[sp] || sp || 'run';
-        syncTerrainOptionsBySport(sp, document.getElementById('ad-extra-terrain')?.value || session.terrain || '', sheet);
-      };
+         }const sheet = document.getElementById('dopamine-session-sheet');
+          if (sheet) {
+        setDopamineSheetMode('edit');
+        try {
+          const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
+          const updateSheetSport = (sp) => {
+            sheet.dataset.sport = sportMap[sp] || sp || 'run';
+          syncTerrainOptionsBySport(sp, document.getElementById('ad-extra-terrain')?.value || session.terrain || '', sheet);
+          updateSheetSport(session.sport);
+         };
+          // Titre, Date & Heure Strava/locale
+          const adTitle = document.getElementById('ad-session-title');
+          const adDate = document.getElementById('ad-session-date');
+          const adTime = document.getElementById('ad-session-time');
 
-      // Titre, Date & Heure Strava/locale
-      const adTitle = document.getElementById('ad-session-title');
-      const adDate = document.getElementById('ad-session-date');
-      const adTime = document.getElementById('ad-session-time');
-      if (adTitle) {
-        adTitle.value = session.title || session.name || '';
-        adTitle.oninput = () => {
-          const el = document.getElementById('edit-session-title');
-          if (el) el.value = adTitle.value;
-        };
-      }
-
-      if (adDate) adDate.textContent = session.date || '--';
-      const rawStart = session.startDateLocal || session.stravaDetails?.startDateLocal || session.start_date_local || session.startTime || '';
-      const parsedTime = typeof rawStart === 'string' && rawStart.includes('T')
-        ? rawStart.split('T')[1].slice(0, 5)
-        : (session.time || '--:--');
-      if (adTime) adTime.textContent = parsedTime;
-
-      // RPE & Commentaire
-      const adRpe = document.getElementById('ad-rpe-input');
-      const adRpeVal = document.getElementById('ad-rpe-val');
-      const adComment = document.getElementById('ad-comment-input');
-
-      if (adRpe) {
-        adRpe.value = Number(session.rpe ?? 5);
-        if (adRpeVal) adRpeVal.textContent = adRpe.value;
-        adRpe.oninput = () => {
-          if (adRpeVal) adRpeVal.textContent = adRpe.value;
-          const el = document.getElementById('edit-session-rpe');
-          if (el) el.value = adRpe.value;
-        };
-      }
-
-      if (adComment) {
-        adComment.value = session.comment || session.description || '';
-        adComment.oninput = () => {
-          const el = document.getElementById('edit-session-comment');
-          if (el) el.value = adComment.value;
-        };
-      }
-
-      // Amis À LA DOPAMINE (liste + ajout pseudo ou e-mail Strava)
-      const friendSelect = document.getElementById('ad-friend-select');
-      const friendCustomInput = document.getElementById('ad-friend-custom-input');
-      const friendAddBtn = document.getElementById('ad-friend-add-btn');
-      const friendsListBox = document.getElementById('ad-friends-list');
-
-      let selectedFriends = Array.isArray(session.partners)
-        ? session.partners.map((p) => (typeof p === 'string' ? p : (p.username || p.name || p.email || ''))).filter(Boolean)
-        : [];
-
-      const syncFriends = () => {
-        session.partners = [...selectedFriends];
-        const hiddenPartners = document.getElementById('edit-session-partners');
-        if (hiddenPartners) hiddenPartners.value = selectedFriends.join(', ');
-        if (friendsListBox) {
-          friendsListBox.innerHTML = selectedFriends.map((f, idx) => `
-            <span class="ad-friend-chip">
-              👤 ${escapeHTML(f)}
-              <button type="button" data-remove-friend="${idx}" title="Retirer">×</button>
-            </span>
-          `).join('');
-          friendsListBox.querySelectorAll('[data-remove-friend]').forEach((btn) => {
-            btn.onclick = () => {
-              const i = Number(btn.dataset.removeFriend);
-              selectedFriends.splice(i, 1);
-              syncFriends();
+          if (adTitle) {
+            adTitle.value = session.title || session.name || '';
+            adTitle.oninput = () => {
+              const el = document.getElementById('edit-session-title');
+              if (el) el.value = adTitle.value;
             };
-          });
-        }
-      };
+          }
+
+          if (adDate) adDate.textContent = session.date || '--';
+          const rawStart = session.startDateLocal || session.stravaDetails?.startDateLocal || session.start_date_local || session.startTime || '';
+          const parsedTime = typeof rawStart === 'string' && rawStart.includes('T')
+            ? rawStart.split('T')[1].slice(0, 5)
+            : (session.time || '--:--');
+          if (adTime) adTime.textContent = parsedTime;
+
+          // RPE & Commentaire
+          const adRpe = document.getElementById('ad-rpe-input');
+          const adRpeVal = document.getElementById('ad-rpe-val');
+          const adComment = document.getElementById('ad-comment-input');
+
+          if (adRpe) {
+            adRpe.value = Number(session.rpe ?? 5);
+            if (adRpeVal) adRpeVal.textContent = adRpe.value;
+            adRpe.oninput = () => {
+              if (adRpeVal) adRpeVal.textContent = adRpe.value;
+              const el = document.getElementById('edit-session-rpe');
+              if (el) el.value = adRpe.value;
+            };
+          }
+
+          if (adComment) {
+            adComment.value = session.comment || session.description || '';
+            adComment.oninput = () => {
+              const el = document.getElementById('edit-session-comment');
+              if (el) el.value = adComment.value;
+            };
+          }
+
+          // Amis À LA DOPAMINE (liste + ajout pseudo ou e-mail Strava)
+          const friendSelect = document.getElementById('ad-friend-select');
+          const friendCustomInput = document.getElementById('ad-friend-custom-input');
+          const friendAddBtn = document.getElementById('ad-friend-add-btn');
+          const friendsListBox = document.getElementById('ad-friends-list');
+
+          let selectedFriends = Array.isArray(session.partners)
+            ? session.partners.map((p) => (typeof p === 'string' ? p : (p.username || p.name || p.email || ''))).filter(Boolean)
+            : [];
+
+          const syncFriends = () => {
+            session.partners = [...selectedFriends];
+            const hiddenPartners = document.getElementById('edit-session-partners');
+            if (hiddenPartners) hiddenPartners.value = selectedFriends.join(', ');
+            if (friendsListBox) {
+              friendsListBox.innerHTML = selectedFriends.map((f, idx) => `
+                <span class="ad-friend-chip">
+                  👤 ${escapeHTML(f)}
+                  <button type="button" data-remove-friend="${idx}" title="Retirer">×</button>
+                </span>
+              `).join('');
+              friendsListBox.querySelectorAll('[data-remove-friend]').forEach((btn) => {
+                btn.onclick = () => {
+                  const i = Number(btn.dataset.removeFriend);
+                  selectedFriends.splice(i, 1);
+                  syncFriends();
+                };
+              });
+            }
+          };
 
           if (friendSelect) {
             const knownFriends = Array.isArray(appData?.friends) ? appData.friends : [];
@@ -4990,9 +4648,13 @@ loadStravaActivityDetails(session).catch(err => {
             };
           }
 
-// Remplir immédiatement les 4 onglets si les détails Strava sont déjà en mémoire
-      if (typeof populateDopamineSheetDetails === 'function') {
-        populateDopamineSheetDetails(session);
+          // Remplir immédiatement les 4 onglets si les détails Strava sont déjà en mémoire
+          if (typeof populateDopamineSheetDetails === 'function') {
+            populateDopamineSheetDetails(session);
+          }
+        } catch (err) {
+          console.error('Affichage fiche séance :', err);
+        }
       }
     }
 
@@ -5111,10 +4773,10 @@ function populateDopamineSheetDetails(session) {
           pointRadius:0, borderWidth:2, tension:.22, spanGaps:true
         }));
         const axes = {};
-      available.forEach(def => { axes[def.axis] = {type:'linear',display:true,position:def.axis==='yPace'||def.axis==='yAlt'||def.axis==='yTemp'?'left':'right',grid:{drawOnChartArea:def.axis==='yPace'},ticks:{color:'#a9bdc8',maxTicksLimit:5},title:{display:true,text:def.unit,color:def.color}}; });
+        available.forEach(def => { axes[def.axis] = {type:'linear',display:true,position:def.axis==='yPace'||def.axis==='yAlt'||def.axis==='yTemp'?'left':'right',grid:{drawOnChartArea:def.axis==='yPace'},ticks:{color:'#a9bdc8',maxTicksLimit:5},title:{display:true,text:def.unit,color:def.color}}; });
         window.adDopamineActivityChart = new Chart(chartCanvas,{type:'line',data:{labels,datasets:buildDatasets()},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#d7e3e9',usePointStyle:true}}},scales:{x:{ticks:{color:'#a9bdc8',maxTicksLimit:8},title:{display:true,text:'Distance (km)',color:'#a9bdc8'}},...axes}}});
         if (toggles) toggles.querySelectorAll('input[data-stream]:not(:disabled)').forEach(input => { input.onchange = () => { window.adDopamineActivityChart.data.datasets = buildDatasets(); window.adDopamineActivityChart.update(); }; });
-        if (averagesBox) averagesBox.innerHTML = available.map(def => { const vals=def.values.map(def.convert).filter(v=>v!==null&&Number.isFinite(v)); const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null; let value='--'; if(avg!==null){ if(def.key==='pace'){ const totalSec=Math.round(avg*60); const mins=Math.floor(totalSec/60); const secs=totalSec%60; value=`${mins}:${String(secs).padStart(2,'0')} /km`; } else { value=`${avg.toFixed(1)} ${def.unit}`; } } return `<span class="ad-chart-average">${def.label} moyenne : <strong>${value}</strong></span>`; }).join('');
+        if (averagesBox) averagesBox.innerHTML = available.map(def => { const vals=def.values.map(def.convert).filter(v=>v!==null&&Number.isFinite(v)); const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null; const value=avg===null?'--':(def.key==='pace'?`${Math.floor(avg)}:${String(Math.round((avg%1)*60)).padStart(2,'0')} /km`:`${avg.toFixed(1)} ${def.unit}`); return `<span class="ad-chart-average">${def.label} moyenne : <strong>${value}</strong></span>`; }).join('');
       } else {
         if (chartEmpty) { chartEmpty.style.display = 'grid'; chartEmpty.textContent = Array.isArray(d.splitsMetric) && d.splitsMetric.length >= 2 ? 'Flux détaillés non transmis. Les temps intermédiaires restent consultables dans le tableau ci-dessus.' : 'Aucune donnée de courbe détaillée disponible pour cette séance.'; }
         if (averagesBox) averagesBox.innerHTML = '';
@@ -5344,9 +5006,10 @@ const effortsBody = document.getElementById('ad-efforts-body');
         <button type="button" class="strava-subtab ${activeTab==='efforts'?'active':''}" data-strava-tab="efforts">Meilleurs efforts</button>
       </div>`;
 
-     const overviewTab=`<div class="strava-detail-grid">${metric('Temps en mouvement',stravaTime(d.movingTime))}${metric('Temps écoulé',stravaTime(d.elapsedTime))}${metric('Distance',`${((Number(d.distance)||0)/1000).toFixed(2)} km`)}${metric('Vitesse moyenne',d.averageSpeed?`${(d.averageSpeed*3.6).toFixed(2)} km/h`:'—')}${metric('Allure moyenne',stravaPace(d.averageSpeed))}${metric('Vitesse max',d.maxSpeed?`${(d.maxSpeed*3.6).toFixed(2)} km/h`:'—')}${metric('Dénivelé positif',`${Math.round(d.totalElevationGain||0)} m`)}${metric('Altitude min / max',`${d.elevLow??'—'} / ${d.elevHigh??'—'} m`)}${metric('BPM moyen / max',`${d.averageHeartrate??'—'} / ${d.maxHeartrate??'—'}`)}${metric('Cadence moyenne',d.averageCadence??'—')}${metric('Puissance moyenne / max',`${d.averageWatts??'—'} / ${d.maxWatts??'—'} W`)}${metric('Puissance pondérée',d.weightedAverageWatts?`${d.weightedAverageWatts} W`:'—')}${metric('Énergie',d.kilojoules?`${d.kilojoules} kJ`:'—')}${metric('Calories',d.calories?`${Math.round(d.calories)} kcal`:'—')}${metric('Effort relatif Strava',d.sufferScore??'—')}${metric('Type d’entraînement',d.workoutType??'—')}${metric('Appareil',d.deviceName||'Non fourni')}${metric('Équipement',d.gear?.name||'Non renseigné')}${metric('Kudos / commentaires',`${d.kudosCount||0} / ${d.commentCount||0}`)}${metric('Athlètes / photos',`${d.athleteCount||0} / ${d.photoCount||0}`)}${metric('Records / trophées',`${d.prCount||0} / ${d.achievementCount||0}`)}</div>
+      const overviewTab=`<div class="strava-detail-grid">${metric('Temps en mouvement',stravaTime(d.movingTime))}${metric('Temps écoulé',stravaTime(d.elapsedTime))}${metric('Distance',`${((Number(d.distance)||0)/1000).toFixed(2)} km`)}${metric('Vitesse moyenne',d.averageSpeed?`${(d.averageSpeed*3.6).toFixed(2)} km/h`:'—')}${metric('Allure moyenne',stravaPace(d.averageSpeed))}${metric('Vitesse max',d.maxSpeed?`${(d.maxSpeed*3.6).toFixed(2)} km/h`:'—')}${metric('Dénivelé positif',`${Math.round(d.totalElevationGain||0)} m`)}${metric('Altitude min / max',`${d.elevLow??'—'} / ${d.elevHigh??'—'} m`)}${metric('BPM moyen / max',`${d.averageHeartrate??'—'} / ${d.maxHeartrate??'—'}`)}${metric('Cadence moyenne',d.averageCadence??'—')}${metric('Puissance moyenne / max',`${d.averageWatts??'—'} / ${d.maxWatts??'—'} W`)}${metric('Puissance pondérée',d.weightedAverageWatts?`${d.weightedAverageWatts} W`:'—')}${metric('Énergie',d.kilojoules?`${d.kilojoules} kJ`:'—')}${metric('Calories',d.calories?`${Math.round(d.calories)} kcal`:'—')}${metric('Effort relatif Strava',d.sufferScore??'—')}${metric('Type d’entraînement',d.workoutType??'—')}${metric('Appareil',d.deviceName||'Non fourni')}${metric('Équipement',d.gear?.name||'Non renseigné')}${metric('Kudos / commentaires',`${d.kudosCount||0} / ${d.commentCount||0}`)}${metric('Athlètes / photos',`${d.athleteCount||0} / ${d.photoCount||0}`)}${metric('Records / trophées',`${d.prCount||0} / ${d.achievementCount||0}`)}</div>
       ${d.description?`<section class="strava-detail-section"><h4>Description</h4><p>${stravaSafeText(d.description)}</p></section>`:''}
-      <section class="strava-detail-section"><h4>GPS & Flux</h4><p>Départ : ${stravaSafeText(latlng.join(', ')||'—')} · Arrivée : ${stravaSafeText((d.endLatlng||d.endLatLng||[]).join(', ')||'—')}</p>${mapUrl?`<a href="${stravaSafeText(mapUrl)}" target="_blank" rel="noopener">Voir la zone de départ sur la carte</a>`:''}<p>Tracé GPS : ${d.map?.polyline||session.routePolyline?'disponible':'non fourni'} · ${streamCount?`${streamCount.toLocaleString('fr-FR')} points de flux`:'flux non chargés'}</p></section>`;
+      <section class="strava-detail-section"><h4>GPS & Flux</h4><p>Départ : ${stravaSafeText(latlng.join(', ')||'—')} · Arrivée : ${stravaSafeText((d.endLatlng||d.endLatLng||[]).join(', ')||'—')}</p>${mapUrl?`<a href="${mapUrl}" target="_blank" rel="noopener">Voir la zone de départ sur la carte</a>`:''}<p>Tracé GPS : ${d.map?.polyline||session.routePolyline?'disponible':'non fourni'} · ${streamCount?`${streamCount.toLocaleString('fr-FR')} points de flux`:'flux non chargés'}</p></section>`;
+
       const analysisTab=`${table('Temps intermédiaires',['#','Distance','Temps','Allure','D+','BPM moy.','Cadence'],splits)}
       <section class="strava-detail-section"><h4>Courbe d’allure</h4>${buildPaceSvgChart(d.splitsMetric)}</section>
       ${table('Tours / laps',['#','Nom','Distance','Temps','Allure','BPM moy.','BPM max','Watts'],laps)}`;
@@ -5363,51 +5026,13 @@ const effortsBody = document.getElementById('ad-efforts-body');
         btn.addEventListener('click',()=>renderStravaActivityDetails(session,btn.getAttribute('data-strava-tab')));
       });
     }
-function openStravaDetailsPage(){
-  const id=document.getElementById('edit-session-id')?.value;
-  const session=appData.sessionsHistory.find(x=>String(x.id)===String(id));
-  if(!session?.stravaActivityId){alert('Aucune donnée détaillée Strava associée à cette séance.');return;}
-  const page=document.getElementById('strava-activity-details-page');
-  const container=document.querySelector('.container');
-  const homeMain=document.getElementById('view-home');
-  if(page && container){
-    if(homeMain && homeMain.parentNode===container){
-      container.insertBefore(page,homeMain);
-    }else if(page.parentNode!==container){
-      container.prepend(page);
+    function openStravaDetailsPage(){
+      const id=document.getElementById('edit-session-id')?.value;const session=appData.sessionsHistory.find(x=>String(x.id)===String(id));if(!session?.stravaActivityId){alert('Cette séance ne possède pas d’identifiant Strava.');return;}
+      const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='block';
+      const content=document.getElementById('strava-activity-details-page-content');if(content)content.innerHTML='<p>Chargement des données détaillées Strava…</p>';
+      loadStravaActivityDetails(session).then(()=>{if(content){const box=document.getElementById('edit-session-strava-details-content');content.innerHTML=box?.innerHTML||'Détails indisponibles.';}}).catch(err=>{if(content)content.textContent='Détails indisponibles : '+err.message;});
     }
-    Array.from(container.children).forEach(child=>{
-      if(child!==page){
-        child.dataset.prevDisplay=child.style.display;
-        child.style.display='none';
-      }
-    });
-    page.style.display='block';
-    page.scrollIntoView({behavior:'smooth',block:'start'});
-  }
-  const content=document.getElementById('strava-activity-details-page-content');
-  if(content)content.innerHTML='<p>Chargement des données détaillées Strava...</p>';
-  loadStravaActivityDetails(session).then(()=>{
-    if(content){
-      const box=document.getElementById('edit-session-strava-details-content');
-      content.innerHTML=box?box.innerHTML:'Détails indisponibles.';
-    }
-  });
-}
-function closeStravaDetailsPage(){
-  const page=document.getElementById('strava-activity-details-page');
-  const container=document.querySelector('.container');
-  if(page)page.style.display='none';
-  if(container){
-    Array.from(container.children).forEach(child=>{
-      if(child!==page && 'prevDisplay' in child.dataset){
-        child.style.display=child.dataset.prevDisplay;
-        delete child.dataset.prevDisplay;
-      }
-    });
-  }
-}
-function closeStravaDetailsPage(){const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='none';}
+    function closeStravaDetailsPage(){const page=document.getElementById('strava-activity-details-page');if(page)page.style.display='none';}
     async function deleteEditedSession() {
       const id=document.getElementById('edit-session-id')?.value;
       const session=appData.sessionsHistory.find(item=>String(item.id)===String(id));
@@ -5426,8 +5051,39 @@ function closeStravaDetailsPage(){const page=document.getElementById('strava-act
       saveAppData();closeEditSession();
       alert(cloudDeleteError?'Séance supprimée de l’historique local. Attention : la suppression de la ligne Supabase a échoué : '+cloudDeleteError:'Séance supprimée. Statistiques, XP et trophées vérifiables recalculés.');
     }
+    function closeEditSession() { const modal = document.getElementById('edit-session-modal'); if (modal) modal.style.display = 'none'; }
+    function setDopamineSheetMode(mode) {
+      const sheet = document.getElementById('dopamine-session-sheet');
+      if (!sheet) return;
+      const inspect = mode === 'inspect';
+      sheet.dataset.sheetMode = inspect ? 'inspect' : 'edit';
+      const label = document.getElementById('ad-sheet-mode-label');
+      const toggle = document.getElementById('ad-sheet-mode-toggle');
+      if (label) label.innerHTML = inspect ? '<i class="fa-solid fa-eye"></i> Mode consultation' : '<i class="fa-solid fa-pen-to-square"></i> Mode modification';
+      if (toggle) toggle.textContent = inspect ? 'Modifier cette séance' : 'Passer en consultation';
+      sheet.querySelectorAll('input:not([type="hidden"]),textarea,select').forEach(el => {
+        if (el.id === 'ad-photo-input') return;
+        if (el.type === 'range' || el.tagName === 'SELECT') el.disabled = inspect;
+        else el.readOnly = inspect;
+      });
+      const save = document.getElementById('ad-save-btn');
+      const remove = document.getElementById('ad-delete-btn');
+      const addPhoto = document.getElementById('ad-add-photo-btn');
+      if (save) save.style.display = inspect ? 'none' : '';
+      if (remove) remove.style.display = inspect ? 'none' : '';
+      if (addPhoto) addPhoto.style.display = inspect ? 'none' : '';
+      sheet.querySelectorAll('[data-del-photo]').forEach(btn => btn.style.display = inspect ? 'none' : '');
+    }
+    function toggleDopamineSheetMode() {
+      const sheet = document.getElementById('dopamine-session-sheet');
+      setDopamineSheetMode(sheet?.dataset.sheetMode === 'inspect' ? 'edit' : 'inspect');
+    }
+    function inspectDopamineSession(id) {
+      openEditSession(id);
+      setDopamineSheetMode('inspect');
+    }
 
-function saveEditedSession() {
+    function saveEditedSession() {
       const val=id=>document.getElementById('edit-session-'+id)?.value;
       const session = appData.sessionsHistory.find(item => String(item.id) === String(val('id')));
       if (!session) { alert('Cette activité est introuvable.'); closeEditSession(); return; }
@@ -5478,7 +5134,7 @@ function saveEditedSession() {
       renderHistory();
     }
 
-     function renderHistory() {
+    function renderHistory() {
       const container = document.getElementById('history-list-container');
       if (!container) return;
       container.innerHTML = '';
@@ -5487,7 +5143,7 @@ function saveEditedSession() {
         container.innerHTML = '<p style="color:var(--text-sub); font-size:0.75rem; text-align:center; padding:10px;">Aucune séance enregistrée.</p>';
         return;
       }
-    const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&'+'amp;','<':'&'+'lt;','>':'&'+'gt;','"':'&'+'quot;','\x27':'&'+'#39;'}[ch]));
+      const escapeHTML = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
       list.forEach(s => {
         updateSessionDerivedMetrics(s);
         const feedback = [s.feeling ? `Ressenti : ${escapeHTML(s.feeling)}` : '', s.comment ? escapeHTML(s.comment) : ''].filter(Boolean).join(' — ');
@@ -5505,19 +5161,17 @@ function saveEditedSession() {
           s.stravaDetails?.segmentEfforts?.length ? `${s.stravaDetails.segmentEfforts.length} segments` : ''
         ].filter(Boolean).join(' · ');
         const metricLine = [speedLine, stravaMetrics, vapLine].filter(Boolean).join(' · ');
-        const safeId = escapeHTML(s.id ?? '');
-        const escapedIdArg = String(s.id ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        const safeTitle = escapeHTML(s.title || 'Séance');
         container.innerHTML += `
-          <div class="history-card" data-session-id="${safeId}">
-            <div style="min-width:0;flex:1;"><button type="button" onclick="event.stopPropagation(); if(typeof inspectDopamineSession==='function'){inspectDopamineSession('${escapedIdArg}');}else if(typeof openEditSession==='function'){openEditSession('${escapedIdArg}');}" style="background:none;border:none;padding:0;margin:0;font:inherit;font-weight:700;color:var(--text-main);cursor:pointer;text-align:left;text-decoration:underline;" title="Consulter cette activité">${safeTitle}</button><div style="font-size:0.65rem; color:var(--text-sub);">${escapeHTML(s.date)} • ${escapeHTML(s.duration)}</div>${metricLine ? `<div style="font-size:0.68rem;color:var(--bike-orange);margin-top:4px;">${escapeHTML(metricLine)}</div>` : ''}${feedback ? `<div style="font-size:0.72rem;color:var(--text-sub);margin-top:5px;overflow-wrap:anywhere;">${feedback}</div>` : ''}</div>
+          <div class="history-card">
+            <div style="min-width:0;flex:1;"><strong>${escapeHTML(s.title)}</strong><div style="font-size:0.65rem; color:var(--text-sub);">${escapeHTML(s.date)} • ${escapeHTML(s.duration)}</div>${metricLine ? `<div style="font-size:0.68rem;color:var(--bike-orange);margin-top:4px;">${escapeHTML(metricLine)}</div>` : ''}${feedback ? `<div style="font-size:0.72rem;color:var(--text-sub);margin-top:5px;overflow-wrap:anywhere;">${feedback}</div>` : ''}</div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <div style="text-align:right;"><strong style="color:var(--bike-orange);">${escapeHTML(s.distance)}</strong><div style="font-size:0.65rem; color:var(--xp-gold);">+${escapeHTML(s.xp)} XP</div></div>
-              <button type="button" class="medal-tab" title="Modifier cette activité" aria-label="Modifier cette activité" onclick="event.stopPropagation(); openEditSession('${escapedIdArg}')"><i class="fa-solid fa-pen"></i></button><button type="button" class="btn-delete-session" onclick="event.stopPropagation(); deleteSession('${escapedIdArg}')"><i class="fa-solid fa-trash"></i></button>
+              <div style="text-align:right;"><strong style="color:var(--bike-orange);">${s.distance}</strong><div style="font-size:0.65rem; color:var(--xp-gold);">+${s.xp} XP</div></div>
+              <button type="button" class="medal-tab" title="Inspecter cette activité" aria-label="Inspecter cette activité" onclick="inspectDopamineSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-eye"></i></button><button type="button" class="medal-tab" title="Modifier cette activité" aria-label="Modifier cette activité" onclick="openEditSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-delete-session" onclick="deleteSession('${escapeHTML(s.id)}')"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>`;
       });
     }
+
     function setCalendarMode(mode) {
       calendarMode = mode;
       ['week','month','year'].forEach(name => { const button=document.getElementById(`cal-mode-${name}`); if(button) button.classList.toggle('active', mode === name); });
@@ -5545,12 +5199,11 @@ function saveEditedSession() {
       const grid = document.getElementById('calendar-days-grid-home');
       const label = document.getElementById('calendar-current-label');
       if (!grid) return;
-
+      
       const today = new Date();
       const displayDate = new Date(calendarDisplayDate);
       grid.innerHTML = '';
 
-     const escapeAttr = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&'+'amp;','<':'&'+'lt;','>':'&'+'gt;','"':'&'+'quot;','\x27':'&'+'#39;'}[ch]));
       const sportPriority = { natation: 1, velo: 2, course: 3, marche: 4, hiit: 5, autres: 6, competition: 7, duathlon: 8, triathlon: 9, trail: 10 };
 
       if (calendarMode === 'today') {
@@ -5582,7 +5235,7 @@ function saveEditedSession() {
           let dotsHtml = '';
           daySessions.forEach(s => {
             const color = calendarSportColor(s);
-            dotsHtml += `<div class="dot-sport" style="background:${color};" title="${escapeAttr(`${s.title} (${s.time || ''})`)}"></div>`;
+            dotsHtml += `<div class="dot-sport" style="background:${color};" title="${s.title} (${s.time || ''})"></div>`;
           });
 
           grid.innerHTML += `
@@ -5599,16 +5252,16 @@ function saveEditedSession() {
         const month = displayDate.getMonth();
         const firstDayOfMonth = new Date(year, month, 1);
         const lastDayOfMonth = new Date(year, month + 1, 0);
-
+        
         if(label) label.innerText = firstDayOfMonth.toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
 
         // Jours de la semaine en entête
         const daysShort = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-        daysShort.forEach(day => { grid.innerHTML += `<div class="calendar-weekday-heading">${day}</div>`; });
-
+        daysShort.forEach(day => { grid.innerHTML += `<div class=\"calendar-weekday-heading\">${day}</div>`; });
+        
         // Décalage premier jour
         let startDay = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
-
+        
         for (let i = 0; i < startDay; i++) {
           grid.innerHTML += `<div class="cal-day-cell-mini" style="opacity:0.2; min-height:45px;"></div>`;
         }
@@ -5622,7 +5275,7 @@ function saveEditedSession() {
           let dotsHtml = '';
           daySessions.forEach(s => {
             const color = calendarSportColor(s);
-            dotsHtml += `<div class="dot-sport" style="background:${color}; width:4px; height:4px;" title="${escapeAttr(s.title)}"></div>`;
+            dotsHtml += `<div class="dot-sport" style="background:${color}; width:4px; height:4px;" title="${s.title}"></div>`;
           });
 
           grid.innerHTML += `
@@ -5644,7 +5297,7 @@ function saveEditedSession() {
           const monthBox = document.createElement('div');
           const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
           monthBox.id = isCurrentMonth ? 'calendar-current-month' : `calendar-month-${month}`;
-          monthBox.style.cssText = `border:1px solid ${isCurrentMonth?'var(--bike-orange)':'var(--card-border)'};border-radius:10px;padding:8px;min-width:0;background:${isCurrentMonth?'rgba(255,107,0,.09)':'rgba(255,255,255,.015)'};`;
+          monthBox.style.cssText = `border:1px solid ${isCurrentMonth?'var(--bike-orange)':'var(--card-border)'};border-radius:10px;padding:8px;min-width:0;background:${isCurrentMonth?'rgba(255,107,0,.09)':'rgba(255,255,255,.015)'};`; 
           const monthTitle = document.createElement('div');
           monthTitle.textContent = firstDay.toLocaleDateString('fr-FR',{month:'long'});
           monthTitle.style.cssText = 'font-weight:800;text-transform:capitalize;font-size:.78rem;margin-bottom:6px;color:var(--text-main);';
@@ -5675,6 +5328,7 @@ function saveEditedSession() {
       }
       updateRaceCountdown();
     }
+
     // Un seul gestionnaire pour toutes les vues : chaque case de jour est sélectionnable,
     // qu'elle contienne une séance passée, prévue ou aucune activité.
     document.addEventListener('click', event => {
@@ -5726,7 +5380,7 @@ function saveEditedSession() {
       window.scrollTo({top:0,behavior:'smooth'});
     }
 
-  function showDayDetails(dateStr) {
+    function showDayDetails(dateStr) {
       calendarSelectedDate = dateStr;
       calendarDisplayDate = new Date(`${dateStr}T12:00:00`);
       const panel = document.getElementById('calendar-selection-hint');
@@ -5737,38 +5391,23 @@ function saveEditedSession() {
         const rows = sessions.map(item => {
           const title = escapeHTML(String(item.title || 'Séance'));
           const sport = escapeHTML(String(item.sport || '').toUpperCase());
-          const rawDateStr = String(item.date || item.startDate || item.startedAt || '');
-          const isoTimeMatch = rawDateStr.match(/T(\d{2}:\d{2})/);
-          const rawTime = String(item.time || item.startTime || item.heure || (isoTimeMatch ? isoTimeMatch[1] : '') || '').trim();
-          const time = escapeHTML(rawTime || 'Heure non renseignée');
+          const time = escapeHTML(String(item.time || 'Heure non renseignée'));
           const duration = escapeHTML(String(item.duration || (item.durationMinutes ? `${item.durationMinutes} min` : '')));
-          const distance = escapeHTML(String(item.distance || ''));
+          const distance = escapeHTML(String(item.distance || '')); 
           const detail = escapeHTML(String(item.description || item.planGoal || item.comment || ''));
           const isCompleted = item.calendarStatus === 'completed';
           const isPastPlanned = !isCompleted && String(item.date || '') < localDateISO(new Date());
-          const status = isCompleted ? 'Séance réalisée' : isPastPlanned ? 'Séance prévue - date passée, à mettre à jour' : 'Séance à venir';
+          const status = isCompleted ? 'Séance réalisée' : isPastPlanned ? 'Séance prévue — date passée, à mettre à jour' : 'Séance à venir';
           const badge = item.type === 'competition' || item.sport === 'competition' ? ' · 🏁 Compétition' : '';
-          const safeId = escapeHTML(String(item.id ?? ''));
-          const escapedIdArg = String(item.id ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-          const edit = isCompleted && item.id != null ? `<button type="button" onclick="event.stopPropagation(); openEditSession('${escapedIdArg}')" title="Modifier l'activité">Modifier</button>` : '';
-          const photoList = Array.isArray(item.photos) ? item.photos : (Array.isArray(item.images) ? item.images : (item.photo ? [item.photo] : []));
-          const firstPhotoRaw = photoList.find(p => typeof p === 'string' && p.trim()) || (photoList[0]?.url || photoList[0]?.src || '');
-          const safePhotoUrl = firstPhotoRaw && /^(https?:\/\/|data:image\/|blob:)/i.test(firstPhotoRaw) ? escapeHTML(firstPhotoRaw) : '';
-          const photoHtml = safePhotoUrl ? `<div style="flex-shrink:0;display:flex;align-items:center;"><img src="${safePhotoUrl}" alt="${title}" style="max-height:92px;max-width:136px;width:auto;object-fit:contain;border-radius:8px;background:rgba(15,23,42,0.65);border:1px solid var(--card-border);"></div>` : '';
-          const canInspect = item.id != null && String(item.id).trim() !== '';
-          const openViewCall = canInspect
-            ? `event.stopPropagation(); if(typeof inspectDopamineSession==='function'){inspectDopamineSession('${escapedIdArg}');}else if(typeof openEditSession==='function'){openEditSession('${escapedIdArg}');if(typeof setDopamineSheetMode==='function')setDopamineSheetMode('inspect');}`
-            : '';
-          const titleHtml = canInspect
-            ? `<button type="button" onclick="${openViewCall}" style="background:none;border:none;padding:0;margin:0;font:inherit;font-weight:inherit;color:var(--text-main);text-decoration:underline;cursor:pointer;text-align:left;" title="Consulter la séance">${title}</button>`
-            : `<span>${title}</span>`;
-          return `<div class="calendar-detail-row" data-session-id="${safeId}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;"><div style="min-width:0;flex:1;"><strong>${time} · ${titleHtml}</strong><small>${sport}${badge} · ${status}${duration ? `<br>Durée : ${duration}` : ''}${distance ? ` · Distance : ${distance}` : ''}${detail ? `<br>${detail}` : ''}</small></div>${photoHtml}${edit}</div>`;
+          const edit = isCompleted && item.id != null ? `<button type="button" onclick="openEditSession('${String(item.id).replace(/'/g, '')}')" title="Modifier l’activité">Modifier</button>` : '';
+          return `<div class="calendar-detail-row"><div style="min-width:0;flex:1;"><strong>${time} · ${title}</strong><small>${sport}${badge} · ${status}${duration ? `<br>Durée : ${duration}` : ''}${distance ? `<br>Distance : ${distance}` : ''}${detail ? `<br>${detail}` : ''}</small></div><span style="width:9px;height:9px;border-radius:50%;background:${calendarSportColor(item)};flex:none;margin-top:5px;"></span>${edit}</div>`;
         }).join('');
-        panel.innerHTML = `<strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">${sessions.length} activité(s) ce jour</small>${rows}${addButtons}`;
+        panel.innerHTML = `<strong style="text-transform:capitalize;">${prettyDate}</strong><small style="display:block;color:var(--text-sub);margin-top:4px;">${sessions.length ? `${sessions.length} activité(s) ce jour` : 'Aucune activité enregistrée pour cette journée.'}</small>${rows}${addButtons}`;
       }
     }
+
     function openSearchFriendsModal() {
-      showPage('home'); 
+      showPage('home');
       const hub = document.getElementById('social-friends-hub');
       if (hub) hub.scrollIntoView({ behavior: 'smooth', block: 'start' });
       switchFriendTab('search');
@@ -6506,7 +6145,7 @@ async function refreshFriendHub(){
 
     // V20 — l'historique canonique de l'application est appData.sessionsHistory.
     function getNormalizedWorkouts() {
-      const durFn = typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes : getSessionDurationMinutes;
+      const durFn = typeof getSessionDurationMinutes === 'function' ? getSessionDurationMinutes : getSessionDurationMinutesutes;
       return (Array.isArray(appData.sessionsHistory)?appData.sessionsHistory:[]).map(s=>({
         ...s, discipline:trophySportOf(s), distance:getSessionDistanceKm(s), duration:durFn(s)
       }));
@@ -7082,7 +6721,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 <div id="edit-session-modal" style="display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.82);padding:12px;overflow:auto;">
  <div class="edit-session-dialog" style="max-width:760px;margin:3vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;"><h3 id="edit-session-modal-title" style="margin:0;color:var(--text-main);"><i class="fa-solid fa-pen-to-square" style="color:var(--bike-orange);margin-right:8px;"></i>Modifier l'activité</h3>  <input type="hidden" id="edit-session-id">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;"><h3 style="margin:0;color:var(--text-main);"><i class="fa-solid fa-pen-to-square" style="color:var(--xp-gold);"></i> Modifier l’activité</h3><button type="button" onclick="closeEditSession()" aria-label="Fermer" style="background:transparent;border:0;color:var(--text-main);font-size:1.5rem;">&times;</button></div>
+  <input type="hidden" id="edit-session-id">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;">
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-title">Nom de l’activité</label><input id="edit-session-title" type="text" maxlength="120" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-sport">Discipline</label><select id="edit-session-sport" style="width:100%;" onchange="updateEditSessionFields()"><option value="natation">Natation</option><option value="velo">Vélo</option><option value="course">Course à pied</option><option value="marche">Marche / randonnée</option><option value="hiit">HIIT</option><option value="autres">Autres sports</option><option value="competition">Compétition</option></select></div>
@@ -8224,14 +7864,13 @@ const esc = (value) =>
   });
 })();
 </script>
-<div id="strava-activity-details-page" style="display:none;margin:15px 0;background:var(--card-bg, #101923);border:1px solid var(--card-border);border-radius:14px;padding:18px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-          <h2 style="margin:0;color:var(--text-main);">Détails complets de l'activité</h2>
-          <button type="button" onclick="closeStravaDetailsPage()" style="background:rgba(255,255,255,0.08);color:var(--text-main);border:1px solid var(--card-border);border-radius:8px;padding:6px 12px;cursor:pointer;">Fermer / Retour</button>
-        </div>
-        <p style="color:var(--text-sub);font-size:.82rem;">Toutes les informations réellement fournies par Strava sont affichées. Les champs absents ou non autorisés restent indiqués.</p>
-        <div id="strava-activity-details-page-content">Chargement...</div>
-      </div>
+
+<div id="strava-activity-details-page" style="display:none;position:fixed;inset:0;z-index:11000;background:rgba(4,10,16,.96);padding:16px;overflow:auto;">
+ <div style="max-width:1100px;margin:2vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><h2 style="margin:0;color:var(--text-main);">Détails complets de l’activité Strava</h2><button type="button" class="medal-tab" onclick="closeStravaDetailsPage()">Fermer ✕</button></div>
+  <p style="color:var(--text-sub);font-size:.82rem;">Toutes les informations réellement fournies par Strava sont affichées. Les champs absents ou non autorisés restent indiqués comme indisponibles.</p>
+  <div id="strava-activity-details-page-content">Chargement…</div>
+ </div>
 </div>
 <style>
         /* Fond bleu sur les champs non renseignés + texte orange bien lisible */
@@ -8251,18 +7890,6 @@ const esc = (value) =>
           background-color: #0f172a !important;
           color: #fb923c !important;
         }
-/* Aperçu photo entier et compact dans la fiche de séance */
-      #edit-session-modal img,
-      #dopamine-session-sheet img,
-      .ad-session-photos img,
-      .session-photos-preview img {
-        max-height: 180px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        object-fit: contain !important;
-        background-color: rgba(15, 23, 42, 0.65) !important;
-        border-radius: 8px !important;
-      }
       </style>
 <style>
 .strava-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}.strava-detail-metric{background:rgba(255,255,255,.045);border:1px solid var(--card-border);border-radius:9px;padding:10px;min-width:0}.strava-detail-metric small{display:block;color:var(--text-sub);font-size:.68rem}.strava-detail-metric strong{display:block;color:var(--text-main);font-size:.95rem;margin-top:4px;overflow-wrap:anywhere}.strava-detail-section{margin-top:16px;padding:12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:10px}.strava-detail-section h4{margin:0 0 10px;color:var(--text-main)}.strava-table-wrap{overflow-x:auto}.strava-detail-section table{border-collapse:collapse;width:100%;font-size:.78rem;white-space:nowrap}.strava-detail-section th,.strava-detail-section td{padding:7px 9px;border-bottom:1px solid var(--card-border);text-align:left}.strava-detail-section th{color:var(--text-sub)}
