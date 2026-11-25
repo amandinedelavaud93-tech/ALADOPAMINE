@@ -4534,6 +4534,18 @@ function positionModalBelowRibbon(modalEl) {
         dialog.style.overflowY = 'auto';
         dialog.style.boxSizing = 'border-box';
     }
+    const gridCandidates = modalEl.querySelectorAll('.edit-session-dialog div');
+    const targetLeftGrid = [...gridCandidates].find(el =>
+        !el.id &&
+        !el.className &&
+        getComputedStyle(el).display === 'grid' &&
+        el.children.length >= 10 &&
+        sheetEl &&
+        !el.contains(sheetEl)
+    );
+    if (targetLeftGrid) {
+        targetLeftGrid.style.display = isInspect ? 'none' : 'grid';
+    }
 }
 function setDopamineSheetMode(mode) {
     const isInspect = mode === 'inspect';
