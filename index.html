@@ -2850,7 +2850,7 @@ function setupProfileCityAutocomplete() {
 
 // Intégration Strava OAuth 2.0 + Import automatique multi-utilisateurs
 const STRAVA_CLIENT_ID = '299273';
-const STRAVA_REDIRECT_URI = window.location.origin;
+const STRAVA_REDIRECT_URI = `${window.location.origin}/api/strava/callback`;
 
 const platformIntegrationStatus = {
   Strava: { status: 'configuree', method: 'OAuth 2.0 / API Strava' },
@@ -2859,130 +2859,137 @@ const platformIntegrationStatus = {
   Zwift: { status: 'non_configuree', method: 'API ou autorisation partenaire à confirmer' }
 };
 
-function setDopamineSheetMode(mode) {
-      const isInspect = mode === 'inspect';
-      const isMobile = window.innerWidth <= 768;
-      const modalEl = document.getElementById('edit-session-modal');
-      const titleEl = document.getElementById('edit-session-modal-title');
-      const modeBadge = document.getElementById('dopamine-sheet-mode-badge');
-      const toggleBtn = document.getElementById('dopamine-sheet-toggle-btn');
-      const legacyForm = document.getElementById('edit-session-form');
-      const sheetEl = document.getElementById('dopamine-session-sheet');
+function getStravaStorageKey() {
+  const userId =
+    (typeof currentUser !== 'undefined' && currentUser && (currentUser.id || currentUser.email)) ||
+    (typeof appData !== 'undefined' && appData && (appData.userId || appData.athleteId)) ||
+    'default';
+  return `aladopamine_strava_auth_${userId}`;
+}
 
-      if (modalEl) {
-        modalEl.dataset.sheetMode = isInspect ? 'inspect' : 'edit';
-        modalEl.classList.toggle('dopamine-inspect-mode', isInspect);
-        positionModalBelowRibbon(modalEl);
-      }
+function beginPlatformConnection(platformName) {
+  if (platformName !== 'Strava') {
+    alert(`La connexion ${platformName} n'est pas encore active.`);
+    return;
+  }
 
-      if (legacyForm) {
-        legacyForm.style.display = isInspect ? 'none' : '';
-      }
-
-      const dialogWrap = document.querySelector('.edit-session-dialog > div');
-      if (dialogWrap) {
-        dialogWrap.style.flexDirection = isMobile ? 'column' : '';
-        dialogWrap.style.gap = isMobile ? '12px' : '';
-      }
-
-      const leftGridCol = dialogWrap
-        ? [...dialogWrap.children].find(el =>
-            el.tagName === 'DIV' &&
-            el.id !== 'dopamine-session-sheet' &&
-            !el.contains(sheetEl) &&
-            getComputedStyle(el).display === 'grid'
-          )
-        : null;
-      if (leftGridCol) {
-        leftGridCol.style.setProperty('display', isInspect ? 'none' : 'grid', 'important');
-      }
-
-      if (sheetEl) {
-        sheetEl.style.width = '100%';
-        sheetEl.style.maxWidth = isMobile ? '100%' : '860px';
-        sheetEl.style.margin = isMobile ? '0' : '0 auto';
-        sheetEl.style.boxSizing = 'border-box';
-        const sheetFields = sheetEl.querySelectorAll('input, select, textarea, button[data-remove-friend], #ad-friend-add-btn');
-        sheetFields.forEach(field => {
-          if (field.type === 'hidden') return;
-          field.disabled = isInspect;
-        });
-      }
-
-      if (titleEl) {
-        titleEl.textContent = isInspect ? "Consulter l'activité" : "Modifier l'activité";
-      }
-
-      if (modeBadge) {
-        modeBadge.textContent = isInspect ? 'Mode consultation' : 'Mode modification';
-      }
-
-      if (toggleBtn) {
-        toggleBtn.textContent = isInspect ? 'Passer en modification' : 'Passer en consultation';
-      }
-
-      const formFields = document.querySelectorAll('#edit-session-form input, #edit-session-form select, #edit-session-form textarea');
-      formFields.forEach(field => {
-        if (field.type === 'hidden') return;
-        field.disabled = isInspect;
-      });
-
-      const actionButtons = document.querySelectorAll('#edit-session-form button[type="submit"], #edit-session-modal button[type="submit"], #ad-save-btn, #ad-delete-btn');
-      actionButtons.forEach(btn => {
-        btn.style.display = isInspect ? 'none' : '';
-      });
-    }
-async function handleStravaOAuthCallback() {
-      const params = new URLSearchParams(window.location.search);
-      const oauthError = params.get('error');
-      if (oauthError) {
-        console.error('Erreur autorisation Strava :', oauthError);
-        alert("Erreur lors de la connexion Strava : " + oauthError);
-        window.history.replaceState({}, document.title, window.location.pathname);
-        return;
-      }
-
-      const connectedFlag = params.get('strava_connected');
-      const accessToken = params.get('strava_access_token');
-      const refreshToken = params.get('strava_refresh_token');
-      const expiresAt = params.get('strava_expires_at');
-      const athleteId = params.get('strava_athlete_id');
-
-      if (connectedFlag === '1' && accessToken) {
-        const authData = {
-          access_token: accessToken,
-          refresh_token: refreshToken || '',
-          expires_at: expiresAt ? Number(expiresAt) : null,
-          athlete: athleteId ? { id: Number(athleteId) } : null
-        };
-        localStorage.setItem(getStravaStorageKey(), JSON.stringify(authData));
-        window.history.replaceState({}, document.title, window.location.pathname);
-        await syncStravaActivities(authData);
-        return;
-      }
-
-      const code = params.get('code');
-      if (!code) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/strava/callback?code=${encodeURIComponent(code)}`, {
-          method: 'GET'
-        });
-        const tokenData = await response.json();
-        if (!response.ok || !tokenData.access_token) {
-          throw new Error(tokenData.error || 'Échec échange de token Strava');
+  const savedRaw = localStorage.getItem(getStravaStorageKey());
+  if (savedRaw) {
+    try {
+      const savedAuth = JSON.parse(savedRaw);
+      if (savedAuth && (savedAuth.access_token || savedAuth.connected)) {
+        if (typeof syncStravaActivities === 'function') {
+          syncStravaActivities(savedAuth);
+          return;
         }
-        localStorage.setItem(getStravaStorageKey(), JSON.stringify(tokenData));
-        window.history.replaceState({}, document.title, window.location.pathname);
-        await syncStravaActivities(tokenData);
-      } catch (err) {
-        console.error('Erreur connexion Strava :', err);
-        alert("Erreur lors de la connexion Strava : " + err.message);
       }
+    } catch (e) {
+      localStorage.removeItem(getStravaStorageKey());
     }
+  }
 
+  const oauthState = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  sessionStorage.setItem('aladopamine_strava_state', oauthState);
+
+  const scope = 'read,activity:read_all';
+  const authUrl =
+    `https://www.strava.com/oauth/authorize` +
+    `?client_id=${encodeURIComponent(STRAVA_CLIENT_ID)}` +
+    `&response_type=code` +
+    `&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}` +
+    `&approval_prompt=auto` +
+    `&scope=${encodeURIComponent(scope)}` +
+    `&state=${encodeURIComponent(oauthState)}`;
+
+  window.location.href = authUrl;
+}
+
+async function handleStravaOAuthCallback() {
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+
+  const oauthError = params.get('error');
+  const stravaError = params.get('strava_error');
+  const connectedFlag = params.get('strava_connected');
+  const sessionTokenRef = params.get('strava_auth_ref');
+  const returnedState = params.get('state');
+
+  if (!oauthError && !stravaError && !connectedFlag && !sessionTokenRef) {
+    return;
+  }
+
+  ['error', 'strava_error', 'strava_connected', 'strava_auth_ref', 'state', 'code', 'scope'].forEach((k) =>
+    params.delete(k)
+  );
+  const cleanUrl = `${url.pathname}${params.toString() ? `?${params.toString()}` : ''}${url.hash}`;
+  window.history.replaceState({}, document.title, cleanUrl);
+
+  if (oauthError || stravaError) {
+    console.error('Erreur autorisation Strava :', oauthError || stravaError);
+    alert(`Connexion Strava annulée ou refusée (${oauthError || stravaError}).`);
+    return;
+  }
+
+  const expectedState = sessionStorage.getItem('aladopamine_strava_state');
+  sessionStorage.removeItem('aladopamine_strava_state');
+  if (expectedState && returnedState && expectedState !== returnedState) {
+    console.error('State OAuth invalide');
+    alert('Session de connexion Strava invalide. Veuillez réessayer.');
+    return;
+  }
+
+  if (sessionTokenRef) {
+    try {
+      const resp = await fetch(`/api/strava/callback?session_ref=${encodeURIComponent(sessionTokenRef)}`, {
+        method: 'GET',
+        credentials: 'same-origin'
+      });
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      if (data && data.ok) {
+        const authPayload = {
+          connected: true,
+          athlete: data.athlete || null,
+          expires_at: data.expires_at || null,
+          updated_at: Date.now()
+        };
+        localStorage.setItem(getStravaStorageKey(), JSON.stringify(authPayload));
+        if (typeof syncStravaActivities === 'function') {
+          await syncStravaActivities(authPayload);
+        }
+      }
+    } catch (err) {
+      console.error('Erreur récupération session Strava :', err);
+      alert('Impossible de finaliser la connexion Strava.');
+    }
+    return;
+  }
+
+  if (connectedFlag === '1') {
+    const authPayload = { connected: true, updated_at: Date.now() };
+    localStorage.setItem(getStravaStorageKey(), JSON.stringify(authPayload));
+    if (typeof syncStravaActivities === 'function') {
+      await syncStravaActivities(authPayload);
+    }
+  }
+}
+
+async function refreshStravaTokenViaServer(refreshToken) {
+  const resp = await fetch('/api/strava/callback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken
+    })
+  });
+  if (!resp.ok) {
+    throw new Error(`Refresh Strava échoué (${resp.status})`);
+  }
+  return resp.json();
+}
 async function syncStravaActivities(tokenData) {
   try {
     let auth = tokenData || JSON.parse(localStorage.getItem(getStravaStorageKey()) || 'null');
