@@ -8430,79 +8430,103 @@ const esc = (value) =>
     });
   };
 
-  window.beginPlatformConnection = function(platformName){
-    if(String(platformName).toLowerCase()!=='strava'){
-      if(typeof window.simulateApiSync==='function' && window.simulateApiSync!==window.beginPlatformConnection){
-        alert(platformName+' : la connexion automatique n’est pas encore configurée.');
-      } else {
-        alert(platformName+' : la connexion automatique n’est pas encore configurée.');
-      }
-      return;
-    }
-    const clientId=String(window.STRAVA_CLIENT_ID || '299273');
-    const redirectUri=String(window.STRAVA_REDIRECT_URI || window.location.origin);
-    if(!clientId || !redirectUri){
-      alert('Configuration Strava incomplète : vérifie le Client ID et l’URL de rappel.');
-      return;
-    }
-    const stateBytes=new Uint8Array(24);
-    if(!window.crypto?.getRandomValues){
-      alert('Ce navigateur ne permet pas de sécuriser la connexion Strava. Mets ton navigateur à jour.');
-      return;
-    }
-    window.crypto.getRandomValues(stateBytes);
-    const state=Array.from(stateBytes,b=>b.toString(16).padStart(2,'0')).join('');
-    sessionStorage.setItem('ad_strava_oauth_state',state);
-    const params=new URLSearchParams({
-      client_id:clientId,
-      response_type:'code',
-      redirect_uri:redirectUri,
-      approval_prompt:'auto',
-      scope:'read,activity:read_all',
-      state
-    });
-    window.location.assign('https://www.strava.com/oauth/authorize?'+params.toString());
-  };
+window.getStravaStorageKey = window.getStravaStorageKey || function () {
+  const userKey =
+    (typeof appData === 'object' && appData?.user?.id) ||
+    (typeof appData === 'object' && appData?.user?.email) ||
+    'default';
+  return `ad_strava_auth_${String(userKey)}`;
+};
 
-  window.handleStravaOAuthCallback = async function(){
-    const params=new URLSearchParams(window.location.search);
-    const oauthError=params.get('error');
-    if(oauthError){
-      alert('Connexion Strava refusée ou impossible : '+oauthError);
-      window.history.replaceState({},document.title,window.location.pathname);
-      return;
+window.beginPlatformConnection = function (platformName) {
+  if (String(platformName || '').toLowerCase() !== 'strava') {
+    if (typeof window.simulateApiSync === 'function' && window.simulateApiSync !== window.beginPlatformConnection) {
+      window.simulateApiSync(platformName);
+    } else {
+      alert(`${platformName} : la connexion automatique n'est pas encore configurée.`);
     }
-    const code=params.get('code');
-    if(!code) return;
-    const receivedState=params.get('state')||'';
-    const expectedState=sessionStorage.getItem('ad_strava_oauth_state')||'';
-    if(!expectedState || !receivedState || receivedState!==expectedState){
-      alert('Connexion Strava interrompue : vérification de sécurité invalide. Relance la connexion.');
-      window.history.replaceState({},document.title,window.location.pathname);
-      sessionStorage.removeItem('ad_strava_oauth_state');
-      return;
-    }
-    try{
-      const response=await fetch('/api/strava/callback?code='+encodeURIComponent(code),{method:'GET',headers:{'Accept':'application/json'}});
-      const tokenData=await response.json();
-      if(!response.ok || !tokenData?.access_token) throw new Error(tokenData?.error||'Le serveur n’a pas retourné de jeton Strava.');
-      localStorage.setItem(window.getStravaStorageKey(),JSON.stringify(tokenData));
-      sessionStorage.removeItem('ad_strava_oauth_state');
-      window.history.replaceState({},document.title,window.location.pathname);
-      if(typeof window.syncStravaActivities==='function') await window.syncStravaActivities(tokenData);
-      else alert('Strava est connecté, mais la fonction de synchronisation est introuvable.');
-    }catch(err){
-      console.error('Erreur OAuth Strava :',err);
-      alert('Connexion Strava impossible : '+(err.message||err));
-    }
-  };
+    return;
+  }
 
-  // Le bouton d'ouverture de la fiche doit rester utilisable au clavier et sur mobile.
-  document.addEventListener('DOMContentLoaded',()=>{
-    const modal=document.getElementById('edit-session-modal');
-    if(modal){
-      modal.addEventListener('click',ev=>{ if(ev.target===modal) window.closeEditSession(); });
-    }
+  const clientId = String(window.STRAVA_CLIENT_ID || '299273');
+  const redirectUri = String(
+    window.STRAVA_REDIRECT_URI || `${window.location.origin}/api/strava/callback`
+  );
+
+  if (!clientId || !redirectUri) {
+    alert("Configuration Strava incomplète : vérifie le Client ID et l'URL de rappel.");
+    return;
+  }
+
+  const stateBytes = new Uint8Array(24);
+  if (!window.crypto?.getRandomValues) {
+    alert('Ce navigateur ne permet pas de sécuriser la connexion Strava.');
+    return;
+  }
+  window.crypto.getRandomValues(stateBytes);
+  const state = Array.from(stateBytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  sessionStorage.setItem('ad_strava_oauth_state', state);
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    response_type: 'code',
+    redirect_uri: redirectUri,
+    approval_prompt: 'auto',
+    scope: 'read,activity:read_all',
+    state
   });
-})();
+
+  window.location.assign(`https://www.strava.com/oauth/authorize?${params.toString()}`);
+};
+
+window.handleStravaOAuthCallback = async function () {
+  const params = new URLSearchParams(window.location.search);
+  const oauthError = params.get('strava_error') || params.get('error');
+  const expectedState = sessionStorage.getItem('ad_strava_oauth_state') || '';
+  const receivedState = params.get('state') || '';
+
+  if (oauthError) {
+    alert(`Connexion Strava refusée ou impossible : ${oauthError}`);
+    sessionStorage.removeItem('ad_strava_oauth_state');
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+
+  if (!params.get('strava_connected') && !params.get('strava_auth')) {
+    return;
+  }
+
+  if (!expectedState || !receivedState || receivedState !== expectedState) {
+    alert('Connexion Strava interrompue : vérification de sécurité invalide. Relance la connexion.');
+    sessionStorage.removeItem('ad_strava_oauth_state');
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+
+  try {
+    const rawAuth = params.get('strava_auth');
+    const tokenData = rawAuth ? JSON.parse(decodeURIComponent(rawAuth)) : null;
+
+    if (!tokenData?.access_token) {
+      throw new Error('Jeton Strava absent au retour.');
+    }
+
+    localStorage.setItem(window.getStravaStorageKey(), JSON.stringify(tokenData));
+    sessionStorage.removeItem('ad_strava_oauth_state');
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    if (typeof window.syncStravaActivities === 'function') {
+      await window.syncStravaActivities(tokenData);
+    } else {
+      alert('Strava est connecté, mais la fonction de synchronisation est introuvable.');
+    }
+} catch (err) {
+    console.error('Erreur retour OAuth Strava :', err);
+    sessionStorage.removeItem('ad_strava_oauth_state');
+    window.history.replaceState({}, document.title, window.location.pathname);
+    alert(`Erreur connexion Strava : ${err.message || err}`);
+  }
+};
+
+  })();
 </script>
