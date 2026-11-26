@@ -4703,9 +4703,26 @@ function inspectDopamineSession(sessionId) {
       setComp('kind',cd.kind||session.eventKind||'triathlon');
       ['swim','swim-distance','t1','bike','bike-distance','bike-elevation','t2','run1','run1-distance','run1-elevation','run','run-distance','run-elevation','other-duration','other-distance'].forEach(k=>setComp(k,cdet[k]));
       ['water-place','water-condition','bike-terrain','run-terrain','weather-condition','place'].forEach(k=>setComp(k,cd[k.replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]));
-      const partners=Array.isArray(session.partners)?session.partners.map(p=>typeof p==='string'?p:(p.username||p.name||'')).filter(Boolean).join(', '):'';
-      set('water-place',session.waterPlace||''); set('water-condition',session.waterCondition||''); set('swim-weather',session.swimWeather||'');
-      set('partners',partners); set('comment',session.comment||session.competitionDetails?.notes||'');
+const isIndoorSession = Boolean(session.isIndoor) || ['maison', 'home', 'zwift', 'home-trainer', 'indoor'].includes(String(session.location || session.lieu || '').trim().toLowerCase());
+const hasWeatherInfo = Boolean(
+  session.weather ||
+  session.weatherCondition ||
+  session.meteo ||
+  document.getElementById('edit-session-weather')?.value
+);
+const reminderEl = document.getElementById('edit-session-weather-reminder');
+if (reminderEl) {
+  if (isIndoorSession) {
+    reminderEl.style.display = 'block';
+    reminderEl.textContent = 'Séance en intérieur (Maison) : lieu défini sur Maison — vous pouvez renseigner la météo si besoin pour vos trophées.';
+  } else if ((session.source === 'strava' || session.stravaActivityId) && !hasWeatherInfo) {
+    reminderEl.style.display = 'block';
+    reminderEl.textContent = 'Rappel : météo non renseignée sur cette sortie extérieure — ajoutez les conditions pour valider vos trophées météo.';
+  } else {
+    reminderEl.style.display = 'none';
+    reminderEl.textContent = '';
+  }
+}
       document.getElementById('edit-session-modal').style.display='block'; updateEditSessionFields(); refreshEditSessionFriendSuggestions();
 const resolvedStravaId = session.stravaActivityId || session.strava_id || session.externalId || (String(session.source || '').toLowerCase() === 'strava' && session.stravaDetails?.raw?.id ? session.stravaDetails.raw.id : null);
       if (resolvedStravaId && !session.stravaActivityId) session.stravaActivityId = resolvedStravaId;
@@ -5035,7 +5052,9 @@ async function loadStravaActivityDetails(session) {
         if(typeof populateDopamineSheetDetails==='function') populateDopamineSheetDetails(session);
         return;
       }
-      const storageKey=getStravaStorageKey();
+      const storageKey = typeof window.getStravaStorageKey === 'function'
+  ? window.getStravaStorageKey()
+  : (typeof getStravaStorageKey === 'function' ? getStravaStorageKey() : 'dopamine_strava_auth');
       let auth=JSON.parse(localStorage.getItem(storageKey)||'null');
       if(!auth?.access_token) throw new Error('Reconnecte Strava pour charger les détails.');
 
@@ -8336,6 +8355,7 @@ const esc = (value) =>
   #dopamine-session-sheet{padding:12px!important;border-radius:10px!important}
 }
 </style>
+  <script>
 window.mapStravaSportType = function(sportType) {
   const raw = String(sportType || '').toLowerCase().trim();
   if (!raw) return 'HIIT & autres sports';
