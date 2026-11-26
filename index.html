@@ -8339,6 +8339,21 @@ const esc = (value) =>
 }
 </style>
 <script id="dopamine-session-and-strava-fixes">
+  if (typeof window.mapStravaSportType !== 'function') {
+  window.mapStravaSportType = function (sportType) {
+    const raw = String(sportType || '').toLowerCase();
+    if (raw.includes('swim')) return 'Natation';
+    if (raw.includes('ride') || raw.includes('cycl') || raw.includes('gravel') || raw.includes('velomobile')) {
+      return 'Vélo';
+    }
+    if (raw.includes('run') || raw.includes('trail')) return 'Course à pied';
+    if (raw.includes('walk') || raw.includes('hike')) return 'Marche';
+    if (raw.includes('workout') || raw.includes('hiit') || raw.includes('crossfit') || raw.includes('yoga') || raw.includes('weight')) {
+      return 'HIIT & autres sports';
+    }
+    return 'HIIT & autres sports';
+  };
+}
 (async function(){
   'use strict';
 
