@@ -5583,11 +5583,26 @@ function saveEditedSession() {
       }));
       return [...planned, ...completed];
     }
-    function calendarSportColor(item) {
-      if (item.type === 'competition' || item.sport === 'competition' || ['triathlon','duathlon','trail'].includes(item.sport)) return 'var(--race-red)';
-      const colors = {natation:'var(--swim-blue)', velo:'var(--bike-orange)', course:'var(--run-green)', marche:'var(--walk-teal)', hiit:'var(--hiit-pink)', autres:'var(--hiit-pink)'};
-      return colors[item.sport] || 'var(--hiit-pink)';
-    }
+function calendarSportColor(item) {
+  const rawSport = String(item?.sport || item?.discipline || '').toLowerCase().trim();
+  const rawType = String(item?.type || '').toLowerCase().trim();
+
+  if (
+    rawType === 'competition' ||
+    rawSport === 'competition' ||
+    rawSport === 'compétition' ||
+    ['triathlon', 'duathlon', 'trail'].includes(rawSport)
+  ) {
+    return 'var(--race-red)';
+  }
+
+  if (rawSport.includes('natation') || rawSport.includes('swim')) return 'var(--swim-blue)';
+  if (rawSport.includes('velo') || rawSport.includes('vélo') || rawSport.includes('cycl') || rawSport.includes('ride')) return 'var(--bike-orange)';
+  if (rawSport.includes('course') || rawSport.includes('run')) return 'var(--run-green)';
+  if (rawSport.includes('marche') || rawSport.includes('walk') || rawSport.includes('hike')) return 'var(--walk-teal)';
+
+  return 'var(--hiit-pink)';
+}
 
     function renderHomeCalendar() {
       const grid = document.getElementById('calendar-days-grid-home');
@@ -8356,53 +8371,48 @@ const esc = (value) =>
 }
 </style>
   <script>
-window.mapStravaSportType = function(sportType) {
-  const raw = String(sportType || '').toLowerCase().trim();
-  if (!raw) return 'HIIT & autres sports';
+window.mapStravaSportType = function(rawType, rawTitle = '') {
+  const t = String(rawType || '').toLowerCase().trim();
+  const title = String(rawTitle || '').toLowerCase().trim();
 
-  if (
-    raw.includes('swim') ||
-    raw.includes('natation') ||
-    raw.includes('openwater')
-  ) {
-    return 'Natation';
-  }
-
-  if (
-    raw.includes('ride') ||
-    raw.includes('cycl') ||
-    raw.includes('gravel') ||
-    raw.includes('velomobile') ||
-    raw.includes('velo') ||
-    raw.includes('vélo') ||
-    raw.includes('zwift') ||
-    raw.includes('rouvy') ||
-    raw.includes('trainer')
-  ) {
+  // 1. Priorité absolue au sport_type / type officiel envoyé par Strava
+  if ([
+    'ride', 'virtualride', 'mountainbikeride', 'gravelride',
+    'ebikeride', 'emountainbikeride', 'handcycle', 'velomobile'
+  ].includes(t) || t.includes('ride') || t.includes('bike') || t.includes('cycl')) {
     return 'Vélo';
   }
 
-  if (
-    raw.includes('run') ||
-    raw.includes('trail') ||
-    raw.includes('course') ||
-    raw.includes('jog')
-  ) {
+  if ([
+    'run', 'trailrun', 'virtualrun'
+  ].includes(t) || t.includes('run')) {
     return 'Course à pied';
   }
 
-  if (
-    raw.includes('walk') ||
-    raw.includes('hike') ||
-    raw.includes('marche') ||
-    raw.includes('rando')
-  ) {
+  if ([
+    'swim', 'openwaterswim'
+  ].includes(t) || t.includes('swim')) {
+    return 'Natation';
+  }
+
+  if ([
+    'walk', 'hike', 'snowshoe'
+  ].includes(t) || t.includes('walk') || t.includes('hike')) {
     return 'Marche';
   }
 
-  if (raw.includes('race') || raw.includes('compet')) {
-    return 'Compétition';
+  if ([
+    'highintensityintervaltraining', 'workout', 'weighttraining',
+    'crossfit', 'yoga', 'pilates', 'elliptical', 'stairstepper', 'rowing'
+  ].includes(t)) {
+    return 'HIIT & autres sports';
   }
+
+  // 2. Repli uniquement si Strava n'a pas envoyé de type connu
+  if (/\b(vélo|velo|vtt|gravel|zwift|rouvy|home[- ]?trainer|cyclisme)\b/.test(title)) return 'Vélo';
+  if (/\b(course|footing|trail|running|fractionné|semi|marathon)\b/.test(title)) return 'Course à pied';
+  if (/\b(natation|piscine|nage)\b/.test(title)) return 'Natation';
+  if (/\b(marche|randonnée|rando)\b/.test(title)) return 'Marche';
 
   return 'HIIT & autres sports';
 };
@@ -8589,6 +8599,7 @@ window.isIndoorStravaActivity = function(act) {
     const redirectUri = String(
       window.STRAVA_REDIRECT_URI || `${window.location.origin}/api/strava/callback`
     );
+
 
     if(!clientId || !redirectUri){
       alert("Configuration Strava incomplète : vérifie le Client ID et l'URL de rappel.");
