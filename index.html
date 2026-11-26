@@ -8370,6 +8370,14 @@ const esc = (value) =>
     }
   };
 
+  function isTabOrNavButton(btn){
+    if(!btn) return false;
+    if(btn.id === 'dopamine-sheet-toggle-btn' || btn.id === 'close-edit-session-btn') return true;
+    if(btn.matches('[role="tab"], .ad-tab, .ad-tabs button, .ad-mode-toggle, [data-tab], [data-sheet-tab]')) return true;
+    if(btn.closest('.ad-tabs, .dopamine-tabs, [role="tablist"]')) return true;
+    return false;
+  }
+
   window.setDopamineSheetMode = function(mode){
     const isInspect = mode === 'inspect';
     const modal = document.getElementById('edit-session-modal');
@@ -8384,17 +8392,10 @@ const esc = (value) =>
     modal.classList.toggle('dopamine-inspect-mode', isInspect);
     window.positionModalBelowRibbon(modal);
 
-    // La fiche reste dans la modale du site : on masque seulement l'ancien formulaire doublon.
-    Array.from(dialog.children).forEach(child => {
-      const isHeader = child === dialog.firstElementChild;
-      const isSheet = child.id === 'dopamine-session-sheet' || child.contains(sheet);
-      if(isInspect && !isHeader && !isSheet){
-        child.style.setProperty('display', 'none', 'important');
-        child.dataset.dopamineHiddenByInspect = '1';
-      } else if(!isInspect && child.dataset.dopamineHiddenByInspect === '1'){
-        child.style.removeProperty('display');
-        delete child.dataset.dopamineHiddenByInspect;
-      }
+    // On réaffiche d'abord tous les éléments masqués précédemment pour ne perdre aucun onglet ni info.
+    modal.querySelectorAll('[data-dopamine-hidden-by-inspect="1"]').forEach(el => {
+      el.style.removeProperty('display');
+      delete el.dataset.dopamineHiddenByInspect;
     });
 
     const legacy = document.getElementById('edit-session-form');
@@ -8405,25 +8406,41 @@ const esc = (value) =>
       sheet.style.display = 'block';
       sheet.style.width = '100%';
       sheet.style.maxWidth = '100%';
+
+      sheet.querySelectorAll('.ad-tabs, .dopamine-tabs, [role="tablist"], .ad-header, .ad-panel').forEach(el => {
+        el.style.removeProperty('display');
+      });
+
       sheet.querySelectorAll('input,select,textarea').forEach(el => {
         if(el.type === 'hidden') return;
         el.disabled = isInspect;
-        if(el.matches('input[type="checkbox"],input[type="radio"]')) el.style.pointerEvents = isInspect ? 'none' : '';
+        if(el.matches('input[type="checkbox"],input[type="radio"]')){
+          el.style.pointerEvents = isInspect ? 'none' : '';
+        }
       });
+
       sheet.querySelectorAll('button').forEach(btn => {
-        const keep = btn.id === 'dopamine-sheet-toggle-btn' || btn.classList.contains('ad-mode-toggle');
-        if(isInspect && !keep) btn.style.display = 'none';
-        else if(!isInspect) btn.style.removeProperty('display');
+        if(isTabOrNavButton(btn)){
+          btn.style.removeProperty('display');
+          btn.disabled = false;
+          return;
+        }
+        if(isInspect){
+          btn.style.display = 'none';
+          btn.dataset.dopamineHiddenByInspect = '1';
+        } else {
+          btn.style.removeProperty('display');
+        }
       });
     }
 
     document.querySelectorAll('#ad-save-btn,#ad-delete-btn,#edit-session-form button[type="submit"],#edit-session-modal button[type="submit"]').forEach(btn => {
-      btn.style.display = isInspect ? 'none' : '';
-    });
-
-    document.querySelectorAll('#dopamine-session-sheet .ad-tabs, #dopamine-session-sheet .ad-header, #dopamine-session-sheet .ad-panel.is-active').forEach(el => {
-      el.style.display = '';
-      delete el.dataset.dopamineHiddenByInspect;
+      if(isInspect){
+        btn.style.display = 'none';
+        btn.dataset.dopamineHiddenByInspect = '1';
+      } else {
+        btn.style.removeProperty('display');
+      }
     });
 
     if(title) title.textContent = isInspect ? "Consulter l'activité" : "Modifier l'activité";
@@ -8436,7 +8453,6 @@ const esc = (value) =>
       console.error('openEditSession est introuvable.');
       return;
     }
-    // L'ouverture remplit la fiche avec les données de la séance ; on applique ensuite le mode lecture.
     window.openEditSession(sessionId);
     requestAnimationFrame(() => requestAnimationFrame(() => window.setDopamineSheetMode('inspect')));
   };
@@ -8461,8 +8477,9 @@ const esc = (value) =>
       el.disabled = false;
     });
 
-    document.querySelectorAll('#ad-save-btn,#ad-delete-btn,#edit-session-form button[type="submit"],#edit-session-modal button[type="submit"]').forEach(btn => {
+    document.querySelectorAll('#ad-save-btn,#ad-delete-btn,#edit-session-form button[type="submit"],#edit-session-modal button[type="submit"],#dopamine-session-sheet button').forEach(btn => {
       btn.style.removeProperty('display');
+      btn.disabled = false;
     });
 
     modal.querySelectorAll('[data-dopamine-hidden-by-inspect="1"]').forEach(el => {
