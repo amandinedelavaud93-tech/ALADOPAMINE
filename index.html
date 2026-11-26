@@ -3083,62 +3083,60 @@ async function syncStravaActivities(tokenData) {
         return true;
       });
 
-      const newSession = {
-        id: stravaId, stravaActivityId: act.id, stravaAthleteId: auth.athlete?.id || null,
-        source: 'strava', title: act.name || 'Séance Strava', date: dateStr, sport, type: 'activity',
-        durationSeconds, duration: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`,
-        durationMinutes: Number((durationSeconds / 60).toFixed(2)), distanceKm, distance: distanceKm,
-        rawVal: ['hiit','autres'].includes(sport) ? Number((durationSeconds / 60).toFixed(2)) : distanceKm,
-        elevation, elevationM: elevation, bpm, averageBpm: bpm || null, rpe: 5,
-        calories: calorieValue || null, averageCadence: avgCadence, cadence: avgCadence,
-        averageWatts: avgWatts, watts: avgWatts, averageSpeedKmh, maxSpeedKmh,
-        workoutType: act.workout_type ?? null, routePolyline: polyline,
-        stravaSummary: {
-          id: act.id, athleteId: act.athlete?.id || auth.athlete?.id || null,
-          name: act.name || null, description: act.description || null,
-          type: act.type || null, sportType: act.sport_type || null, workoutType: act.workout_type ?? null,
-          startDateLocal: act.start_date_local || null, startDateUtc: act.start_date || null, timezone: act.timezone || null,
-          trainer: !!act.trainer, commute: !!act.commute, private: !!act.private, manual: !!act.manual, gearId: act.gear_id || null,
-          movingTime: Number(act.moving_time) || 0, elapsedTime: Number(act.elapsed_time) || 0, distanceMeters: Number(act.distance) || 0,
-          averageSpeed: Number(act.average_speed) || null, maxSpeed: Number(act.max_speed) || null,
-          totalElevationGain: Number(act.total_elevation_gain) || 0, elevationHigh: act.elev_high ?? null, elevationLow: act.elev_low ?? null,
-          hasHeartrate: !!act.has_heartrate, averageHeartrate: act.average_heartrate ?? null, maxHeartrate: act.max_heartrate ?? null,
-          averageCadence: act.average_cadence ?? null, deviceWatts: !!act.device_watts, averageWatts: act.average_watts ?? null,
-          maxWatts: act.max_watts ?? null, weightedAverageWatts: act.weighted_average_watts ?? null, kilojoules: act.kilojoules ?? null,
-          calories: act.calories ?? null, sufferScore: act.suffer_score ?? null,
-          startLatLng: act.start_latlng || null, endLatLng: act.end_latlng || null, summaryPolyline: polyline,
-          kudosCount: act.kudos_count ?? 0, commentCount: act.comment_count ?? 0, photoCount: act.total_photo_count ?? 0,
-          athleteCount: act.athlete_count ?? 0, prCount: act.pr_count ?? 0, achievementCount: act.achievement_count ?? 0
-        }
-      };
+const isIndoor = typeof window.isIndoorStravaActivity === 'function'
+  ? window.isIndoorStravaActivity(act)
+  : Boolean(act.trainer);
 
-      if (manualCandidates.length > 1) {
-        // Plusieurs saisies manuelles peuvent correspondre : on n'importe pas une copie supplémentaire sans certitude.
-        ambiguousCount++;
-        return;
-      }
-      if (manualCandidates.length === 1) {
-        const existing = manualCandidates[0];
-        Object.assign(existing, {
-          stravaActivityId: act.id, stravaAthleteId: auth.athlete?.id || null,
-          externalSource: 'strava', routePolyline: polyline || existing.routePolyline || null,
-          stravaSummary: newSession.stravaSummary,
-          averageCadence: avgCadence ?? existing.averageCadence ?? null,
-          averageWatts: avgWatts ?? existing.averageWatts ?? null,
-          watts: avgWatts ?? existing.watts ?? null, cadence: avgCadence ?? existing.cadence ?? null,
-          averageSpeedKmh: averageSpeedKmh ?? existing.averageSpeedKmh ?? null,
-          maxSpeedKmh: maxSpeedKmh ?? existing.maxSpeedKmh ?? null,
-          workoutType: newSession.workoutType ?? existing.workoutType ?? null,
-          calories: calorieValue || existing.calories || null,
-          elevationM: elevation || existing.elevationM || existing.elevation || 0,
-          averageBpm: bpm || existing.averageBpm || existing.bpm || null,
-          stravaDetailsLoaded: false
-        });
-        // On conserve l'identifiant, les commentaires et la saisie manuelle de l'utilisateur.
-        mergedCount++;
-        return;
-      }
+const resolvedLocation = isIndoor ? 'Maison' : (act.location_city || '');
+const needsWeatherCheck = !isIndoor;
 
+const newSession = {
+  id: stravaId, stravaActivityId: act.id, stravaAthleteId: auth.athlete?.id || null,
+  source: 'strava', title: act.name || 'Séance Strava', date: dateStr, sport, discipline: sport, type: 'activity',
+  location: resolvedLocation,
+  lieu: resolvedLocation,
+  isIndoor,
+  needsWeatherCheck,
+  weatherStatus: isIndoor ? 'indoor_no_weather' : 'pending_check',
+  durationSeconds, duration: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`,
+  durationMinutes: Number((durationSeconds / 60).toFixed(2)), distanceKm, distance: distanceKm,
+  rawVal: ['hiit','autres'].includes(sport) ? Number((durationSeconds / 60).toFixed(2)) : distanceKm,
+  elevation, elevationM: elevation, bpm, averageBpm: bpm || null, rpe: 5,
+  calories: calorieValue || null, averageCadence: avgCadence, cadence: avgCadence,
+  averageWatts: avgWatts, watts: avgWatts, averageSpeedKmh, maxSpeedKmh,
+  workoutType: act.workout_type ?? null, routePolyline: polyline,
+  stravaSummary: {
+    id: act.id, athleteId: act.athlete?.id || auth.athlete?.id || null,
+    name: act.name || null, description: act.description || null,
+    type: act.type || null, sportType: act.sport_type || null, workoutType: act.workout_type ?? null,
+    startDateLocal: act.start_date_local || null, startDateUtc: act.start_date || null, timezone: act.timezone || null,
+    trainer: Boolean(act.trainer || isIndoor), commute: Boolean(act.commute), private: Boolean(act.private), manual: Boolean(act.manual), gearId: act.gear_id || null,
+    movingTime: Number(act.moving_time) || 0, elapsedTime: Number(act.elapsed_time) || 0, distanceMeters: Number(act.distance) || 0,
+    averageSpeed: act.average_speed ?? null, maxSpeed: act.max_speed ?? null,
+    totalElevationGain: Number(act.total_elevation_gain) || 0, elevationHigh: act.elev_high ?? null, elevationLow: act.elev_low ?? null,
+    hasHeartrate: !!act.has_heartrate, averageHeartrate: act.average_heartrate ?? null, maxHeartrate: act.max_heartrate ?? null,
+    averageCadence: act.average_cadence ?? null, deviceWatts: !!act.device_watts, averageWatts: act.average_watts ?? null,
+    maxWatts: act.max_watts ?? null, weightedAverageWatts: act.weighted_average_watts ?? null, kilojoules: act.kilojoules ?? null,
+    calories: act.calories ?? null, sufferScore: act.suffer_score ?? null,
+    startLatlng: act.start_latlng || null, endLatlng: act.end_latlng || null, summaryPolyline: polyline,
+    kudosCount: act.kudos_count ?? 0, commentCount: act.comment_count ?? 0, photoCount: act.total_photo_count ?? 0,
+    athleteCount: act.athlete_count ?? 0, prCount: act.pr_count ?? 0, achievementCount: act.achievement_count ?? 0
+  }
+};
+if (manualCandidates.length === 1) {
+  const existing = manualCandidates[0];
+  Object.assign(existing, {
+    sport,
+    discipline: sport,
+    location: existing.location || resolvedLocation,
+    lieu: existing.lieu || resolvedLocation,
+    stravaActivityId: act.id, stravaAthleteId: auth.athlete?.id || null,
+    externalSource: 'strava', routePolyline: polyline || existing.routePolyline || null,
+    stravaSummary: newSession.stravaSummary,
+    averageCadence: avgCadence ?? existing.averageCadence ?? null,
+    averageWatts: avgWatts ?? existing.averageWatts ?? null,
+  });
+}
       if (typeof calculateSessionXp === 'function') newSession.xp = calculateSessionXp({ sport, isCompetition: false, durationMinutes: newSession.durationMinutes, distanceKm, elevation });
       if (typeof updateSessionDerivedMetrics === 'function') updateSessionDerivedMetrics(newSession);
       appData.sessionsHistory.unshift(newSession);
@@ -8338,17 +8336,76 @@ const esc = (value) =>
   #dopamine-session-sheet{padding:12px!important;border-radius:10px!important}
 }
 </style>
-<script id="dopamine-session-and-strava-fixes">
-if (typeof window.mapStravaSportType !== 'function') {
-  window.mapStravaSportType = function (sportType) {
-    const raw = String(sportType || '').toLowerCase();
-    if (raw.includes('swim')) return 'Natation';
-    if (raw.includes('ride') || raw.includes('cycl') || raw.includes('gravel') || raw.includes('velomobile')) return 'Vélo';
-    if (raw.includes('run') || raw.includes('trail')) return 'Course à pied';
-    if (raw.includes('walk') || raw.includes('hike')) return 'Marche';
-    return 'HIIT & autres sports';
-  };
-}
+window.mapStravaSportType = function(sportType) {
+  const raw = String(sportType || '').toLowerCase().trim();
+  if (!raw) return 'HIIT & autres sports';
+
+  if (
+    raw.includes('swim') ||
+    raw.includes('natation') ||
+    raw.includes('openwater')
+  ) {
+    return 'Natation';
+  }
+
+  if (
+    raw.includes('ride') ||
+    raw.includes('cycl') ||
+    raw.includes('gravel') ||
+    raw.includes('velomobile') ||
+    raw.includes('velo') ||
+    raw.includes('vélo') ||
+    raw.includes('zwift') ||
+    raw.includes('rouvy') ||
+    raw.includes('trainer')
+  ) {
+    return 'Vélo';
+  }
+
+  if (
+    raw.includes('run') ||
+    raw.includes('trail') ||
+    raw.includes('course') ||
+    raw.includes('jog')
+  ) {
+    return 'Course à pied';
+  }
+
+  if (
+    raw.includes('walk') ||
+    raw.includes('hike') ||
+    raw.includes('marche') ||
+    raw.includes('rando')
+  ) {
+    return 'Marche';
+  }
+
+  if (raw.includes('race') || raw.includes('compet')) {
+    return 'Compétition';
+  }
+
+  return 'HIIT & autres sports';
+};
+
+window.isIndoorStravaActivity = function(act) {
+  if (!act || typeof act !== 'object') return false;
+  const combined = [
+    act.sport_type,
+    act.type,
+    act.name,
+    act.device_name
+  ].join(' ').toLowerCase();
+
+  return Boolean(
+    act.trainer === true ||
+    combined.includes('virtual') ||
+    combined.includes('zwift') ||
+    combined.includes('rouvy') ||
+    combined.includes('home trainer') ||
+    combined.includes('home-trainer') ||
+    combined.includes('indoor')
+  );
+};
 (async function(){
   'use strict';
 
