@@ -3257,25 +3257,48 @@ function resetActiveForm(sport) {
       appData.xp = totalXp % 500;
     }
 
-    function recalculateStatsFromHistory() {
-      if (!Array.isArray(appData.sessionsHistory)) appData.sessionsHistory = [];
-      appData.stats = { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, autres: 0, calories: 0 };
-      appData.sessionsHistory.forEach(s => {
-        if (!s || !['natation', 'velo', 'course', 'marche', 'hiit', 'autres'].includes(s.sport)) return;
-        const val = Number(s.rawVal);
-        if (!Number.isFinite(val) || val <= 0) return;
-        appData.stats[s.sport] += val;
-        const calories = Number(s.calories);
-        appData.stats.calories += Number.isFinite(calories) && calories >= 0 ? calories : Math.round(val * 40);
-      });
-      Object.keys(appData.stats).forEach(k => {
-        appData.stats[k] = Math.round(appData.stats[k] * 10) / 10;
-      });
-      recalculateXpFromHistory();
-      saveAppData();
-      updateSummaryUI();
-      updateAICoachAdvice();
+function recalculateStatsFromHistory() {
+  if (!Array.isArray(appData.sessionsHistory)) appData.sessionsHistory = [];
+  appData.stats = { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, autres: 0, calories: 0 };
+  appData.sessionsHistory.forEach(s => {
+    if (!s) return;
+    let sport = String(s.sport || '').toLowerCase();
+    if (sport === 'competition') {
+      const compSport = String(s.competitionKind || s.compKind || '').toLowerCase();
+      if (['natation', 'velo', 'course', 'marche', 'hiit', 'autres'].includes(compSport)) {
+        sport = compSport;
+      } else {
+        sport = 'autres';
+      }
     }
+    if (!['natation', 'velo', 'course', 'marche', 'hiit', 'autres'].includes(sport)) return;
+
+    let val = Number(s.rawVal);
+    if (!Number.isFinite(val) || val <= 0) {
+      if (['hiit', 'autres'].includes(sport)) {
+        const durMin = Number(s.durationMinutes) || (Number(s.durationSeconds) > 0 ? Number(s.durationSeconds) / 60 : 0);
+        val = durMin > 0 ? Number(durMin.toFixed(2)) : 0;
+      } else {
+        const distKm = typeof getSessionDistanceKm === 'function'
+          ? Number(getSessionDistanceKm(s))
+          : Number(s.distanceKm ?? s.distance ?? 0);
+        val = distKm > 0 ? Number(distKm.toFixed(2)) : 0;
+      }
+    }
+    if (!Number.isFinite(val) || val <= 0) return;
+
+    appData.stats[sport] += val;
+    const calories = Number(s.calories);
+    appData.stats.calories += (Number.isFinite(calories) && calories >= 0) ? calories : Math.round(val * 40);
+  });
+  Object.keys(appData.stats).forEach(k => {
+    appData.stats[k] = Math.round(appData.stats[k] * 10) / 10;
+  });
+  recalculateXpFromHistory();
+  saveAppData();
+  updateSummaryUI();
+  updateAICoachAdvice();
+}
 
 async function deleteSession(id) {
   const target = appData.sessionsHistory.find(s => String(s.id) === String(id) || String(s.supabaseId || '') === String(id));
@@ -7089,9 +7112,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 </script>
 <div id="edit-session-modal" style="display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.82);padding:12px;overflow:auto;">
- <div class="edit-session-dialog" style="max-width:760px;margin:3vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;"><h3 id="edit-session-modal-title" style="margin:0;color:var(--text-main);"><i class="fa-solid fa-pen-to-square" style="color:var(--bike-orange);margin-right:8px;"></i>Modifier l'activité</h3>  <input type="hidden" id="edit-session-id">
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;">
+ <div class="edit-session-dialog" style="max-width:860px;margin:3vh auto;background:var(--card-bg,#101923);border:1px solid var(--card-border);border-radius:16px;padding:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap;">
+   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <h3 id="edit-session-modal-title" style="margin:0;color:var(--text-main);"><i class="fa-solid fa-pen-to-square" style="color:var(--bike-orange);margin-right:8px;"></i>Consulter l'activité</h3>
+    <span id="dopamine-sheet-mode-badge" style="font-size:.75rem;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--text-sub);">Mode consultation</span>
+   </div>
+   <div style="display:flex;align-items:center;gap:8px;">
+    <button type="button" id="dopamine-sheet-toggle-btn" onclick="setDopamineSheetMode(document.getElementById('edit-session-modal')?.dataset.sheetMode === 'inspect' ? 'edit' : 'inspect')" style="background:#161e2b;color:#e2e8f0;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:7px 12px;font-size:.82rem;font-weight:600;cursor:pointer;">Passer en modification</button>
+    <button type="button" id="edit-session-close-btn" onclick="closeEditSessionModal ? closeEditSessionModal() : (document.getElementById('edit-session-modal').style.display='none')" aria-label="Fermer" style="background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:10px;width:36px;height:36px;font-size:1.25rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">×</button>
+   </div>
+  </div>
+  <input type="hidden" id="edit-session-id">  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;">
    <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-title">Nom de l’activité</label><input id="edit-session-title" type="text" maxlength="120" style="width:100%;"></div>
    <div class="form-group"><label for="edit-session-sport">Discipline</label><select id="edit-session-sport" style="width:100%;" onchange="updateEditSessionFields()"><option value="natation">Natation</option><option value="velo">Vélo</option><option value="course">Course à pied</option><option value="marche">Marche / randonnée</option><option value="hiit">HIIT</option><option value="autres">Autres sports</option><option value="competition">Compétition</option></select></div>
    <div class="form-group"><label for="edit-session-date">Date</label><input id="edit-session-date" type="date" style="width:100%;"></div>
@@ -7370,10 +7402,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   </style>
 
-  <div class="ad-mode-toolbar">
-    <span id="ad-sheet-mode-label"><i class="fa-solid fa-pen-to-square"></i> Mode modification</span>
-    <button type="button" id="ad-sheet-mode-toggle" class="ad-mode-toggle" onclick="toggleDopamineSheetMode()">Passer en consultation</button>
-  </div>
+<div class="ad-mode-toolbar" style="display:none;">
+  <span id="ad-sheet-mode-label"><i class="fa-solid fa-pen-to-square"></i> Mode modification</span>
+  <button type="button" id="ad-sheet-mode-toggle" class="ad-mode-toggle" onclick="toggleDopamineSheetMode()">Passer en consultation</button>
+</div>
   <!-- 1. Onglets au-dessus du nom de la sortie -->
   <div class="ad-tabs" role="tablist">
     <button type="button" class="ad-tab is-active" data-tab="apercu">Aperçu & Saisie</button>
@@ -8383,16 +8415,16 @@ const esc = (value) =>
         else if(!inspect) btn.style.removeProperty('display');
       });
     }
-    document.querySelectorAll('#edit-session-form input,#edit-session-form select,#edit-session-form textarea').forEach(el=>{
-      if(el.type!=='hidden') el.disabled=inspect;
-    });
-    document.querySelectorAll('#ad-save-btn,#ad-delete-btn,#edit-session-form button[type="submit"],#edit-session-modal button[type="submit"]').forEach(btn=>{
-      btn.style.display=inspect?'none':'';
-    });
-    if(title) title.textContent=inspect?"Consulter l'activité":"Modifier l'activité";
-    if(badge) badge.textContent=inspect?'Mode consultation':'Mode modification';
-    if(toggle) toggle.textContent=inspect?'Passer en modification':'Passer en consultation';
-  };
+document.querySelectorAll('#ad-save-btn,#ad-delete-btn,#edit-session-form button[type="submit"],#edit-session-modal button[type="submit"]').forEach(btn => {
+  btn.style.display = isInspect ? 'none' : '';
+});
+document.querySelectorAll('#dopamine-session-sheet .ad-tabs, #dopamine-session-sheet .ad-header, #dopamine-session-sheet .ad-panel.is-active').forEach(el => {
+  el.style.display = '';
+  delete el.dataset.dopamineHiddenByInspect;
+});
+if (title) title.textContent = isInspect ? "Consulter l'activité" : "Modifier l'activité";
+if (badge) badge.textContent = isInspect ? 'Mode consultation' : 'Mode modification';
+if (toggle) toggle.textContent = isInspect ? 'Passer en modification' : 'Passer en consultation';
 
   window.inspectDopamineSession = function(sessionId){
     if(typeof window.openEditSession!=='function'){
