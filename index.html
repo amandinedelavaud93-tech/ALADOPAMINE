@@ -3258,16 +3258,24 @@ function resetActiveForm(sport) {
 function recalculateStatsFromHistory() {
   if (!Array.isArray(appData.sessionsHistory)) appData.sessionsHistory = [];
   appData.stats = { natation: 0, velo: 0, course: 0, marche: 0, hiit: 0, autres: 0, calories: 0 };
-  appData.sessionsHistory.forEach(s => {
+
+  const normalizeStatSport = (raw) => {
+    const v = String(raw || '').trim().toLowerCase();
+    if (['natation', 'swim', 'openwaterswim'].includes(v)) return 'natation';
+    if (['velo', 'vélo', 'bike', 'ride', 'virtualride', 'mountainbikeride', 'gravelride', 'ebikeride'].includes(v)) return 'velo';
+    if (['course', 'course à pied', 'course a pied', 'cap', 'run', 'trailrun', 'trail', 'virtualrun'].includes(v)) return 'course';
+    if (['marche', 'marche / rando', 'rando', 'walk', 'hike'].includes(v)) return 'marche';
+    if (['hiit', 'hiit / renfo', 'crossfit'].includes(v)) return 'hiit';
+    if (['autres', 'autre', 'workout', 'autre sport', 'autres sports'].includes(v)) return 'autres';
+    return '';
+  };
+
+  appData.sessionsHistory.forEach((s) => {
     if (!s) return;
-    let sport = String(s.sport || '').toLowerCase();
-    if (sport === 'competition') {
-      const compSport = String(s.competitionKind || s.compKind || '').toLowerCase();
-      if (['natation', 'velo', 'course', 'marche', 'hiit', 'autres'].includes(compSport)) {
-        sport = compSport;
-      } else {
-        sport = 'autres';
-      }
+    let sport = normalizeStatSport(s.sport || s.discipline || s.sport_type || s.type);
+    if (String(s.sport || s.type || '').toLowerCase() === 'competition') {
+      const compSport = normalizeStatSport(s.competitionKind || s.compKind);
+      sport = compSport || 'autres';
     }
     if (!['natation', 'velo', 'course', 'marche', 'hiit', 'autres'].includes(sport)) return;
 
@@ -3283,15 +3291,18 @@ function recalculateStatsFromHistory() {
         val = distKm > 0 ? Number(distKm.toFixed(2)) : 0;
       }
     }
+
     if (!Number.isFinite(val) || val <= 0) return;
 
     appData.stats[sport] += val;
     const calories = Number(s.calories);
     appData.stats.calories += (Number.isFinite(calories) && calories >= 0) ? calories : Math.round(val * 40);
   });
-  Object.keys(appData.stats).forEach(k => {
+
+  Object.keys(appData.stats).forEach((k) => {
     appData.stats[k] = Math.round(appData.stats[k] * 10) / 10;
   });
+
   recalculateXpFromHistory();
   saveAppData();
   updateSummaryUI();
