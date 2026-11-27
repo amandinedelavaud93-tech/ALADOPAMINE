@@ -3150,7 +3150,22 @@ if (manualCandidates.length === 1) {
       appData.sessionsHistory.unshift(newSession);
       importedCount++;
     });
+const removedManualIds = [];
+let removedManualsCount = 0;
 
+appData.sessionsHistory = deduplicateAndPrioritizeSessions(appData.sessionsHistory, {
+  dropUnmatchedManuals: false,
+  onManualsRemoved: (removed) => {
+    removedManualsCount = removed.length;
+    removed.forEach((m) => {
+      if (m?.id != null) removedManualIds.push(m.id);
+    });
+  }
+});
+
+if (removedManualsCount > 0) {
+  mergedCount += removedManualsCount;
+}
     if (typeof closeSyncModal === 'function') closeSyncModal();
 
     if (importedCount > 0 || mergedCount > 0) {
@@ -3163,6 +3178,9 @@ if (manualCandidates.length === 1) {
       if (typeof renderHomeCalendar === 'function') renderHomeCalendar();
       if (typeof saveAppData === 'function') saveAppData();
       alert(`${importedCount} nouvelle(s) séance(s) importée(s), ${mergedCount} doublon(s) fusionné(s) et ${ambiguousCount} correspondance(s) ambiguë(s) laissée(s) en attente pour éviter un doublon.`);
+if (removedManualsCount > 0) {
+  alert(`${removedManualsCount} séance(s) manuelle(s) supprimée(s) ou fusionnée(s) pour ne garder qu'une seule séance.`);
+}
     } else if (ambiguousCount > 0) {
       alert(`${ambiguousCount} activité(s) Strava correspondent à plusieurs séances manuelles possibles. Elles n'ont pas été importées pour éviter de créer des doublons : vérifie ces séances dans ton historique.`);
     } else {
@@ -3670,6 +3688,90 @@ function isSameCalendarDay(d1, d2) {
         mergedFromManual: true
       };
     }
+    function deduplicateAndPrioritizeSessions(sessions = [], opts = {}) {
+  const dropUnmatchedManuals = Boolean(opts.dropUnmatchedManuals);
+  const isTrackedExternal = (s) => {
+    const src = String(s?.source || '').toLowerCase();
+    return Boolean(
+      s?.stravaId ||
+      s?.strava_id ||
+      s?.externalId ||
+      String(s?.id || '').startsWith('strava_') ||
+      (src && src !== 'manual')
+    );
+  };
+
+  const richness = (s) => {
+    let score = isTrackedExternal(s) ? 100 : 0;
+    if (s?.routePolyline || s?.polyline || s?.gpx_uri) score += 20;
+    if (Number(s?.averageBpm || s?.average_hr || s?.bpm) > 0) score += 10;
+    if (Number(s?.elevationM || s?.elevation_m || s?.elevation) > 0) score += 10;
+    if (Number(s?.calories) > 0) score += 5;
+    return score;
+  };
+
+  const sorted = [...(Array.isArray(sessions) ? sessions : [])].sort(
+    (a, b) => richness(b) - richness(a)
+  );
+
+  const kept = [];
+  const removedManuals = [];
+
+  for (const item of sorted) {
+    if (!item) continue;
+
+    if (item.id != null && kept.some((k) => String(k.id) === String(item.id))) {
+      continue;
+    }
+
+    const existingMatch = typeof findDuplicateSession === 'function'
+      ? findDuplicateSession(item, kept)
+      : null;
+
+    if (existingMatch) {
+      const idx = kept.findIndex((k) => String(k.id) === String(existingMatch.id));
+      if (idx !== -1) {
+        const wasManual = !isTrackedExternal(item);
+        kept[idx] = isTrackedExternal(kept[idx]) && wasManual
+          ? mergeExternalIntoManualSession(item, kept[idx])
+          : {
+              ...item,
+              ...kept[idx],
+              comment: kept[idx].comment || item.comment || '',
+              feeling: kept[idx].feeling || item.feeling || '',
+              rpe: kept[idx].rpe ?? item.rpe ?? null
+            };
+        if (wasManual) {
+          removedManuals.push({
+            id: item.id,
+            title: item.title || 'Séance manuelle',
+            date: item.date || '',
+            reason: 'merged_with_tracked'
+          });
+        }
+      }
+      continue;
+    }
+
+    if (dropUnmatchedManuals && !isTrackedExternal(item)) {
+      removedManuals.push({
+        id: item.id,
+        title: item.title || 'Séance manuelle',
+        date: item.date || '',
+        reason: 'unmatched_manual_dropped'
+      });
+      continue;
+    }
+
+    kept.push(item);
+  }
+
+  if (typeof opts.onManualsRemoved === 'function' && removedManuals.length > 0) {
+    opts.onManualsRemoved(removedManuals);
+  }
+
+  return kept;
+}
     function saveCurrentSession(sport) {
       const supportedSports = ['natation', 'velo', 'course', 'marche', 'hiit', 'autres'];
       if (!supportedSports.includes(sport)) { alert("Le sport sélectionné n'est pas reconnu."); return; }
