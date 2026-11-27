@@ -4910,15 +4910,62 @@ loadStravaActivityDetails(session).catch(err => {
           const extraTerrain = document.getElementById('ad-extra-terrain');
           const extraWeather = document.getElementById('ad-extra-weather');
 
-          if (extraSport) {
-            extraSport.value = session.type === 'competition' ? 'competition' : (session.sport || 'course');
-            extraSport.onchange = () => {
-              session.sport = extraSport.value;
-              updateSheetSport(extraSport.value);
-              const el = document.getElementById('edit-session-sport');
-              if (el) el.value = extraSport.value;
-            };
-          }
+if (extraSport) {
+  const rawSport = String(
+    session.type === 'competition'
+      ? 'competition'
+      : (session.sport || session.discipline || session.sport_type || session.type || 'course')
+  ).trim().toLowerCase();
+
+  const sportMap = {
+    'course': 'course',
+    'course à pied': 'course',
+    'course a pied': 'course',
+    'cap': 'course',
+    'run': 'course',
+    'trailrun': 'course',
+    'trail': 'course',
+    'virtualrun': 'course',
+    'velo': 'velo',
+    'vélo': 'velo',
+    'bike': 'velo',
+    'ride': 'velo',
+    'virtualride': 'velo',
+    'mountainbikeride': 'velo',
+    'gravelride': 'velo',
+    'ebikeride': 'velo',
+    'natation': 'natation',
+    'swim': 'natation',
+    'openwaterswim': 'natation',
+    'marche': 'marche',
+    'marche / rando': 'marche',
+    'rando': 'marche',
+    'walk': 'marche',
+    'hike': 'marche',
+    'hiit': 'hiit',
+    'hiit / renfo': 'hiit',
+    'workout': 'hiit',
+    'crossfit': 'hiit',
+    'autre': 'hiit',
+    'competition': 'competition',
+    'compétition': 'competition',
+    'course officielle': 'competition'
+  };
+
+  const resolvedSport = sportMap[rawSport] || 'course';
+  extraSport.value = resolvedSport;
+  session.sport = resolvedSport;
+  if (typeof updateSheetSport === 'function') updateSheetSport(resolvedSport);
+  const editSportEl = document.getElementById('edit-session-sport');
+  if (editSportEl) editSportEl.value = resolvedSport;
+
+  extraSport.onchange = () => {
+    session.sport = extraSport.value;
+    if (typeof updateSheetSport === 'function') updateSheetSport(extraSport.value);
+    const el = document.getElementById('edit-session-sport');
+    if (el) el.value = extraSport.value;
+  };
+}
           if (extraSource) {
             extraSource.value = (session.source || (session.stravaActivityId ? 'strava' : 'manual')).toLowerCase();
             extraSource.onchange = () => {
