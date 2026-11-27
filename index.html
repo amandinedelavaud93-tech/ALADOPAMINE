@@ -4533,30 +4533,35 @@ function refreshEditSessionFriendSuggestions() {
       if (help) help.textContent = candidates.length ? `${candidates.length} ami(s) proposé(s).` : 'La liste des amis n’est pas encore disponible dans cette fenêtre.';
     }
 
-    function updateEditSessionFields() {
-      const sportSelectEl = document.getElementById('edit-session-sport');
-      const sport =
-  sportSelectEl?.value ||
-  (window.getDopamineDisciplineMeta ? window.getDopamineDisciplineMeta('').key : 'hiit');
-      document.querySelectorAll('#edit-session-modal [data-edit-sport]').forEach(group=>{
-        const rule=group.getAttribute('data-edit-sport');
-        let visible=true;
-        if(rule==='natation') visible=sport==='natation';
-        else if(rule==='distance') visible=!['hiit','autres'].includes(sport);
-        else if(rule==='elevation') visible=!['hiit','autres'].includes(sport);
-        else if(rule==='velo') visible=sport==='velo';
-        else if(rule==='cadence') visible=['velo','course'].includes(sport);
-        else if(rule==='speed') visible=['velo','course','marche'].includes(sport);
-        else if(rule==='terrain') visible=['natation','velo','course','marche'].includes(sport);
-        else if(rule==='competition') visible=sport==='competition';
-        group.style.display=visible?'':'none';
-      });
-    if (typeof window.applyDisciplineRibbonColor === 'function') {
-    window.applyDisciplineRibbonColor(sport);
+   function updateEditSessionFields() {
+  const sportSelectEl = document.getElementById('edit-session-sport');
+  const rawSport = sportSelectEl?.value || '';
+  const meta = window.getDopamineDisciplineMeta
+    ? window.getDopamineDisciplineMeta(rawSport || 'course')
+    : { key: 'course', label: 'Course à pied', color: '#22c55e' };
+  const sport = rawSport ? meta.key : 'course';
+
+  document.querySelectorAll('#edit-session-modal [data-edit-sport]').forEach((group) => {
+    const rule = group.getAttribute('data-edit-sport');
+    let visible = true;
+    if (rule === 'natation') visible = sport === 'natation';
+    else if (rule === 'distance') visible = !['hiit', 'autres'].includes(sport);
+    else if (rule === 'elevation') visible = !['hiit', 'autres'].includes(sport);
+    else if (rule === 'velo') visible = sport === 'velo';
+    else if (rule === 'cadence') visible = ['velo', 'course'].includes(sport);
+    else if (rule === 'speed') visible = ['velo', 'course', 'marche'].includes(sport);
+    else if (rule === 'terrain') visible = ['natation', 'velo', 'course', 'marche'].includes(sport);
+    else if (rule === 'competition') visible = sport === 'competition';
+    group.style.display = visible ? '' : 'none';
+  });
+
+  if (typeof window.applyDisciplineRibbonColor === 'function') {
+    window.applyDisciplineRibbonColor(rawSport || sport);
   }
   if (typeof window.syncActivityTypeOptionsBySport === 'function') {
-    window.syncActivityTypeOptionsBySport(sport);
-  }}
+    window.syncActivityTypeOptionsBySport(rawSport || sport);
+  }
+}
 
     function syncMissingFieldHighlights(root = document) {
       const emptyTokens = ['', 'non renseigné', 'non renseigné / autre', 'autre', 'autre entraînement', 'autre terrain', '--'];
@@ -9171,3 +9176,4 @@ window.isIndoorStravaActivity = function(act) {
   };
 })();
 </script>
+                
