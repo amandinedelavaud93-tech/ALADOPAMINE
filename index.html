@@ -4647,17 +4647,17 @@ window.getDopamineDisciplineMeta = function(rawSportOrDiscipline = '') {
   if (v.includes('velo') || v.includes('vélo') || v.includes('bike') || v.includes('cycl') || v.includes('zwift') || v.includes('rouvy')) {
     return { key: 'velo', label: 'Vélo', color: '#f97316' };
   }
-  if (v.includes('march') || v.includes('walk') || v.includes('rand')) {
+  if (v.includes('marche') || v.includes('walk') || v.includes('rand')) {
     return { key: 'marche', label: 'Marche', color: '#22d3ee' };
   }
   if (v.includes('comp') || v.includes('race') || v.includes('tri')) {
     return { key: 'competition', label: 'Compétition', color: '#ef4444' };
   }
-  if (v.includes('hiit') || v.includes('renfo') || v.includes('muscu') || v.includes('autre') || v.includes('workout') || v.includes('corde') || v.includes('pompe') || v.includes('poid')) {
-    return { key: 'hiit', label: 'HIIT & autres sports', color: '#a855f7' };
-  }
   if (v.includes('course') || v.includes('cap') || v.includes('run') || v.includes('trail') || v.includes('footing')) {
     return { key: 'course', label: 'Course à pied', color: '#22c55e' };
+  }
+  if (v.includes('hiit') || v.includes('renfo') || v.includes('muscu') || v.includes('autre') || v.includes('workout') || v.includes('corde') || v.includes('pompe') || v.includes('gainage')) {
+    return { key: 'hiit', label: 'HIIT & autres sports', color: '#a855f7' };
   }
   return { key: 'hiit', label: 'HIIT & autres sports', color: '#a855f7' };
 };
