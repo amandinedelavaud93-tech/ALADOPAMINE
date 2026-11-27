@@ -5086,14 +5086,38 @@ if (extraSport) {
     if (el) el.value = extraSport.value;
   };
 }
-          if (extraSource) {
-            extraSource.value = (session.source || (session.stravaActivityId ? 'strava' : 'manual')).toLowerCase();
-            extraSource.onchange = () => {
-              session.source = extraSource.value;
-              const el = document.getElementById('edit-session-source');
-              if (el) el.value = extraSource.value;
-            };
-          }
+if (extraSource) {
+  const isManualSession =
+    !session?.source ||
+    String(session.source).toLowerCase() === 'manual' ||
+    (!session?.stravaActivityId && !session?.stravaId && !session?.strava_id && !String(session?.id || '').startsWith('stra'));
+
+  const editSourceEl = document.getElementById('edit-session-source');
+
+  if (isManualSession) {
+    session.source = 'manual';
+    delete session.stravaActivityId;
+    delete session.stravaId;
+    delete session.strava_id;
+    extraSource.value = 'manual';
+    extraSource.disabled = true;
+    if (editSourceEl) {
+      editSourceEl.value = 'manual';
+      editSourceEl.disabled = true;
+    }
+  } else {
+    extraSource.value = String(session.source || (session.stravaActivityId ? 'strava' : 'manual')).toLowerCase();
+    extraSource.disabled = false;
+    if (editSourceEl) {
+      editSourceEl.disabled = false;
+    }
+    extraSource.onchange = () => {
+      session.source = extraSource.value;
+      const el = document.getElementById('edit-session-source');
+      if (el) el.value = extraSource.value;
+    };
+  }
+}
           if (extraTerrain) {
           const currentSport = sheet?.dataset?.sport || extraSport?.value || session.sport || 'course';
           syncTerrainOptionsBySport(currentSport, session.terrain || '', sheet);
