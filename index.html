@@ -1505,17 +1505,18 @@
   <div style="height:230px;margin-top:14px;"><canvas id="dopamine-fitness-chart"></canvas></div>
   <div id="dopamine-fitness-explanation" style="font-size:.76rem;color:var(--text-sub);margin-top:8px;"></div>
 </section>
-          <div class="history-box">
-            <div class="card-title-flex">
-              <span style="font-size:0.82rem; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-clock-rotate-left"></i> Historique Sécurisé & Synchronisé</span>
-              <div style="display:flex; gap:4px; flex-wrap:wrap;">
-                <button class="medal-tab active" onclick="filterHistory('all', this)">Tous</button>
-                <button class="medal-tab" onclick="filterHistory('velo', this)">Vélo</button>
-                <button class="medal-tab" onclick="filterHistory('course', this)">Course</button>
-                <button class="medal-tab" onclick="filterHistory('hiit', this)">HIIT</button>
-                <button class="medal-tab" onclick="filterHistory('autres', this)">Autres sports</button>
-              </div>
-            </div>
+<div class="history-box">
+  <div class="card-title-flex">
+    <span style="font-size:0.82rem;font-weight:bold;color:var(--text-main);"><i class="fa-solid fa-clock-rotate-left"></i> Historique</span>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button type="button" class="medal-tab active" onclick="filterHistory('all', this)">Tous</button>
+      <button type="button" class="medal-tab" onclick="filterHistory('natation', this)">Natation</button>
+      <button type="button" class="medal-tab" onclick="filterHistory('velo', this)">Vélo</button>
+      <button type="button" class="medal-tab" onclick="filterHistory('course', this)">CAP</button>
+      <button type="button" class="medal-tab" onclick="filterHistory('hiit-autres', this)">HIIT & autres sports</button>
+      <button type="button" class="medal-tab" onclick="filterHistory('competition', this)">Compétition</button>
+    </div>
+  </div>
             <div class="history-list" id="history-list-container"></div>
           </div>
         </div>
@@ -5583,19 +5584,52 @@ function saveEditedSession() {
     }
 
     document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.activity-date-input').forEach(input => { if (!input.value) input.value = localDateISO(new Date()); }); calendarDisplayDate = new Date(); calendarSelectedDate = localDateISO(calendarDisplayDate); renderHomeCalendar(); showDayDetails(calendarSelectedDate); });
+function normalizeHistorySportCategory(s) {
+  if (!s) return '';
+  const rawSport = String(s.sport || s.discipline || s.sport_type || s.type || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (rawSport === 'competition' || Boolean(s.isCompetition || s.competitionName || s.competitionKind)) {
+    return 'competition';
+  }
+  if (['natation', 'swim', 'openwaterswim', 'nat'].includes(rawSport)) {
+    return 'natation';
+  }
+  if (
+    rawSport === 'velo' ||
+    rawSport.includes('velo') ||
+    ['bike', 'ride', 'virtualride', 'mountainbikeride', 'gravelride', 'ebikeride', 'ht', 'home-trainer', 'zwift', 'rouvy'].includes(rawSport)
+  ) {
+    return 'velo';
+  }
+  if (['course', 'course a pied', 'cap', 'run', 'trailrun', 'trail', 'virtualrun', 'running'].includes(rawSport)) {
+    return 'course';
+  }
+  if (
+    ['hiit', 'hiit / renfo', 'crossfit', 'autres', 'autre', 'workout', 'autre sport', 'autres sports', 'hiit & autres sports', 'hiit et autres sports', 'marche', 'marche / rando', 'rando', 'walk', 'hike'].includes(rawSport)
+  ) {
+    return 'hiit-autres';
+  }
+  return rawSport;
+}
 
-    function filterHistory(filter, btn) {
-      historyFilter = filter;
-      document.querySelectorAll('.history-box .medal-tab').forEach(b => b.classList.remove('active'));
-      if(btn) btn.classList.add('active');
-      renderHistory();
-    }
+function filterHistory(filter, btn) {
+  historyFilter = filter || 'all';
+  document.querySelectorAll('.history-box .medal-tab').forEach((b) => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderHistory();
+}
 
      function renderHistory() {
       const container = document.getElementById('history-list-container');
       if (!container) return;
       container.innerHTML = '';
-      const list = (historyFilter === 'all') ? appData.sessionsHistory : appData.sessionsHistory.filter(s => s.sport === historyFilter);
+    const allSessions = Array.isArray(appData?.sessionsHistory) ? appData.sessionsHistory : [];
+  const list = historyFilter === 'all'
+    ? allSessions
+    : allSessions.filter((s) => normalizeHistorySportCategory(s) === historyFilter);
       if (list.length === 0) {
         container.innerHTML = '<p style="color:var(--text-sub); font-size:0.75rem; text-align:center; padding:10px;">Aucune séance enregistrée.</p>';
         return;
