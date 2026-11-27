@@ -4673,11 +4673,6 @@ window.applyDisciplineRibbonColor = function(sportOrDiscipline) {
 
   root.style.setProperty('--dopamine-discipline-color', meta.color);
 
-  // Ruban / bordure en haut de la modale
-  if (dialog) {
-    dialog.style.borderTop = `4px solid ${meta.color}`;
-  }
-
   // Onglets du ruban (Aperçu & Saisie, Analyse Allure, Zones, Meilleurs efforts)
   const tabButtons = root.querySelectorAll('[role="tab"], .ad-tab, .dopamine-tab, .edit-session-tabs button, .sheet-tabs button');
   tabButtons.forEach((btn) => {
