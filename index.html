@@ -1476,15 +1476,22 @@
             </div>
           </div>
 
-          <div class="goals-box">
-            <div class="goals-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:bold;font-size:0.85rem;margin-bottom:8px;"><span>Objectifs annuels par discipline</span><button type="button" class="medal-tab" onclick="editAnnualGoals()">Modifier</button></div>
-            <div class="goal-row"><span style="color:var(--swim-blue)">Natation</span><span id="goal-natation-text">0 / 15 km</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-natation-bar" style="width: 0%; background: var(--swim-blue);"></div></div>
-            <div class="goal-row"><span style="color:var(--bike-orange)">Vélo</span><span id="goal-velo-text">0 / 180 km</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-velo-bar" style="width: 0%; background: var(--bike-orange);"></div></div>
-            <div class="goal-row"><span style="color:var(--run-green)">Course à pied</span><span id="goal-course-text">0 / 40 km</span></div>
-            <div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-course-bar" style="width: 0%; background: var(--run-green);"></div></div>
-          </div>
+<div class="goals-box">
+  <div class="goals-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+    <span id="goals-period-title" style="font-size:0.88rem;font-weight:bold;color:var(--text-main);">Objectifs & bilan — Semaine</span>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button type="button" id="bilan-tab-week" class="medal-tab active" onclick="setBilanPeriod('week', this)">Semaine</button>
+      <button type="button" id="bilan-tab-month" class="medal-tab" onclick="setBilanPeriod('month', this)">Mois</button>
+      <button type="button" class="medal-tab" onclick="editPeriodGoals()">Modifier</button>
+    </div>
+  </div>
+  <div class="goal-row"><span style="color:var(--swim-blue);">Natation</span><span id="goal-natation-text">0 / 0 km</span></div>
+  <div class="goal-row"><div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-natation-bar" style="width:0%;background:var(--swim-blue);"></div></div></div>
+  <div class="goal-row"><span style="color:var(--bike-orange);">Vélo</span><span id="goal-velo-text">0 / 0 km</span></div>
+  <div class="goal-row"><div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-velo-bar" style="width:0%;background:var(--bike-orange);"></div></div></div>
+  <div class="goal-row"><span style="color:var(--run-green);">CAP</span><span id="goal-course-text">0 / 0 km</span></div>
+  <div class="goal-row"><div class="progress-bar-bg"><div class="progress-bar-fill" id="goal-course-bar" style="width:0%;background:var(--run-green);"></div></div></div>
+</div>
 
           <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; margin: 15px 0;">
             <canvas id="evolutionChart" style="max-height: 220px;"></canvas>
@@ -6778,36 +6785,152 @@ let cloudSaveTimer = null;
       }
     }
 
-    function editAnnualGoals() {
-      const current = appData.goals || (appData.goals = {natation:15,velo:180,course:40});
-      const ask = (label, key) => { const raw = prompt(`${label} — objectif annuel en km`, String(current[key] ?? 0)); if (raw === null) return null; const n = Number(String(raw).replace(',', '.')); if (!Number.isFinite(n) || n <= 0 || n > 100000) { alert('Saisis un objectif positif valide.'); return false; } current[key] = n; return true; };
-      for (const [label,key] of [['Natation','natation'],['Vélo','velo'],['Course à pied','course']]) { const result = ask(label,key); if (result === null || result === false) return; }
-      saveAppData(); updateSummaryUI(); alert('Objectifs annuels enregistrés sur cet appareil.');
-    }
+window.bilanPeriod = window.bilanPeriod || 'week';
 
-    function renderChart() {
-      const ctx = document.getElementById('evolutionChart');
-      if (!ctx) return;
-      if (chartInstance) { chartInstance.destroy(); }
-      
-      if (typeof Chart === 'undefined') { console.warn('Chart.js indisponible : graphique non affiché.'); return; }
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Natation (km)', 'Vélo (km)', 'Course à pied (km)', 'Marche (km)', 'HIIT (min)', 'Autres sports (min)', 'Compétitions (épreuves)'],
-          datasets: [{
-            label: 'Volume Total',
-            data: [appData.stats.natation, appData.stats.velo, appData.stats.course, appData.stats.marche, appData.stats.hiit, appData.stats.autres || 0, (appData.sessionsHistory || []).filter(s => s && s.type === 'competition').length],
-            backgroundColor: ['#00d2ff', '#ff9f43', '#10ac84', '#1dd1a1', '#8854d0', '#8854d0', '#ff6b6b']
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }
-        }
-      });
+function normalizeBilanSportKey(raw) {
+  const v = String(raw || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (!v) return '';
+  if (['natation', 'swim', 'openwaterswim', 'nat'].includes(v)) return 'natation';
+  if (v === 'velo' || v.includes('velo') || ['bike', 'ride', 'virtualride', 'mountainbikeride', 'gravelride', 'ebikeride', 'ht', 'home-trainer', 'zwift', 'rouvy'].includes(v)) return 'velo';
+  if (['course', 'course a pied', 'cap', 'run', 'trailrun', 'trail', 'virtualrun', 'running'].includes(v)) return 'course';
+  if (['marche', 'marche / rando', 'rando', 'walk', 'hike'].includes(v)) return 'marche';
+  if (['hiit', 'hiit / renfo', 'crossfit', 'autres', 'autre', 'workout', 'autre sport', 'autres sports', 'hiit & autres sports', 'hiit et autres sports'].includes(v)) return 'hiitAutres';
+  return '';
+}
+
+function isSessionInBilanPeriod(s, period) {
+  const rawDate = s?.date || s?.start_date_local || s?.start_date || s?.createdAt;
+  if (!rawDate) return period === 'week';
+  const d = new Date(rawDate);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  if (period === 'month') {
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }
+  const startOfWeek = new Date(now);
+  const day = startOfWeek.getDay();
+  const diffToMonday = (day === 0 ? -6 : 1 - day);
+  startOfWeek.setDate(now.getDate() + diffToMonday);
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 7);
+  return d >= startOfWeek && d < endOfWeek;
+}
+
+function computePeriodStats(period) {
+  const res = { natation: 0, velo: 0, course: 0, marche: 0, hiitAutres: 0 };
+  const hist = Array.isArray(appData?.sessionsHistory) ? appData.sessionsHistory : [];
+  hist.forEach((s) => {
+    if (!s || !isSessionInBilanPeriod(s, period)) return;
+    let key = normalizeBilanSportKey(s.sport || s.discipline || s.sport_type || s.type);
+    if (String(s.sport || s.type || '').toLowerCase() === 'competition') {
+      key = normalizeBilanSportKey(s.competitionKind || s.compKind) || 'hiitAutres';
     }
+    if (!key) return;
+    if (key === 'hiitAutres') {
+      const mins = Number(s.durationMinutes) || (Number(s.durationSeconds) > 0 ? Number(s.durationSeconds) / 60 : 0) || Number(s.rawVal) || 0;
+      if (Number.isFinite(mins) && mins > 0) res.hiitAutres += mins;
+    } else {
+      const km = (typeof getSessionDistanceKm === 'function' ? Number(getSessionDistanceKm(s)) : Number(s.distanceKm ?? s.distance ?? 0)) || (Number(s.rawVal) > 0 ? Number(s.rawVal) : 0);
+      if (Number.isFinite(km) && km > 0) res[key] += km;
+    }
+  });
+  Object.keys(res).forEach((k) => { res[k] = Math.round(res[k] * 10) / 10; });
+  return res;
+}
+
+function getPeriodGoals(period) {
+  appData.periodGoals = appData.periodGoals || {
+    week: { natation: 2, velo: 120, course: 25 },
+    month: { natation: 8, velo: 450, course: 100 }
+  };
+  return appData.periodGoals[period] || { natation: 0, velo: 0, course: 0 };
+}
+
+function setBilanPeriod(period, btnEl) {
+  window.bilanPeriod = period === 'month' ? 'month' : 'week';
+  document.querySelectorAll('#bilan-tab-week, #bilan-tab-month').forEach((b) => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  else {
+    const activeBtn = document.getElementById(window.bilanPeriod === 'month' ? 'bilan-tab-month' : 'bilan-tab-week');
+    if (activeBtn) activeBtn.classList.add('active');
+  }
+  renderPeriodBilanAndChart();
+}
+
+function editPeriodGoals() {
+  const period = window.bilanPeriod || 'week';
+  const labelPeriod = period === 'month' ? 'mensuel (km)' : 'hebdomadaire (km)';
+  const current = getPeriodGoals(period);
+  const ask = (label, key) => {
+    const raw = prompt(`${label} — objectif ${labelPeriod}`, String(current[key] ?? 0));
+    if (raw === null) return null;
+    const n = Number(String(raw).replace(',', '.'));
+    return Number.isFinite(n) && n >= 0 ? n : false;
+  };
+  for (const [label, key] of [['Natation', 'natation'], ['Vélo', 'velo'], ['CAP', 'course']]) {
+    const r = ask(label, key);
+    if (r === null || r === false) return;
+    current[key] = r;
+  }
+  getPeriodGoals(period);
+  if (typeof saveAppData === 'function') saveAppData();
+  renderPeriodBilanAndChart();
+}
+
+function renderPeriodBilanAndChart() {
+  const period = window.bilanPeriod || 'week';
+  const stats = computePeriodStats(period);
+  const goals = getPeriodGoals(period);
+  const titleEl = document.getElementById('goals-period-title');
+  if (titleEl) {
+    titleEl.textContent = period === 'month' ? 'Objectifs & bilan — Mois en cours' : 'Objectifs & bilan — Semaine en cours';
+  }
+  const setGoalRow = (key, val) => {
+    const target = Number(goals[key] || 0);
+    const txtEl = document.getElementById(`goal-${key}-text`);
+    const barEl = document.getElementById(`goal-${key}-bar`);
+    if (txtEl) txtEl.textContent = `${val} / ${target} km`;
+    if (barEl) {
+      const pct = target > 0 ? Math.min(100, Math.max(0, (val / target) * 100)) : 0;
+      barEl.style.width = `${pct}%`;
+    }
+  };
+  setGoalRow('natation', stats.natation);
+  setGoalRow('velo', stats.velo);
+  setGoalRow('course', stats.course);
+
+  const ctx = document.getElementById('evolutionChart');
+  if (!ctx || typeof Chart === 'undefined') return;
+  if (typeof chartInstance !== 'undefined' && chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Natation (km)', 'Vélo (km)', 'CAP (km)', 'Marche (km)', 'HIIT & autres sports (min)'],
+      datasets: [{
+        label: period === 'month' ? 'Volume mois en cours' : 'Volume semaine en cours',
+        data: [stats.natation, stats.velo, stats.course, stats.marche, stats.hiitAutres],
+        backgroundColor: ['#00d2ff', '#ff9f43', '#10ac84', '#1dd1a1', '#8854d0']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { color: '#94a3b8' } },
+        x: { ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+}
+
+function editAnnualGoals() {
+  editPeriodGoals();
+}
+
+function renderChart() {
+  renderPeriodBilanAndChart();
+}
 
 window.onload = async function() {
       const competitionDateInput = document.getElementById('competition-date');
