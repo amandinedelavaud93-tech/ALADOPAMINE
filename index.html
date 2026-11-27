@@ -4668,10 +4668,14 @@ window.applyDisciplineRibbonColor = function(sportOrDiscipline) {
     : { key: 'hiit', label: 'HIIT & autres sports', color: '#a855f7' };
 
   const modal = document.getElementById('edit-session-modal');
-  const dialog = modal ? modal.querySelector('.edit-session-dialog') : null;
   const root = modal || document;
+  const sheet = root.querySelector('.ad-sheet');
 
   root.style.setProperty('--dopamine-discipline-color', meta.color);
+  if (sheet) {
+    sheet.style.setProperty('--sport-color', meta.color);
+    sheet.style.borderTopColor = meta.color;
+  }
 
   // Onglets du ruban (Aperçu & Saisie, Analyse Allure, Zones, Meilleurs efforts)
   const tabButtons = root.querySelectorAll('[role="tab"], .ad-tab, .dopamine-tab, .edit-session-tabs button, .sheet-tabs button');
@@ -7705,68 +7709,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <button type="button" id="dopamine-sheet-toggle-btn" onclick="setDopamineSheetMode(document.getElementById('edit-session-modal')?.dataset.sheetMode === 'inspect' ? 'edit' : 'inspect')" style="background:#161e2b;color:#e2e8f0;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:7px 12px;font-size:.82rem;font-weight:600;cursor:pointer;">Passer en modification</button>
   <button type="button" id="edit-session-close-btn" onclick="if (typeof window.closeEditSession === 'function') { window.closeEditSession(); } else if (typeof closeEditSession === 'function') { closeEditSession(); } else { document.getElementById('edit-session-modal').style.display='none'; }" aria-label="Fermer" style="background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:10px;width:36px;height:36px;font-size:1.25rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">×</button>   </div>
   </div>
-  <input type="hidden" id="edit-session-id">  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;">
-   <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-title">Nom de l’activité</label><input id="edit-session-title" type="text" maxlength="120" style="width:100%;"></div>
-   <div class="form-group"><label for="edit-session-sport">Discipline</label><select id="edit-session-sport" style="width:100%;" onchange="updateEditSessionFields()"><option value="natation">Natation</option><option value="velo">Vélo</option><option value="course">Course à pied</option><option value="marche">Marche / randonnée</option><option value="hiit">HIIT</option><option value="autres">Autres sports</option><option value="competition">Compétition</option></select></div>
-   <div class="form-group"><label for="edit-session-date">Date</label><input id="edit-session-date" type="date" style="width:100%;"></div>
-   <div class="form-group"><label>Durée — heures</label><input id="edit-session-hours" type="number" min="0" max="999" step="1" style="width:100%;" inputmode="numeric"></div>
-   <div class="form-group"><label>Durée — minutes</label><input id="edit-session-minutes" type="number" min="0" max="59" step="1" style="width:100%;" inputmode="numeric"></div>
-   <div class="form-group"><label>Durée — secondes</label><input id="edit-session-seconds" type="number" min="0" max="59" step="1" style="width:100%;" inputmode="numeric"></div>
-   <div class="form-group distance-picker-group" data-edit-sport="distance">
-      <label>Distance</label>
-      <div class="distance-picker" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div><label for="edit-session-distance-km" style="font-size:.68rem;color:var(--text-sub);">Kilomètres (km)</label><input type="number" id="edit-session-distance-km" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('edit-session')" class="form-control"></div>
-        <div><label for="edit-session-distance-m" style="font-size:.68rem;color:var(--text-sub);">Mètres (m)</label><input type="number" id="edit-session-distance-m" min="0" max="999" step="1" inputmode="numeric" placeholder="0" oninput="actualiserDistanceActivite('edit-session')" class="form-control"></div>
-      </div>
-      <input type="hidden" id="edit-session-distance" value="0">
-      <small id="edit-session-distance-preview" style="display:block;color:var(--text-sub);margin-top:5px;">0 km</small>
-    </div>
-   <div class="form-group" data-edit-sport="elevation"><label for="edit-session-elevation">Dénivelé (m)</label><input id="edit-session-elevation" type="number" min="0" max="20000" step="1" style="width:100%;"></div>
-   <div class="form-group"><label for="edit-session-bpm">BPM moyen</label><input id="edit-session-bpm" type="number" min="0" max="250" step="1" style="width:100%;"></div>
-   <div class="form-group"><label for="edit-session-rpe">Effort perçu (RPE /10)</label><input id="edit-session-rpe" type="number" min="1" max="10" step="1" style="width:100%;"></div>
-   <div class="form-group"><label for="edit-session-calories">Calories (kcal)</label><input id="edit-session-calories" type="number" min="0" max="50000" step="1" style="width:100%;"></div>
-   <div class="form-group"><label for="edit-session-feeling">Ressenti</label><select id="edit-session-feeling" style="width:100%;"><option value="">Non renseigné</option><option value="🚀 Facile / en forme">Facile / en forme</option><option value="🙂 Bien / maîtrisé">Bien / maîtrisé</option><option value="🥵 Dur">Dur</option><option value="🌧️ Difficile / galère">Difficile / galère</option></select></div>
-   <div class="form-group"><label for="edit-session-source">Source</label><select id="edit-session-source" style="width:100%;"><option value="manual">Saisie manuelle</option><option value="strava">Strava</option><option value="garmin">Garmin</option><option value="gpx">GPX</option><option value="polar">Polar</option><option value="zwift">Zwift</option></select></div>
-   <div class="form-group" data-edit-sport="velo"><label for="edit-session-watts">Puissance moyenne (W)</label><input id="edit-session-watts" type="number" min="0" max="3000" step="1" style="width:100%;"></div>
-   <div class="form-group" data-edit-sport="cadence"><label for="edit-session-cadence">Cadence moyenne (tr/min)</label><input id="edit-session-cadence" type="number" min="0" max="300" step="1" style="width:100%;"></div>
-   <div class="form-group" data-edit-sport="speed"><label for="edit-session-average-speed">Vitesse moyenne (km/h)</label><input id="edit-session-average-speed" type="number" min="0" max="200" step="0.01" style="width:100%;"></div>
-   <div class="form-group" data-edit-sport="speed"><label for="edit-session-max-speed">Vitesse maximale (km/h)</label><input id="edit-session-max-speed" type="number" min="0" max="200" step="0.01" style="width:100%;"></div>
-   <div class="form-group" data-edit-sport="terrain"><label for="edit-session-terrain">Terrain</label><input id="edit-session-terrain" type="text" maxlength="100" style="width:100%;"></div>
-   <div class="form-group"><label for="edit-session-weather">Météo / conditions</label><input id="edit-session-weather" type="text" maxlength="100" style="width:100%;"></div>
-   <div class="form-group" data-edit-sport="competition"><label for="edit-session-format">Format compétition</label><input id="edit-session-format" type="text" maxlength="80" style="width:100%;"></div>
-   <details data-edit-sport="competition" style="grid-column:1/-1;background:rgba(255,255,255,.035);border:1px solid var(--card-border);border-radius:10px;padding:12px;">
-    <summary style="cursor:pointer;font-weight:700;color:var(--text-main);">Détails de l’épreuve (disciplines, transitions et distances)</summary>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-top:12px;">
-     <div class="form-group"><label for="edit-session-comp-kind">Type d’épreuve</label><select id="edit-session-comp-kind" style="width:100%;"><option value="triathlon">Triathlon</option><option value="duathlon">Duathlon</option><option value="trail">Trail</option><option value="course">Course</option><option value="velo">Vélo</option><option value="natation">Natation</option><option value="autre">Autre</option></select></div>
-     <div class="form-group"><label for="edit-session-comp-swim">Natation (min)</label><input id="edit-session-comp-swim" type="number" min="0" step="0.01" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-swim-distance">Natation (km)</label><input id="edit-session-comp-swim-distance" type="number" min="0" step="0.001" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-t1">Transition T1 (min)</label><input id="edit-session-comp-t1" type="number" min="0" step="0.01" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-bike">Vélo (min)</label><input id="edit-session-comp-bike" type="number" min="0" step="0.01" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-bike-distance">Vélo (km)</label><input id="edit-session-comp-bike-distance" type="number" min="0" step="0.001" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-bike-elevation">D+ vélo (m)</label><input id="edit-session-comp-bike-elevation" type="number" min="0" step="1" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-t2">Transition T2 (min)</label><input id="edit-session-comp-t2" type="number" min="0" step="0.01" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-run1">Course 1 (min)</label><input id="edit-session-comp-run1" type="number" min="0" step="0.01" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-run1-distance">Course 1 (km)</label><input id="edit-session-comp-run1-distance" type="number" min="0" step="0.001" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-run1-elevation">D+ course 1 (m)</label><input id="edit-session-comp-run1-elevation" type="number" min="0" step="1" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-run">Course finale (min)</label><input id="edit-session-comp-run" type="number" min="0" step="0.01" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-run-distance">Course finale (km)</label><input id="edit-session-comp-run-distance" type="number" min="0" step="0.001" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-run-elevation">D+ course finale (m)</label><input id="edit-session-comp-run-elevation" type="number" min="0" step="1" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-other-duration">Autre discipline (min)</label><input id="edit-session-comp-other-duration" type="number" min="0" step="0.01" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-other-distance">Autre distance (km)</label><input id="edit-session-comp-other-distance" type="number" min="0" step="0.001" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-water-place">Lieu natation</label><input id="edit-session-comp-water-place" type="text" maxlength="100" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-water-condition">Conditions eau</label><input id="edit-session-comp-water-condition" type="text" maxlength="100" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-bike-terrain">Terrain vélo</label><input id="edit-session-comp-bike-terrain" type="text" maxlength="100" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-run-terrain">Terrain course</label><input id="edit-session-comp-run-terrain" type="text" maxlength="100" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-weather-condition">Météo épreuve</label><input id="edit-session-comp-weather-condition" type="text" maxlength="100" style="width:100%;"></div>
-     <div class="form-group"><label for="edit-session-comp-place">Lieu épreuve</label><input id="edit-session-comp-place" type="text" maxlength="120" style="width:100%;"></div>
-    </div>
-   </details>
-   <div class="form-group" data-edit-sport="natation"><label for="edit-session-water-place">Lieu de natation</label><select id="edit-session-water-place" style="width:100%;"><option value="">Non renseigné</option><option>Piscine 25 m</option><option>Piscine 50 m</option><option>Eau libre / mer</option><option>Lac / étang</option></select></div>
-   <div class="form-group" data-edit-sport="natation"><label for="edit-session-water-condition">État de l’eau</label><select id="edit-session-water-condition" style="width:100%;"><option value="">Non renseigné</option><option>Calme / lisse</option><option>Agité / clapot</option><option>Vagues / houle</option></select></div>
-   <div class="form-group" data-edit-sport="natation"><label for="edit-session-swim-weather">Météo</label><select id="edit-session-swim-weather" style="width:100%;"><option value="">Non renseignée</option><option>☀️ Soleil / idéal</option><option>🌧️ Pluie / humide</option><option>💨 Vent fort</option><option>Froid</option></select></div>
-   <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-partners">Partenaires (pseudos séparés par des virgules)</label><input id="edit-session-partners" type="text" maxlength="500" list="edit-session-friend-options" placeholder="Choisir un ami ou saisir un pseudo" style="width:100%;"><datalist id="edit-session-friend-options"></datalist><small id="edit-session-partner-help" style="color:var(--text-sub);font-size:.68rem;">Les suggestions apparaîtront après chargement de ta liste d’amis.</small></div>
-   <div class="form-group" style="grid-column:1/-1;"><label for="edit-session-comment">Commentaire</label><textarea id="edit-session-comment" rows="3" maxlength="1500" style="width:100%;"></textarea></div>
-  </div>
+
   <p style="font-size:.72rem;color:var(--text-sub);margin-top:8px;">Les statistiques, la vitesse moyenne et les trophées vérifiables seront recalculés après l’enregistrement. La VAP nécessite un tracé GPX détaillé.</p>
  <div id="dopamine-session-sheet" class="ad-sheet" data-sport="run">
   <style>
