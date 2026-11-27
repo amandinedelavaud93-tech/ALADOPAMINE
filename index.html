@@ -1466,13 +1466,13 @@
             </div>
           </div>
 
-<div class="triathlon-summary-box">
+          <div class="triathlon-summary-box">
             <div class="triathlon-grid">
               <div><i class="fa-solid fa-person-swimming" style="color:var(--swim-blue)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-nat">0 km</div><div style="font-size:0.65rem; color:var(--swim-blue);">Natation</div></div>
               <div><i class="fa-solid fa-person-biking" style="color:var(--bike-orange)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-vel">0 km</div><div style="font-size:0.65rem; color:var(--bike-orange);">Vélo</div></div>
-              <div><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-cou">0 km</div><div style="font-size:0.65rem; color:var(--run-green);">Course à pied</div></div>
-              <div><i class="fa-solid fa-bolt" style="color:var(--hiit-pink)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-hiit">0 min</div><div style="font-size:0.65rem; color:var(--hiit-pink);">HIIT & autres sports</div></div>
-              <div><i class="fa-solid fa-person-walking" style="color:var(--walk-turquoise, #14b8a6);"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-marche">0 km</div><div style="font-size:0.65rem; color:var(--walk-turquoise, #14b8a6);">Marche</div></div>
+              <div><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-cou">0 km</div><div style="font-size:0.65rem; color:var(--run-green);">Course</div></div>
+              <div><i class="fa-solid fa-bolt" style="color:var(--hiit-pink)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-hiit">0 min</div><div style="font-size:0.65rem; color:var(--hiit-pink);">HIIT</div></div>
+              <div><i class="fa-solid fa-person-walking" style="color:var(--walk-turquoise, #14b8a6);"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-marche">0 km</div><div style="font-size:0.7rem; color:var(--text-sub);">Marche</div></div>
               <div><i class="fa-solid fa-fire" style="color:var(--heart-red)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-calories">0 kcal</div><div style="font-size:0.65rem; color:var(--heart-red);">Calories</div></div>
             </div>
           </div>
@@ -4534,7 +4534,10 @@ function refreshEditSessionFriendSuggestions() {
     }
 
     function updateEditSessionFields() {
-      const sport=document.getElementById('edit-session-sport')?.value||'course';
+      const sportSelectEl = document.getElementById('edit-session-sport');
+      const sport =
+  sportSelectEl?.value ||
+  (window.getDopamineDisciplineMeta ? window.getDopamineDisciplineMeta('').key : 'hiit');
       document.querySelectorAll('#edit-session-modal [data-edit-sport]').forEach(group=>{
         const rule=group.getAttribute('data-edit-sport');
         let visible=true;
@@ -4548,7 +4551,12 @@ function refreshEditSessionFriendSuggestions() {
         else if(rule==='competition') visible=sport==='competition';
         group.style.display=visible?'':'none';
       });
-    }
+    if (typeof window.applyDisciplineRibbonColor === 'function') {
+    window.applyDisciplineRibbonColor(sport);
+  }
+  if (typeof window.syncActivityTypeOptionsBySport === 'function') {
+    window.syncActivityTypeOptionsBySport(sport);
+  }}
 
     function syncMissingFieldHighlights(root = document) {
       const emptyTokens = ['', 'non renseigné', 'non renseigné / autre', 'autre', 'autre entraînement', 'autre terrain', '--'];
@@ -4631,7 +4639,112 @@ function refreshEditSessionFriendSuggestions() {
       select.innerHTML = options
         .map((opt) => `<option value="${escapeHTML(opt.value)}">${escapeHTML(opt.label)}</option>`)
         .join('');
+window.getDopamineDisciplineMeta = function(rawSportOrDiscipline = '') {
+  const v = String(rawSportOrDiscipline || '').toLowerCase().trim();
+  if (v.includes('nat') || v.includes('swim') || v.includes('piscine') || v.includes('eau libre')) {
+    return { key: 'natation', label: 'Natation', color: '#3b82f6' };
+  }
+  if (v.includes('velo') || v.includes('vélo') || v.includes('bike') || v.includes('cycl') || v.includes('zwift') || v.includes('rouvy')) {
+    return { key: 'velo', label: 'Vélo', color: '#f97316' };
+  }
+  if (v.includes('march') || v.includes('walk') || v.includes('rand')) {
+    return { key: 'marche', label: 'Marche', color: '#22d3ee' };
+  }
+  if (v.includes('comp') || v.includes('race') || v.includes('tri')) {
+    return { key: 'competition', label: 'Compétition', color: '#ef4444' };
+  }
+  if (v.includes('hiit') || v.includes('renfo') || v.includes('muscu') || v.includes('autre') || v.includes('workout') || v.includes('corde') || v.includes('pompe') || v.includes('poid')) {
+    return { key: 'hiit', label: 'HIIT & autres sports', color: '#a855f7' };
+  }
+  if (v.includes('course') || v.includes('cap') || v.includes('run') || v.includes('trail') || v.includes('footing')) {
+    return { key: 'course', label: 'Course à pied', color: '#22c55e' };
+  }
+  return { key: 'hiit', label: 'HIIT & autres sports', color: '#a855f7' };
+};
 
+window.applyDisciplineRibbonColor = function(sportOrDiscipline) {
+  const meta = window.getDopamineDisciplineMeta(sportOrDiscipline);
+  const modal = document.getElementById('edit-session-modal');
+  const root = modal || document;
+  root.style.setProperty('--dopamine-discipline-color', meta.color);
+
+  const tabButtons = root.querySelectorAll('[role="tab"], .ad-tab, .dopamine-tab, .edit-session-tabs button, .sheet-tabs button');
+  tabButtons.forEach((btn) => {
+    const isActive =
+      btn.classList.contains('active') ||
+      btn.getAttribute('aria-selected') === 'true' ||
+      btn.dataset.active === 'true';
+    btn.style.borderBottomColor = isActive ? meta.color : 'transparent';
+    btn.style.color = isActive ? meta.color : '';
+    btn.style.boxShadow = isActive ? `inset 0 -2px 0 ${meta.color}` : '';
+  });
+};
+
+window.syncActivityTypeOptionsBySport = function(sportValue, root = document) {
+  const select =
+    root.querySelector('#ad-extra-activity-type') ||
+    root.querySelector('#edit-session-activity-type') ||
+    document.getElementById('ad-extra-activity-type');
+  if (!select) return;
+
+  const meta = window.getDopamineDisciplineMeta(sportValue);
+  const optionsByKey = {
+    hiit: [
+      { value: 'HIIT / Cardio', label: 'HIIT / Cardio' },
+      { value: 'Renforcement / Poids', label: 'Renforcement / Poids' },
+      { value: 'Corde à sauter / Cardio', label: 'Corde à sauter / Cardio' },
+      { value: 'Mobilité / Étirements', label: 'Mobilité / Étirements' },
+      { value: 'Autre entraînement', label: 'Autre entraînement' }
+    ],
+    marche: [
+      { value: 'Marche active', label: 'Marche active' },
+      { value: 'Randonnée', label: 'Randonnée' },
+      { value: 'Récupération', label: 'Récupération' },
+      { value: 'Autre entraînement', label: 'Autre entraînement' }
+    ],
+    natation: [
+      { value: 'Endurance fondamentale (EF)', label: 'Endurance fondamentale (EF)' },
+      { value: 'Technique / Éducatifs', label: 'Technique / Éducatifs' },
+      { value: 'Fractionné / Intervalles', label: 'Fractionné / Intervalles' },
+      { value: 'Eau libre', label: 'Eau libre' },
+      { value: 'Autre entraînement', label: 'Autre entraînement' }
+    ],
+    velo: [
+      { value: 'Endurance fondamentale (EF)', label: 'Endurance fondamentale (EF)' },
+      { value: 'Sortie longue', label: 'Sortie longue' },
+      { value: 'Seuil / Tempo', label: 'Seuil / Tempo' },
+      { value: 'Fractionné / PMA', label: 'Fractionné / PMA' },
+      { value: 'Récupération', label: 'Récupération' },
+      { value: 'Autre entraînement', label: 'Autre entraînement' }
+    ],
+    course: [
+      { value: 'Endurance fondamentale (EF)', label: 'Endurance fondamentale (EF)' },
+      { value: 'Fractionné / VMA', label: 'Fractionné / VMA' },
+      { value: 'Seuil', label: 'Seuil' },
+      { value: 'Récupération', label: 'Récupération' },
+      { value: 'Sortie longue', label: 'Sortie longue' },
+      { value: 'Compétition', label: 'Compétition' },
+      { value: 'Autre entraînement', label: 'Autre entraînement' }
+    ],
+    competition: [
+      { value: 'Compétition', label: 'Compétition' },
+      { value: 'Préparation / Test', label: 'Préparation / Test' },
+      { value: 'Autre entraînement', label: 'Autre entraînement' }
+    ]
+  };
+
+  const list = optionsByKey[meta.key] || optionsByKey.hiit;
+  const currentVal = select.value;
+  select.innerHTML = list
+    .map((o) => `<option value="${o.value}">${o.label}</option>`)
+    .join('');
+
+  if (list.some((o) => o.value === currentVal)) {
+    select.value = currentVal;
+  } else {
+    select.value = list[list.length - 1].value;
+  }
+};
       select.value = nextValue;
       if (typeof syncMissingFieldHighlights === 'function') {
         syncMissingFieldHighlights(root);
