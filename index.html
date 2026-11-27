@@ -3179,8 +3179,7 @@ if (removedManualsCount > 0) {
       if (typeof saveAppData === 'function') saveAppData();
       alert(`${importedCount} nouvelle(s) séance(s) importée(s), ${mergedCount} doublon(s) fusionné(s) et ${ambiguousCount} correspondance(s) ambiguë(s) laissée(s) en attente pour éviter un doublon.`);
 if (removedManualsCount > 0) {
-  alert(`${removedManualsCount} séance(s) manuelle(s) supprimée(s) ou fusionnée(s) pour ne garder qu'une seule séance.`);
-}
+alert(`${removedManualsCount} séance(s) manuelle(s) supprimée(s) ou fusionnée(s) car une séance similaire a été synchronisée (Strava ou autre outil).`);}
     } else if (ambiguousCount > 0) {
       alert(`${ambiguousCount} activité(s) Strava correspondent à plusieurs séances manuelles possibles. Elles n'ont pas été importées pour éviter de créer des doublons : vérifie ces séances dans ton historique.`);
     } else {
