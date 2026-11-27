@@ -4663,20 +4663,41 @@ window.getDopamineDisciplineMeta = function(rawSportOrDiscipline = '') {
 };
 
 window.applyDisciplineRibbonColor = function(sportOrDiscipline) {
-  const meta = window.getDopamineDisciplineMeta(sportOrDiscipline);
+  const meta = window.getDopamineDisciplineMeta
+    ? window.getDopamineDisciplineMeta(sportOrDiscipline)
+    : { key: 'hiit', label: 'HIIT & autres sports', color: '#a855f7' };
+
   const modal = document.getElementById('edit-session-modal');
+  const dialog = modal ? modal.querySelector('.edit-session-dialog') : null;
   const root = modal || document;
+
   root.style.setProperty('--dopamine-discipline-color', meta.color);
 
+  // Ruban / bordure en haut de la modale
+  if (dialog) {
+    dialog.style.borderTop = `4px solid ${meta.color}`;
+  }
+
+  // Onglets du ruban (Aperçu & Saisie, Analyse Allure, Zones, Meilleurs efforts)
   const tabButtons = root.querySelectorAll('[role="tab"], .ad-tab, .dopamine-tab, .edit-session-tabs button, .sheet-tabs button');
   tabButtons.forEach((btn) => {
     const isActive =
       btn.classList.contains('active') ||
       btn.getAttribute('aria-selected') === 'true' ||
       btn.dataset.active === 'true';
-    btn.style.borderBottomColor = isActive ? meta.color : 'transparent';
+
+    btn.style.borderColor = isActive ? meta.color : 'transparent';
+    btn.style.borderBottomWidth = isActive ? '2px' : '0px';
+    btn.style.borderBottomStyle = isActive ? 'solid' : 'none';
     btn.style.color = isActive ? meta.color : '';
-    btn.style.boxShadow = isActive ? `inset 0 -2px 0 ${meta.color}` : '';
+    btn.style.boxShadow = isActive ? `inset 0 -2px 0 ${meta.color}` : 'none';
+  });
+
+  // Éléments marqués avec la couleur de discipline
+  const coloredEls = root.querySelectorAll('[data-discipline-color], .discipline-accent, .dopamine-discipline-accent');
+  coloredEls.forEach((el) => {
+    el.style.color = meta.color;
+    el.style.borderColor = meta.color;
   });
 };
 
@@ -4687,48 +4708,55 @@ window.syncActivityTypeOptionsBySport = function(sportValue, root = document) {
     document.getElementById('ad-extra-activity-type');
   if (!select) return;
 
-  const meta = window.getDopamineDisciplineMeta(sportValue);
+  const meta = window.getDopamineDisciplineMeta
+    ? window.getDopamineDisciplineMeta(sportValue)
+    : { key: 'hiit', label: 'HIIT & autres sports' };
+
   const optionsByKey = {
-    hiit: [
-      { value: 'HIIT / Cardio', label: 'HIIT / Cardio' },
-      { value: 'Renforcement / Poids', label: 'Renforcement / Poids' },
-      { value: 'Corde à sauter / Cardio', label: 'Corde à sauter / Cardio' },
-      { value: 'Mobilité / Étirements', label: 'Mobilité / Étirements' },
-      { value: 'Autre entraînement', label: 'Autre entraînement' }
-    ],
-    marche: [
-      { value: 'Marche active', label: 'Marche active' },
-      { value: 'Randonnée', label: 'Randonnée' },
-      { value: 'Récupération', label: 'Récupération' },
-      { value: 'Autre entraînement', label: 'Autre entraînement' }
-    ],
     natation: [
       { value: 'Endurance fondamentale (EF)', label: 'Endurance fondamentale (EF)' },
       { value: 'Technique / Éducatifs', label: 'Technique / Éducatifs' },
       { value: 'Fractionné / Intervalles', label: 'Fractionné / Intervalles' },
-      { value: 'Eau libre', label: 'Eau libre' },
+      { value: 'Eau libre / Longue distance', label: 'Eau libre / Longue distance' },
+      { value: 'Récupération active', label: 'Récupération active' },
       { value: 'Autre entraînement', label: 'Autre entraînement' }
     ],
     velo: [
       { value: 'Endurance fondamentale (EF)', label: 'Endurance fondamentale (EF)' },
-      { value: 'Sortie longue', label: 'Sortie longue' },
-      { value: 'Seuil / Tempo', label: 'Seuil / Tempo' },
-      { value: 'Fractionné / PMA', label: 'Fractionné / PMA' },
-      { value: 'Récupération', label: 'Récupération' },
+      { value: 'Sortie longue / Endurance', label: 'Sortie longue / Endurance' },
+      { value: 'Seuil / Tempo / Sweet Spot', label: 'Seuil / Tempo / Sweet Spot' },
+      { value: 'Fractionné / PMA / Sprint', label: 'Fractionné / PMA / Sprint' },
+      { value: 'Col / Dénivelé', label: 'Col / Dénivelé' },
+      { value: 'Récupération / Home-trainer léger', label: 'Récupération / Home-trainer léger' },
       { value: 'Autre entraînement', label: 'Autre entraînement' }
     ],
     course: [
       { value: 'Endurance fondamentale (EF)', label: 'Endurance fondamentale (EF)' },
-      { value: 'Fractionné / VMA', label: 'Fractionné / VMA' },
-      { value: 'Seuil', label: 'Seuil' },
-      { value: 'Récupération', label: 'Récupération' },
       { value: 'Sortie longue', label: 'Sortie longue' },
-      { value: 'Compétition', label: 'Compétition' },
+      { value: 'Fractionné / VMA', label: 'Fractionné / VMA' },
+      { value: 'Seuil / Allure spécifique', label: 'Seuil / Allure spécifique' },
+      { value: 'Trail / Dénivelé', label: 'Trail / Dénivelé' },
+      { value: 'Récupération / Footing léger', label: 'Récupération / Footing léger' },
       { value: 'Autre entraînement', label: 'Autre entraînement' }
     ],
+    marche: [
+      { value: 'Marche active / Cardio', label: 'Marche active / Cardio' },
+      { value: 'Randonnée / Dénivelé', label: 'Randonnée / Dénivelé' },
+      { value: 'Marche de récupération', label: 'Marche de récupération' },
+      { value: 'Autre entraînement', label: 'Autre entraînement' }
+    ],
+    hiit: [
+      { value: 'HIIT / Cardio fractionné', label: 'HIIT / Cardio fractionné' },
+      { value: 'Renforcement musculaire / Muscu', label: 'Renforcement musculaire / Muscu' },
+      { value: 'Poids du corps / Circuit training', label: 'Poids du corps / Circuit training' },
+      { value: 'PPG / Gainage / Coordination', label: 'PPG / Gainage / Coordination' },
+      { value: 'Corde à sauter / Cardio', label: 'Corde à sauter / Cardio' },
+      { value: 'Mobilité / Yoga / Stretching', label: 'Mobilité / Yoga / Stretching' },
+      { value: 'Autre sport / Entraînement libre', label: 'Autre sport / Entraînement libre' }
+    ],
     competition: [
-      { value: 'Compétition', label: 'Compétition' },
-      { value: 'Préparation / Test', label: 'Préparation / Test' },
+      { value: 'Compétition / Course officielle', label: 'Compétition / Course officielle' },
+      { value: 'Simulation / Test allure', label: 'Simulation / Test allure' },
       { value: 'Autre entraînement', label: 'Autre entraînement' }
     ]
   };
@@ -4745,79 +4773,52 @@ window.syncActivityTypeOptionsBySport = function(sportValue, root = document) {
     select.value = list[list.length - 1].value;
   }
 };
-      select.value = nextValue;
-      if (typeof syncMissingFieldHighlights === 'function') {
-        syncMissingFieldHighlights(root);
-      }
+
+window.getDopamineCoachContext = function(session = {}, root = document) {
+  const sportEl = root.querySelector('#edit-session-sport') || document.getElementById('edit-session-sport');
+  const typeEl = root.querySelector('#ad-extra-activity-type') || document.getElementById('ad-extra-activity-type');
+  const bpmAvgEl = root.querySelector('#edit-session-bpm') || document.getElementById('edit-session-bpm');
+  const rpeEl = root.querySelector('#edit-session-rpe') || document.getElementById('edit-session-rpe');
+  const calEl = root.querySelector('#edit-session-calories') || document.getElementById('edit-session-calories');
+  const commentEl = root.querySelector('#ad-comment-input') || document.getElementById('ad-comment-input');
+
+  const rawSport = sportEl?.value || session?.sport || session?.discipline || '';
+  const meta = window.getDopamineDisciplineMeta
+    ? window.getDopamineDisciplineMeta(rawSport)
+    : { key: 'hiit', label: 'HIIT & autres sports' };
+
+  const activityType = typeEl?.value || session?.activityType || session?.coachActivityType || 'Autre entraînement';
+  const avgBpm = Number(bpmAvgEl?.value || session?.avgHr || session?.avg_hr || session?.bpm || 0) || null;
+  const maxBpm = Number(session?.maxHr || session?.max_hr || 0) || null;
+  const rpe = Number(rpeEl?.value || session?.rpe || 0) || null;
+  const calories = Number(calEl?.value || session?.calories || 0) || null;
+  const comment = String(commentEl?.value || session?.comment || session?.notes || '').trim();
+
+  const coachHint = (() => {
+    if (avgBpm && rpe && rpe >= 8 && avgBpm < 135) {
+      return 'Ressenti élevé avec cardio modéré : probable fatigue musculaire, charge locale ou chaleur plutôt que dérive cardiaque pure.';
     }
-function positionModalBelowRibbon(modalEl) {
-      if (!modalEl) return;
-      const ribbonEl = document.querySelector('header, nav, .top-nav, .navbar, .topbar, .app-header, [class*="ribbon"]');
-      const ribbonBottom = ribbonEl ? Math.ceil(ribbonEl.getBoundingClientRect().bottom) : 84;
-      const topOffset = Math.max(84, ribbonBottom + 12);
-
-      modalEl.style.setProperty('--dopamine-sheet-top', `${topOffset}px`);
-      modalEl.style.paddingTop = `${topOffset}px`;
-      modalEl.style.alignItems = 'flex-start';
-      modalEl.style.overflowY = 'auto';
-
-      const sheetOrDialog = modalEl.querySelector('#dopamine-session-sheet, .edit-session-dialog') || modalEl.firstElementChild;
-      if (sheetOrDialog) {
-        sheetOrDialog.style.marginTop = '0';
-        sheetOrDialog.style.maxHeight = `calc(100vh - ${topOffset + 16}px)`;
-        sheetOrDialog.style.overflowY = 'auto';
-      }
+    if (avgBpm && meta.key === 'hiit' && avgBpm >= 150) {
+      return 'Cardio soutenu sur format HIIT/autre sport : bon stimulus cardio-métabolique, prévoir une récupération adaptée.';
     }
-function setDopamineSheetMode(mode) {
-      const isInspect = mode === 'inspect';
-      const modalEl = document.getElementById('edit-session-modal');
-      const titleEl = document.getElementById('edit-session-modal-title');
-      const modeBadge = document.getElementById('dopamine-sheet-mode-badge');
-      const toggleBtn = document.getElementById('dopamine-sheet-toggle-btn');
-      const legacyForm = document.getElementById('edit-session-form');
-      const sheetEl = document.getElementById('dopamine-session-sheet');
+    if (meta.key === 'hiit') {
+      return 'Séance hors endurance classique : évaluer surtout la qualité du mouvement, la charge/intensité et la récupération musculaire.';
+    }
+    return 'Analyser la cohérence entre discipline, type de séance, cardio, RPE et commentaire.';
+  })();
 
-      if (modalEl) {
-        modalEl.dataset.sheetMode = isInspect ? 'inspect' : 'edit';
-        modalEl.classList.toggle('dopamine-inspect-mode', isInspect);
-        positionModalBelowRibbon(modalEl);
-      }
-
-      if (legacyForm) {
-        legacyForm.style.display = isInspect ? 'none' : '';
-      }
-const dialogWrap = document.querySelector('.edit-session-dialog > div');
-      const leftGridCol = dialogWrap
-        ? [...dialogWrap.children].find(el =>
-            el.tagName === 'DIV' &&
-            el.id !== 'dopamine-session-sheet' &&
-            !el.contains(sheetEl) &&
-            getComputedStyle(el).display === 'grid'
-          )
-        : null;
-      if (leftGridCol) {
-        leftGridCol.style.setProperty('display', isInspect ? 'none' : 'grid', 'important');
-      }const isMobileViewport = window.innerWidth <= 768;
-      if (dialogWrap) {
-        dialogWrap.style.flexDirection = isMobileViewport ? 'column' : '';
-        dialogWrap.style.gap = isMobileViewport ? '12px' : '';
-      }
-      if (sheetEl) {
-        sheetEl.style.width = '100%';
-        sheetEl.style.maxWidth = isMobileViewport ? '100%' : '860px';
-        sheetEl.style.margin = isMobileViewport ? '0' : '0 auto';
-        sheetEl.style.boxSizing = 'border-box';
-      }
-      if (sheetEl) {
-        sheetEl.style.width = '100%';
-        sheetEl.style.maxWidth = '860px';
-        sheetEl.style.margin = '0 auto';
-        const sheetFields = sheetEl.querySelectorAll('input, select, textarea, button[data-remove-friend], #ad-friend-add-btn');
-        sheetFields.forEach(field => {
-          if (field.type === 'hidden') return;
-          field.disabled = isInspect;
-        });
-      }
+  return {
+    disciplineKey: meta.key,
+    disciplineLabel: meta.label,
+    activityType,
+    avgBpm,
+    maxBpm,
+    rpe,
+    calories,
+    comment,
+    coachHint
+  };
+};
 
       if (titleEl) {
         titleEl.textContent = isInspect ? "Consulter l'activité" : "Modifier l'activité";
