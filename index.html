@@ -1466,12 +1466,13 @@
             </div>
           </div>
 
-          <div class="triathlon-summary-box">
+<div class="triathlon-summary-box">
             <div class="triathlon-grid">
               <div><i class="fa-solid fa-person-swimming" style="color:var(--swim-blue)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-nat">0 km</div><div style="font-size:0.65rem; color:var(--swim-blue);">Natation</div></div>
               <div><i class="fa-solid fa-person-biking" style="color:var(--bike-orange)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-vel">0 km</div><div style="font-size:0.65rem; color:var(--bike-orange);">Vélo</div></div>
-              <div><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-cou">0 km</div><div style="font-size:0.65rem; color:var(--run-green);">Course</div></div>
-              <div><i class="fa-solid fa-bolt" style="color:var(--hiit-pink)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-hiit">0 min</div><div style="font-size:0.65rem; color:var(--hiit-pink);">HIIT</div></div>
+              <div><i class="fa-solid fa-person-running" style="color:var(--run-green)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-cou">0 km</div><div style="font-size:0.65rem; color:var(--run-green);">Course à pied</div></div>
+              <div><i class="fa-solid fa-bolt" style="color:var(--hiit-pink)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-hiit">0 min</div><div style="font-size:0.65rem; color:var(--hiit-pink);">HIIT & autres sports</div></div>
+              <div><i class="fa-solid fa-person-walking" style="color:var(--walk-turquoise, #14b8a6);"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-marche">0 km</div><div style="font-size:0.65rem; color:var(--walk-turquoise, #14b8a6);">Marche</div></div>
               <div><i class="fa-solid fa-fire" style="color:var(--heart-red)"></i><div style="font-weight:bold; font-size:1.1rem;" id="tri-calories">0 kcal</div><div style="font-size:0.65rem; color:var(--heart-red);">Calories</div></div>
             </div>
           </div>
@@ -6603,18 +6604,21 @@ async function refreshFriendHub(){
 
     function updateSummaryUI() {
       updateWeeklyStreakUI();
-      ['tri', 'home-tri'].forEach(prefix => {
-        const nat = document.getElementById(`${prefix}-nat`);
-        const vel = document.getElementById(`${prefix}-vel`);
-        const cou = document.getElementById(`${prefix}-cou`);
-        const hiit = document.getElementById(`${prefix}-hiit`);
-        const cal = document.getElementById(`${prefix}-calories`);
-        if(nat) nat.innerText = `${appData.stats.natation} km`;
-        if(vel) vel.innerText = `${appData.stats.velo} km`;
-        if(cou) cou.innerText = `${appData.stats.course} km`;
-        if(hiit) hiit.innerText = `${appData.stats.hiit} min`;
-        if(cal) cal.innerText = `${appData.stats.calories} kcal`;
-      });
+    ['tri', 'home-tri'].forEach(prefix => {
+    const nat = document.getElementById(`${prefix}-nat`);
+    const vel = document.getElementById(`${prefix}-vel`);
+    const cou = document.getElementById(`${prefix}-cou`);
+    const hiit = document.getElementById(`${prefix}-hiit`);
+    const marche = document.getElementById(`${prefix}-marche`);
+    const cal = document.getElementById(`${prefix}-calories`);
+    const hiitAndOtherMin = Math.round(((Number(appData.stats.hiit) || 0) + (Number(appData.stats.autres) || 0)) * 10) / 10;
+    if (nat) nat.innerText = `${appData.stats.natation} km`;
+    if (vel) vel.innerText = `${appData.stats.velo} km`;
+    if (cou) cou.innerText = `${appData.stats.course} km`;
+    if (hiit) hiit.innerText = `${hiitAndOtherMin} min`;
+    if (marche) marche.innerText = `${appData.stats.marche || 0} km`;
+    if (cal) cal.innerText = `${appData.stats.calories} kcal`;
+  });
       
       const lvlEl = document.getElementById('user-level-num');
       if (lvlEl) lvlEl.innerText = appData.level;
