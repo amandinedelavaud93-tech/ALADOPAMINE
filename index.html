@@ -4704,7 +4704,13 @@ window.applyDisciplineRibbonColor = function(sportOrDiscipline) {
     el.style.borderColor = meta.color;
   });
 };
-
+// Éléments marqués avec la couleur de discipline
+  const coloredEls = root.querySelectorAll('[data-discipline-color], .discipline-accent, .dopamine-discipline-accent');
+  coloredEls.forEach((el) => {
+    el.style.color = meta.color;
+    el.style.borderColor = meta.color;
+  });
+};
 window.syncActivityTypeOptionsBySport = function(sportValue, root = document) {
   const select =
     root.querySelector('#ad-extra-activity-type') ||
