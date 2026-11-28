@@ -4852,7 +4852,6 @@ window.getDopamineCoachContext = function(session = {}, root = document) {
       actionButtons.forEach(btn => {
         btn.style.display = isInspect ? 'none' : '';
       });
-    }
 
     function toggleDopamineSheetMode() {
       const modalEl = document.getElementById('edit-session-modal');
@@ -7675,8 +7674,7 @@ async function handleUnblock(targetUserId) {
 
     // 5. Écouteur en direct au chargement et changement d'état
     buildTrophyCatalogue();
-
-document.addEventListener('DOMContentLoaded', () => {
+     document.addEventListener('DOMContentLoaded', () => {
       setAuthMode('login');
       if (new URLSearchParams(window.location.search).get('reset-password') === '1' || window.location.hash.includes('type=recovery')) {
         const recoveryModal = document.getElementById('auth-recovery-modal');
