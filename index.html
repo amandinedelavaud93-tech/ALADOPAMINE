@@ -4784,148 +4784,78 @@ window.syncActivityTypeOptionsBySport = function(sportValue, root = document) {
   }
 };
 
-window.getDopamineCoachContext = function(session = {}, root = document) {
-  const sportEl = root.querySelector('#edit-session-sport') || document.getElementById('edit-session-sport');
-  const typeEl = root.querySelector('#ad-extra-activity-type') || document.getElementById('ad-extra-activity-type');
-  const bpmAvgEl = root.querySelector('#edit-session-bpm') || document.getElementById('edit-session-bpm');
-  const rpeEl = root.querySelector('#edit-session-rpe') || document.getElementById('edit-session-rpe');
-  const calEl = root.querySelector('#edit-session-calories') || document.getElementById('edit-session-calories');
-  const commentEl = root.querySelector('#ad-comment-input') || document.getElementById('ad-comment-input');
-
-  const rawSport = sportEl?.value || session?.sport || session?.discipline || '';
-  const meta = window.getDopamineDisciplineMeta
-    ? window.getDopamineDisciplineMeta(rawSport)
-    : { key: 'hiit', label: 'HIIT & autres sports' };
-
-  const activityType = typeEl?.value || session?.activityType || session?.coachActivityType || 'Autre entraînement';
-  const avgBpm = Number(bpmAvgEl?.value || session?.avgHr || session?.avg_hr || session?.bpm || 0) || null;
-  const maxBpm = Number(session?.maxHr || session?.max_hr || 0) || null;
-  const rpe = Number(rpeEl?.value || session?.rpe || 0) || null;
-  const calories = Number(calEl?.value || session?.calories || 0) || null;
-  const comment = String(commentEl?.value || session?.comment || session?.notes || '').trim();
-
-  const coachHint = (() => {
-    if (avgBpm && rpe && rpe >= 8 && avgBpm < 135) {
-      return 'Ressenti élevé avec cardio modéré : probable fatigue musculaire, charge locale ou chaleur plutôt que dérive cardiaque pure.';
-    }
-    if (avgBpm && meta.key === 'hiit' && avgBpm >= 150) {
-      return 'Cardio soutenu sur format HIIT/autre sport : bon stimulus cardio-métabolique, prévoir une récupération adaptée.';
-    }
-    if (meta.key === 'hiit') {
-      return 'Séance hors endurance classique : évaluer surtout la qualité du mouvement, la charge/intensité et la récupération musculaire.';
-    }
-    return 'Analyser la cohérence entre discipline, type de séance, cardio, RPE et commentaire.';
-  })();
-
-  return {
-    disciplineKey: meta.key,
-    disciplineLabel: meta.label,
-    activityType,
-    avgBpm,
-    maxBpm,
-    rpe,
-    calories,
-    comment,
-    coachHint
-  };
-};
-
 function openEditSession(id) {
-      document.getElementById('edit-session-modal').style.display='block'; updateEditSessionFields(); refreshEditSessionFriendSuggestions();
-const resolvedStravaId = session.stravaActivityId || session.strava_id || session.externalId || (String(session.source || '').toLowerCase() === 'strava' && session.stravaDetails?.raw?.id ? session.stravaDetails.raw.id : null);
-      if (resolvedStravaId && !session.stravaActivityId) session.stravaActivityId = resolvedStravaId;
-      const detailBox=document.getElementById('edit-session-strava-details');
-      if(detailBox){detailBox.style.display=(resolvedStravaId?'block':'none');}
-      if(resolvedStravaId){
-        const detContent = document.getElementById('edit-session-strava-details-content');
-        if (detContent) detContent.textContent='Chargement des détails Strava…';
-loadStravaActivityDetails(session).catch(err => {
-          console.warn('Chargement détails Strava :', err);
-          if (detContent) detContent.textContent = 'Détails indisponibles : ' + err.message;
-        });
-      }
- const modalEl = document.getElementById('edit-session-modal');
-      const sheet = document.getElementById('dopamine-session-sheet');
-      const sportMap = { course: 'run', velo: 'bike', natation: 'swim', marche: 'walk', hiit: 'hiit', competition: 'race' };
-      const updateSheetSport = (sp) => {
-        if (!sheet) return;
-        sheet.dataset.sport = sportMap[sp] || sp || 'run';
-        syncTerrainOptionsBySport(sp, document.getElementById('ad-extra-terrain')?.value || session.terrain || '', sheet);
-      };
+      const session = appData.sessionsHistory.find(item => String(item.id) === String(id));
+      if (!session) { alert('Cette activité est introuvable.'); return; }
+      const set = (key, value) => { const el = document.getElementById('edit-session-' + key); if (el) el.value = value ?? ''; };
+      set('id', String(session.id));
+      set('title', session.title || '');
+      set('date', session.date || localDateISO(new Date()));
+      let totalSeconds = Number(session.durationSeconds) || Math.round(getSessionDurationMinutes(session) * 60);
+      set('hours', Math.floor(totalSeconds / 3600));
+      set('minutes', Math.floor((totalSeconds % 3600) / 60));
+      set('seconds', totalSeconds % 60);
 
-      // Titre, Date & Heure Strava/locale
-      const adTitle = document.getElementById('ad-session-title');
-      const adDate = document.getElementById('ad-session-date');
-      const adTime = document.getElementById('ad-session-time');
-      if (adTitle) {
-        adTitle.value = session.title || session.name || '';
-        adTitle.oninput = () => {
-          const el = document.getElementById('edit-session-title');
-          if (el) el.value = adTitle.value;
-        };
-      }
+      const rawSport = session.type === 'competition' || session.competitionDetails
+        ? 'competition'
+        : (session.sport || session.discipline || 'course');
+      const disciplineMeta = window.getDopamineDisciplineMeta
+        ? window.getDopamineDisciplineMeta(rawSport)
+        : { key: rawSport };
+      set('sport', disciplineMeta.key);
 
-      if (adDate) adDate.textContent = session.date || '--';
-      const rawStart = session.startDateLocal || session.stravaDetails?.startDateLocal || session.start_date_local || session.startTime || '';
-      const parsedTime = typeof rawStart === 'string' && rawStart.includes('T')
-        ? rawStart.split('T')[1].slice(0, 5)
-        : (session.time || '--:--');
-      if (adTime) adTime.textContent = parsedTime;
+      set('distance', getSessionDistanceKm(session));
+      if (typeof setDistancePickerValue === 'function') setDistancePickerValue('edit-session-distance', getSessionDistanceKm(session));
+      set('elevation', Number(session.elevationM || session.competitionDetails?.totalElevationM || 0));
+      set('bpm', Number(session.averageBpm || session.bpm || 0));
+      set('rpe', Number(session.rpe || 5));
+      set('calories', Number(session.calories || 0));
+      set('feeling', session.feeling || session.feelingLabel || getRPEFeeling(Number(session.rpe || 5)));
+      set('source', session.source || 'manual');
+      set('watts', session.watts ?? session.averageWatts ?? '');
+      set('cadence', session.cadence ?? session.averageCadence ?? '');
+      set('average-speed', session.averageSpeedKmh ?? session.avg_speed ?? '');
+      set('max-speed', session.maxSpeedKmh ?? '');
+      set('terrain', session.terrain || '');
+      set('weather', session.weather || '');
+      set('format', session.format || session.competitionDetails?.format || '');
 
-      // RPE & Commentaire
-      const adRpe = document.getElementById('ad-rpe-input');
-      const adRpeVal = document.getElementById('ad-rpe-val');
-      const adComment = document.getElementById('ad-comment-input');
+      const cd = session.competitionDetails || {}, cdet = cd.details || {};
+      const setComp = (key, value) => { const el = document.getElementById('edit-session-comp-' + key); if (el) el.value = value ?? ''; };
+      setComp('kind', cd.kind || session.eventKind || 'triathlon');
+      ['swim', 'swim-distance', 't1', 'bike', 'bike-distance', 'bike-elevation', 't2', 'run1', 'run1-distance', 'run1-elevation', 'run', 'run-distance', 'run-elevation', 'other-duration', 'other-distance'].forEach(k => setComp(k, cdet[k]));
+      ['water-place', 'water-condition', 'bike-terrain', 'run-terrain', 'weather-condition', 'place'].forEach(k => setComp(k, cd[k.replace(/-([a-z])/g, (_, c) => c.toUpperCase())]));
 
-      if (adRpe) {
-        adRpe.value = Number(session.rpe ?? 5);
-        if (adRpeVal) adRpeVal.textContent = adRpe.value;
-        adRpe.oninput = () => {
-          if (adRpeVal) adRpeVal.textContent = adRpe.value;
-          const el = document.getElementById('edit-session-rpe');
-          if (el) el.value = adRpe.value;
-        };
-      }
-
-      if (adComment) {
-        adComment.value = session.comment || session.description || '';
-        adComment.oninput = () => {
-          const el = document.getElementById('edit-session-comment');
-          if (el) el.value = adComment.value;
-        };
-      }
-
-      // Amis À LA DOPAMINE (liste + ajout pseudo ou e-mail Strava)
-      const friendSelect = document.getElementById('ad-friend-select');
-      const friendCustomInput = document.getElementById('ad-friend-custom-input');
-      const friendAddBtn = document.getElementById('ad-friend-add-btn');
-      const friendsListBox = document.getElementById('ad-friends-list');
-
-      let selectedFriends = Array.isArray(session.partners)
-        ? session.partners.map((p) => (typeof p === 'string' ? p : (p.username || p.name || p.email || ''))).filter(Boolean)
-        : [];
-
-      const syncFriends = () => {
-        session.partners = [...selectedFriends];
-        const hiddenPartners = document.getElementById('edit-session-partners');
-        if (hiddenPartners) hiddenPartners.value = selectedFriends.join(', ');
-        if (friendsListBox) {
-          friendsListBox.innerHTML = selectedFriends.map((f, idx) => `
-            <span class="ad-friend-chip">
-              👤 ${escapeHTML(f)}
-              <button type="button" data-remove-friend="${idx}" title="Retirer">×</button>
-            </span>
-          `).join('');
-          friendsListBox.querySelectorAll('[data-remove-friend]').forEach((btn) => {
-            btn.onclick = () => {
-              const i = Number(btn.dataset.removeFriend);
-              selectedFriends.splice(i, 1);
-              syncFriends();
-            };
-          });
+      const isIndoorSession = Boolean(session.isIndoor) || ['maison', 'home', 'zwift', 'home-trainer', 'indoor'].includes(String(session.location || session.lieu || '').trim().toLowerCase());
+      const hasWeatherInfo = Boolean(
+        session.weather ||
+        session.weatherCondition ||
+        session.meteo ||
+        document.getElementById('edit-session-weather')?.value
+      );
+      const reminderEl = document.getElementById('edit-session-weather-reminder');
+      if (reminderEl) {
+        if (isIndoorSession) {
+          reminderEl.style.display = 'block';
+          reminderEl.textContent = 'Séance en intérieur (Maison) : lieu défini sur Maison — vous pouvez renseigner la météo si besoin pour vos trophées.';
+        } else if ((session.source === 'strava' || session.stravaActivityId) && !hasWeatherInfo) {
+          reminderEl.style.display = 'block';
+          reminderEl.textContent = 'Rappel : météo non renseignée sur cette sortie extérieure — ajoutez les conditions pour valider vos trophées météo.';
+        } else {
+          reminderEl.style.display = 'none';
+          reminderEl.textContent = '';
         }
-      };
+      }
 
+      document.getElementById('edit-session-modal').style.display = 'block';
+      updateEditSessionFields();
+      if (typeof window.applyDisciplineRibbonColor === 'function') {
+        window.applyDisciplineRibbonColor(disciplineMeta.key, document.getElementById('dopamine-session-sheet') || document);
+      }
+      if (typeof window.syncActivityTypeOptionsBySport === 'function') {
+        window.syncActivityTypeOptionsBySport(disciplineMeta.key, session.activityType || session.coachActivityType || '', document.getElementById('dopamine-session-sheet') || document);
+      }
+      refreshEditSessionFriendSuggestions();
           if (friendSelect) {
             const knownFriends = Array.isArray(appData?.friends) ? appData.friends : [];
             friendSelect.innerHTML = '<option value="">+ Choisir un ami inscrit...</option>' + knownFriends.map((fr) => {
